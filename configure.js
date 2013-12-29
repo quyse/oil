@@ -1,0 +1,80 @@
+exports.configureCompiler = function(objectFile, compiler) {
+	// object files: <conf>/object
+	var a = /^([^\/]+)\/([^\/]+)$/.exec(objectFile);
+	compiler.configuration = a[1];
+	// replace dots with slashes, and add extension
+	// if ends with .c - this is .c, otherwise .cpp
+	var source = a[2];
+	var b = /^(.*)\.c$/.exec(source);
+	if(b) {
+		// .c
+		source = b[1].replace(/\./g, '/') + '.c';
+		compiler.cppMode = false;
+	}
+	else
+		// .cpp
+		source = source.replace(/\./g, '/') + '.cpp';
+	compiler.setSourceFile(source);
+};
+
+var libraries = {
+};
+
+var executables = {
+	npoil: {
+		objects: ['npoil', 'MainPluginInstance', 'ViewPluginInstance', 'meta'],
+		staticLibraries: [
+			'../inanity//libinanity-base',
+			'../inanity//libinanity-graphics',
+			'../inanity//libinanity-dx11',
+			'../inanity//libinanity-gl',
+			'../inanity//libinanity-shaders',
+			'../inanity//libinanity-platform',
+			'../inanity//libinanity-npapi',
+			'../inanity//libinanity-np',
+			'../inanity//libinanity-input',
+			'../inanity/deps/glew//libglew'
+		],
+		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
+		defFile: 'windows/npoil.def',
+		resFiles: ['windows/npoil.res']
+	}
+};
+
+exports.configureComposer = function(libraryFile, composer) {
+	// library files: <conf>/library
+	var a = /^(([^\/]+)\/)([^\/]+)$/.exec(libraryFile);
+	var confDir = a[1];
+	composer.configuration = a[2];
+	var library = libraries[a[3]];
+	for ( var i = 0; i < library.objects.length; ++i)
+		composer.addObjectFile(confDir + library.objects[i]);
+	var platformObjects = library['objects-' + composer.platform] || [];
+	for(var i = 0; i < platformObjects.length; ++i)
+		composer.addObjectFile(confDir + platformObjects[i]);
+};
+
+exports.configureLinker = function(executableFile, linker) {
+	// executable files: <conf>/executable
+	var a = /^(([^\/]+)\/)([^\/]+)$/.exec(executableFile);
+	var confDir = a[1];
+	linker.configuration = a[2];
+	var executable = executables[a[3]];
+	for ( var i = 0; i < executable.objects.length; ++i)
+		linker.addObjectFile(confDir + executable.objects[i]);
+	for ( var i = 0; i < executable.staticLibraries.length; ++i) {
+		var staticLibrary = executable.staticLibraries[i];
+		var confPos = staticLibrary.indexOf('//');
+		if(confPos >= 0)
+			staticLibrary = staticLibrary.replace('//', '/' + confDir);
+		else
+			staticLibrary = confDir + staticLibrary;
+		linker.addStaticLibrary(staticLibrary);
+	}
+	for ( var i = 0; i < executable.dynamicLibraries.length; ++i)
+		linker.addDynamicLibrary(executable.dynamicLibraries[i]);
+	linker.defFile = executable.defFile;
+	if(executable.resFiles)
+		for(var i = 0; i < executable.resFiles.length; ++i)
+			linker.resFiles.push(executable.resFiles[i]);
+};

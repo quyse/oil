@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<window id="main" title="Oil"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml">
+
+	<commandset>
+		<command id="commandRepoConnect" oncommand="window.openDialog('connectrepo.xul', '', 'chrome,modal,centerscreen');" />
+	</commandset>
+
+	<toolbox>
+		<menubar>
+			<menu label="Repo">
+				<menupopup>
+					<menuitem label="Connect..." command="commandRepoConnect" />
+					<menuitem label="Open offline..." />
+					<menuitem label="Disconnect" />
+				</menupopup>
+			</menu>
+		</menubar>
+	</toolbox>
+	<html:embed id="oil" type="application/x-inanityoil" width="10" height="10" oiltype="main" />
+
+</window>

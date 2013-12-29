@@ -1,0 +1,5 @@
+#include "../inanity/script/np/impl.ipp"
+#include "../inanity/inanity-base-meta.ipp"
+#include "../inanity/inanity-graphics-meta.ipp"
+#include "../inanity/inanity-physics-meta.ipp"
+#include "../inanity/inanity-math-script.ipp"
