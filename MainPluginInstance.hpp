@@ -13,6 +13,12 @@ class Device;
 
 END_INANITY_GRAPHICS
 
+BEGIN_INANITY_NP
+
+class State;
+
+END_INANITY_NP
+
 BEGIN_INANITY_OIL
 
 class MainPluginInstance : public Platform::NpapiPluginInstance
@@ -20,12 +26,16 @@ class MainPluginInstance : public Platform::NpapiPluginInstance
 private:
 	static MainPluginInstance* instance;
 
+	ptr<Script::Np::State> scriptState;
+
 	ptr<Graphics::System> graphicsSystem;
 	ptr<Graphics::Device> graphicsDevice;
 
 #ifdef ___INANITY_PLATFORM_WINDOWS
 	void Paint(HDC hdc);
 #endif
+
+	void PostInit();
 
 public:
 	MainPluginInstance();

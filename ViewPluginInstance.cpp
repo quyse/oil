@@ -1,5 +1,6 @@
 #include "ViewPluginInstance.hpp"
 #include "../inanity/script/np/State.hpp"
+#include "../inanity/script/np/Any.hpp"
 #ifdef ___INANITY_PLATFORM_WINDOWS
 #include "../inanity/platform/Win32Window.hpp"
 #include "../inanity/input/Win32WmManager.hpp"
@@ -8,7 +9,7 @@
 BEGIN_INANITY_OIL
 
 ViewPluginInstance::ViewPluginInstance()
-: NpapiPluginInstance(true, false) {}
+: NpapiPluginInstance(true) {}
 
 #ifdef ___INANITY_PLATFORM_WINDOWS
 

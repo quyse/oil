@@ -22,7 +22,7 @@ var libraries = {
 
 var executables = {
 	npoil: {
-		objects: ['npoil', 'MainPluginInstance', 'ViewPluginInstance', 'meta'],
+		objects: ['npoil', 'MainPluginInstance', 'ViewPluginInstance', 'ScriptObject', 'meta'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
 			'../inanity//libinanity-graphics',
