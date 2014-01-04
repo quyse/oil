@@ -41,17 +41,19 @@ var executables = {
 	}
 };
 
+var platformed = function(object, field, platform) {
+	return (object[field] || []).concat(object[field + '-' + platform] || []);
+};
+
 exports.configureComposer = function(libraryFile, composer) {
 	// library files: <conf>/library
 	var a = /^(([^\/]+)\/)([^\/]+)$/.exec(libraryFile);
 	var confDir = a[1];
 	composer.configuration = a[2];
 	var library = libraries[a[3]];
-	for ( var i = 0; i < library.objects.length; ++i)
-		composer.addObjectFile(confDir + library.objects[i]);
-	var platformObjects = library['objects-' + composer.platform] || [];
-	for(var i = 0; i < platformObjects.length; ++i)
-		composer.addObjectFile(confDir + platformObjects[i]);
+	var objects = platformed(library, 'objects', composer.platform);
+	for ( var i = 0; i < objects.length; ++i)
+		composer.addObjectFile(confDir + objects[i]);
 };
 
 exports.configureLinker = function(executableFile, linker) {
@@ -71,8 +73,9 @@ exports.configureLinker = function(executableFile, linker) {
 			staticLibrary = confDir + staticLibrary;
 		linker.addStaticLibrary(staticLibrary);
 	}
-	for ( var i = 0; i < executable.dynamicLibraries.length; ++i)
-		linker.addDynamicLibrary(executable.dynamicLibraries[i]);
+	var dynamicLibraries = platformed(executable, 'dynamicLibraries', linker.platform);
+	for ( var i = 0; i < dynamicLibraries.length; ++i)
+		linker.addDynamicLibrary(dynamicLibraries[i]);
 	linker.defFile = executable.defFile;
 	if(executable.resFiles)
 		for(var i = 0; i < executable.resFiles.length; ++i)
