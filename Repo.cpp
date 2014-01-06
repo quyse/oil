@@ -1,5 +1,6 @@
 #include "Repo.hpp"
 #include "../inanity/data/sqlite.hpp"
+#include "../inanity/MemoryFile.hpp"
 #include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
@@ -16,6 +17,9 @@ Repo::Repo(const char* fileName)
 	BEGIN_TRY();
 
 	db = Data::SqliteDb::Open(fileName);
+
+	keyBufferFile = NEW(MemoryFile(maxKeySize));
+	valueBufferFile = NEW(MemoryFile(maxValueSize));
 
 	END_TRY("Can't create repo");
 }

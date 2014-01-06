@@ -6,7 +6,6 @@
 
 BEGIN_INANITY
 
-class MemoryFile;
 class StreamReader;
 class StreamWriter;
 
@@ -24,10 +23,6 @@ private:
 	ptr<Data::SqliteStatement> stmtPullTotalSize;
 
 	//*** Temporaries.
-	/// Key buffer.
-	ptr<MemoryFile> keyBufferFile;
-	/// Value buffer.
-	ptr<MemoryFile> valueBufferFile;
 	/// Indexes of written values.
 	std::vector<size_t> written;
 

@@ -4,6 +4,12 @@
 #include "oil.hpp"
 #include "../inanity/data/data.hpp"
 
+BEGIN_INANITY
+
+class MemoryFile;
+
+END_INANITY
+
 BEGIN_INANITY_DATA
 
 class SqliteDb;
@@ -32,6 +38,12 @@ public:
 protected:
 	/// SQLite database.
 	ptr<Data::SqliteDb> db;
+
+	//*** Temporaries.
+	/// Key buffer.
+	ptr<MemoryFile> keyBufferFile;
+	/// Value buffer.
+	ptr<MemoryFile> valueBufferFile;
 
 public:
 	Repo(const char* fileName);
