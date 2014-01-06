@@ -38,6 +38,17 @@ var executables = {
 		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']
+	},
+	'oilserver': {
+		objects: ['oilserver', 'Repo', 'ServerRepo'],
+		staticLibraries: [
+			'../inanity//libinanity-base',
+			'../inanity//libinanity-sqlite',
+			'../inanity/deps/sqlite//libsqlite',
+			'../inanity//libinanity-fcgi',
+			'../inanity/deps/fcgi//libfcgi'
+			],
+		'dynamicLibraries-win32': ['ws2_32.lib']
 	}
 };
 
