@@ -5,6 +5,7 @@
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/StreamWriter.hpp"
 #include "../inanity/Exception.hpp"
+#include <sstream>
 
 BEGIN_INANITY_OIL
 
@@ -16,9 +17,9 @@ ServerRepo::ServerRepo(const char* fileName)
 	// create table revs
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS revs ("
-		"rev INTEGER PRIMARY KEY, "
+		"rev INTEGER PRIMARY KEY AUTOINCREMENT, "
 		"key BLOB NOT NULL, "
-		"value BLOB)",
+		"value BLOB NOT NULL)",
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table revs", db->Error());
 	// create index revs_key_rev
@@ -30,10 +31,15 @@ ServerRepo::ServerRepo(const char* fileName)
 	// create statements
 	stmtCheckConflict = db->CreateStatement("SELECT COUNT(*) FROM revs WHERE key = ?1 AND rev > ?2");
 	stmtWrite = db->CreateStatement("INSERT INTO revs (key, value) VALUES (?1, ?2)");
-	stmtPull = db->CreateStatement(
-		"SELECT rev, key, value FROM revs NATURAL JOIN ("
+	{
+		std::ostringstream ss;
+		ss <<
+			"SELECT rev, key, value FROM revs NATURAL JOIN ("
 				"SELECT key, MAX(rev) AS maxrev FROM revs WHERE rev > ?1 GROUP BY key"
-			") WHERE rev = maxrev ORDER BY rev LIMIT ?2");
+				") WHERE rev = maxrev ORDER BY rev LIMIT "
+			<< maxPullKeysCount;
+		stmtPull = db->CreateStatement(ss.str().c_str());
+	}
 	stmtPullTotalSize = db->CreateStatement(
 		"SELECT COUNT(DISTINCT key) FROM revs WHERE rev > ?1");
 
@@ -73,11 +79,6 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
 {
-	// read number of keys
-	size_t pushKeysCount = reader->ReadShortly();
-	if(pushKeysCount > (size_t)maxPushKeysCount)
-		THROW("Too many push keys");
-
 	void* key = keyBufferFile->GetData();
 	void* value = valueBufferFile->GetData();
 
@@ -86,19 +87,31 @@ void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
 	size_t totalPushSize = 0;
 
 	// loop for push keys
-	for(size_t i = 0; i < pushKeysCount; ++i)
+	for(size_t i = 0; ; ++i)
 	{
-		// read key
+		// read key size
 		size_t keySize = reader->ReadShortly();
+		// if it's 0, it's signal of end
+		if(!keySize)
+			break;
+
+		// check number of keys
+		if(i >= (size_t)maxPushKeysCount)
+			THROW("Too many keys");
+
+		// check key size
 		if(keySize > maxKeySize)
 			THROW("Too big key");
+
+		// read key value
 		reader->Read(key, keySize);
 
 		// read value
 		size_t valueSize = reader->ReadShortly();
 		if(valueSize > maxValueSize)
 			THROW("Too big value");
-		reader->Read(value, valueSize);
+		if(valueSize)
+			reader->Read(value, valueSize);
 
 		// check total push size
 		totalPushSize += valueSize;
@@ -148,7 +161,6 @@ void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
 	Data::SqliteQuery queryPull(stmtPull);
 
 	stmtPull->Bind(1, clientRevision);
-	stmtPull->Bind(2, maxPullKeysCount);
 
 	size_t totalPullSize = 0;
 	bool done = false;
@@ -166,28 +178,33 @@ void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
 				break;
 			}
 
-			// output revision
-			writer->WriteShortlyBig(stmtPull->ColumnInt64(0));
 			// output key
 			{
 				ptr<File> key = stmtPull->ColumnBlob(1);
-				writer->WriteShortly(key->GetSize());
-				writer->WriteFile(key);
+				size_t keySize = key->GetSize();
+				writer->WriteShortly(keySize);
+				writer->Write(key->GetData(), keySize);
 			}
 			// output value
 			{
 				ptr<File> value = stmtPull->ColumnBlob(2);
-				writer->WriteShortly(value->GetSize());
-				writer->WriteFile(value);
+				size_t valueSize = value->GetSize();
+				writer->WriteShortly(valueSize);
+				writer->Write(value->GetData(), valueSize);
 			}
+			// output revision
+			writer->WriteShortlyBig(stmtPull->ColumnInt64(0));
+
 			break;
+
 		case SQLITE_DONE:
 			// end, no more keys
 			done = true;
 			break;
+
 		default:
 			// some error
-			THROW_SECONDARY("Can't pull", db->Error());
+			THROW_SECONDARY("Error pulling changes", db->Error());
 		}
 	}
 }

@@ -2,6 +2,7 @@
 #define ___INANITY_OIL_CLIENT_REPO_HPP___
 
 #include "Repo.hpp"
+#include <vector>
 
 BEGIN_INANITY
 
@@ -37,28 +38,53 @@ public:
 
 private:
 	struct ItemStatuses;
+	struct ManifestKeys;
 	struct KeyItems;
 
 	//*** SQLite statements.
+	ptr<Data::SqliteStatement> stmtManifestGet;
+	ptr<Data::SqliteStatement> stmtManifestSet;
 	ptr<Data::SqliteStatement> stmtGetKeyItems;
+	ptr<Data::SqliteStatement> stmtGetKeyItemsByOneItemId;
 	ptr<Data::SqliteStatement> stmtAddKeyItem;
 	ptr<Data::SqliteStatement> stmtRemoveKeyItem;
 	ptr<Data::SqliteStatement> stmtChangeKeyItemStatus;
 	ptr<Data::SqliteStatement> stmtChangeKeyItemValue;
+	ptr<Data::SqliteStatement> stmtSelectKeysToPush;
+	ptr<Data::SqliteStatement> stmtMassChangeStatus;
 
-	//*** Internal help methods. All should be called in transaction.
+	/// Helper empty file.
+	ptr<File> emptyFile;
+	/// Is push in progress.
+	bool pushInProgress;
+	/// Ids of transient keys.
+	std::vector<long long> transientIds;
+	/// Number of keys to pull more (estimated).
+	long long pullLag;
+
+	//*** Internal help methods.
 	/// Check item status for validity.
 	void CheckItemStatus(int itemStatus);
+	/// Helper method for getting key items.
+	KeyItems FillKeyItems(Data::SqliteStatement* stmt);
 	/// Get basic info about key.
 	KeyItems GetKeyItems(ptr<File> key);
+	/// Get basic info about key using id of one of key items.
+	KeyItems GetKeyItemsByOneItemId(long long itemId);
 	/// Add new key item (replacing old one if exists).
-	void AddKeyItem(ptr<File> key, ptr<File> value, int status, long long revision);
+	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
 	/// Remove key item.
 	void RemoveKeyItem(long long itemId);
 	/// Change key item status (replacing old item if exists).
 	void ChangeKeyItemStatus(long long itemId, int newItemStatus);
 	/// Change key item value.
 	void ChangeKeyItemValue(long long itemId, ptr<File> newValue);
+
+	//*** Manifest methods.
+	long long GetManifestValue(int key, long long defaultValue);
+	void SetManifestValue(int key, long long value);
+
+	void DoPush(StreamWriter* writer);
 
 public:
 	ClientRepo(const char* fileName);
@@ -68,7 +94,8 @@ public:
 	/// Get client value.
 	ptr<File> GetValue(ptr<File> key);
 	/// Add client change.
-	/** If the key is conflicted, just change the client value. */
+	/** If the key is conflicted, just change the client value.
+	To remove key-value pair specify value = nullptr. */
 	void Change(ptr<File> key, ptr<File> value);
 	/// Resolve conflicting change.
 	/** In case of no conflict throws.
@@ -85,6 +112,7 @@ public:
 
 	void Push(StreamWriter* writer);
 	void Pull(StreamReader* reader);
+	void CleanupTransients();
 };
 
 END_INANITY_OIL
