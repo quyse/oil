@@ -49,6 +49,14 @@ var executables = {
 			'../inanity/deps/fcgi//libfcgi'
 			],
 		'dynamicLibraries-win32': ['ws2_32.lib']
+	},
+	'repo-sync-test': {
+		objects: ['repo-sync-test', 'Repo', 'ServerRepo', 'ClientRepo'],
+		staticLibraries: [
+			'../inanity//libinanity-base',
+			'../inanity//libinanity-sqlite',
+			'../inanity/deps/sqlite//libsqlite'
+		]
 	}
 };
 

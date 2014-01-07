@@ -1,0 +1,95 @@
+begin Simple transfers
+
+client A
+client B
+
+# null check
+check A k null
+check B k null
+
+# A adds (k aaa), transfer to B
+change A k aaa
+check A k aaa
+push A sync A pull A
+push B sync B pull B
+check B k aaa
+
+# A changes (k bbb), transfer to B
+change A k bbb
+check A k bbb
+push A sync A pull A
+push B sync B pull B
+check B k bbb
+
+# A removes k, transfer to B
+change A k null
+check A k null
+push A sync A pull A
+push B sync B pull B
+check B k null
+
+
+
+begin Add conflict
+
+client A
+client B
+
+# A adds k=aaa, and sync
+check_conflict A k 0
+change A k aaa
+check_conflict A k 0
+push A sync A pull A
+check_conflict A k 0
+check A k aaa
+check_conflict A k 0
+
+# B adds k=bbb, and sync
+change B k bbb
+push B sync B pull B
+check B k bbb
+check_conflict B k 1
+check_conflict_base B k null
+check_conflict_server B k aaa
+
+# B changes k=ccc, and sync
+change B k ccc
+check B k ccc
+check_conflict B k 1
+check_conflict_base B k null
+check_conflict_server B k aaa
+push B sync B pull B
+check B k ccc
+check_conflict B k 1
+check_conflict_base B k null
+check_conflict_server B k aaa
+check A k aaa
+check_conflict A k 0
+
+# A changes k=ddd, and sync
+change A k ddd
+check A k ddd
+push A sync A pull A
+check A k ddd
+check_conflict A k 0
+push B sync B pull B
+check A k ddd
+check_conflict A k 0
+check B k ccc
+check_conflict B k 1
+check_conflict_base B k null
+check_conflict_server B k ddd
+
+# B resolves k (==ccc) and sync
+resolve B k
+check B k ccc
+check_conflict B k 0
+push B sync B pull B
+check B k ccc
+check_conflict B k 0
+push A sync A pull A
+check B k ccc
+check_conflict B k 0
+check A k ccc
+check_conflict A k 0
+
