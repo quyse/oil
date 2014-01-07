@@ -120,7 +120,7 @@ void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
 
 		// check for conflict
 		Data::SqliteQuery queryCheckConflict(stmtCheckConflict);
-		ptr<File> keyFile = NEW(PartFile(keyBufferFile, 0, keySize));
+		ptr<File> keyFile = NEW(PartFile(keyBufferFile, key, keySize));
 		stmtCheckConflict->Bind(1, keyFile);
 		stmtCheckConflict->Bind(2, clientRevision);
 		if(stmtCheckConflict->Step() != SQLITE_ROW)
@@ -132,7 +132,7 @@ void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
 		// do write
 		Data::SqliteQuery queryWrite(stmtWrite);
 		stmtWrite->Bind(1, keyFile);
-		stmtWrite->Bind(2, NEW(PartFile(valueBufferFile, 0, valueSize)));
+		stmtWrite->Bind(2, NEW(PartFile(valueBufferFile, value, valueSize)));
 		if(stmtWrite->Step() != SQLITE_DONE)
 			THROW_SECONDARY("Can't do write", db->Error());
 

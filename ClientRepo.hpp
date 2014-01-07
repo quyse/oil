@@ -46,6 +46,7 @@ private:
 	ptr<Data::SqliteStatement> stmtManifestSet;
 	ptr<Data::SqliteStatement> stmtGetKeyItems;
 	ptr<Data::SqliteStatement> stmtGetKeyItemsByOneItemId;
+	ptr<Data::SqliteStatement> stmtGetKeyItemValue;
 	ptr<Data::SqliteStatement> stmtAddKeyItem;
 	ptr<Data::SqliteStatement> stmtRemoveKeyItem;
 	ptr<Data::SqliteStatement> stmtChangeKeyItemStatus;
@@ -71,6 +72,8 @@ private:
 	KeyItems GetKeyItems(ptr<File> key);
 	/// Get basic info about key using id of one of key items.
 	KeyItems GetKeyItemsByOneItemId(long long itemId);
+	/// Get value of key item.
+	ptr<File> GetKeyItemValue(long long itemId);
 	/// Add new key item (replacing old one if exists).
 	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
 	/// Remove key item.
@@ -89,10 +92,8 @@ private:
 public:
 	ClientRepo(const char* fileName);
 
-	/// Get key status.
-	KeyStatus GetKeyStatus(ptr<File> key);
-	/// Get client value.
-	ptr<File> GetValue(ptr<File> key);
+	ptr<Data::SqliteDb> GetDb() const;
+
 	/// Add client change.
 	/** If the key is conflicted, just change the client value.
 	To remove key-value pair specify value = nullptr. */
@@ -101,6 +102,13 @@ public:
 	/** In case of no conflict throws.
 	Just set that client change is not conflicted anymore. */
 	void Resolve(ptr<File> key);
+
+	/// Get key status.
+	KeyStatus GetKeyStatus(ptr<File> key);
+	/// Get client value.
+	ptr<File> GetValue(ptr<File> key);
+	/// Get is value in conflict.
+	bool IsConflicted(ptr<File> key);
 	/// Get conflicting (server) value.
 	/** In case of no conflict throws.
 	In case conflict server value isn't known yet, returns 0. */
@@ -112,7 +120,7 @@ public:
 
 	void Push(StreamWriter* writer);
 	void Pull(StreamReader* reader);
-	void CleanupTransients();
+	void Cleanup();
 };
 
 END_INANITY_OIL

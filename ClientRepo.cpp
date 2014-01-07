@@ -4,7 +4,6 @@
 #include "../inanity/StreamWriter.hpp"
 #include "../inanity/MemoryFile.hpp"
 #include "../inanity/PartFile.hpp"
-#include "../inanity/EmptyFile.hpp"
 #include "../inanity/Exception.hpp"
 #include <sstream>
 
@@ -137,7 +136,7 @@ ClientRepo::ClientRepo(const char* fileName)
 	// create table manifest
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS manifest ("
-		"key INTEGER PRIMARY KEY"
+		"key INTEGER PRIMARY KEY, "
 		"value ANY NOT NULL)",
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table manifest", db->Error());
@@ -148,7 +147,7 @@ ClientRepo::ClientRepo(const char* fileName)
 		"id INTEGER PRIMARY KEY, "
 		"value BLOB NOT NULL, " // value comes first to decrease moving large blob
 		"key BLOB NOT NULL, "
-		"status INTEGER NOT NULL", // see ItemStatus enum
+		"status INTEGER NOT NULL)", // see ItemStatus enum
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table items", db->Error());
 	// create index items_key_status
@@ -174,6 +173,7 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtManifestSet = db->CreateStatement("INSERT OR REPLACE INTO manifest (key, value) VALUES (?1, ?2)");
 	stmtGetKeyItems = db->CreateStatement("SELECT id, status FROM items WHERE key = ?1");
 	stmtGetKeyItemsByOneItemId = db->CreateStatement("SELECT id, status FROM items WHERE key = (SELECT key FROM items WHERE id = ?1)");
+	stmtGetKeyItemValue = db->CreateStatement("SELECT value FROM items WHERE id = ?1");
 	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status) VALUES (?1, ?2, ?3)");
 	stmtRemoveKeyItem = db->CreateStatement("DELETE FROM items WHERE id = ?1");
 	stmtChangeKeyItemStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE id = ?1");
@@ -186,9 +186,14 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
 
 	// create helper empty file
-	emptyFile = NEW(EmptyFile());
+	emptyFile = NEW(PartFile(keyBufferFile, keyBufferFile->GetData(), 0));
 
 	END_TRY("Can't create client repo");
+}
+
+ptr<Data::SqliteDb> ClientRepo::GetDb() const
+{
+	return db;
 }
 
 void ClientRepo::CheckItemStatus(int itemStatus)
@@ -241,6 +246,23 @@ ClientRepo::KeyItems ClientRepo::GetKeyItemsByOneItemId(long long itemId)
 	stmtGetKeyItemsByOneItemId->Bind(1, itemId);
 
 	return FillKeyItems(stmtGetKeyItemsByOneItemId);
+}
+
+ptr<File> ClientRepo::GetKeyItemValue(long long itemId)
+{
+	THROW_ASSERT(itemId > 0);
+
+	Data::SqliteQuery query(stmtGetKeyItemValue);
+
+	stmtGetKeyItemValue->Bind(1, itemId);
+
+	if(stmtGetKeyItemValue->Step() != SQLITE_ROW)
+		THROW_SECONDARY("Error getting key item value", db->Error());
+
+	ptr<File> result = stmtGetKeyItemValue->ColumnBlob(0);
+	if(!result->GetSize())
+		return nullptr;
+	return result;
 }
 
 void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status)
@@ -358,6 +380,8 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	else
 		AddKeyItem(key, value, status);
 
+	transaction.Commit();
+
 	END_TRY("Can't change repo value");
 }
 
@@ -381,7 +405,83 @@ void ClientRepo::Resolve(ptr<File> key)
 	if(keyItems.ids[ItemStatuses::conflictBase])
 		RemoveKeyItem(keyItems.ids[ItemStatuses::conflictBase]);
 
+	transaction.Commit();
+
 	END_TRY("Can't resolve repo conflict");
+}
+
+ptr<File> ClientRepo::GetValue(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	Data::SqliteTransaction transaction(db);
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	int order[] = {
+		ItemStatuses::postponed,
+		ItemStatuses::transient,
+		ItemStatuses::client,
+		ItemStatuses::conflictClient,
+		ItemStatuses::server
+	};
+
+	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
+		if(keyItems.ids[order[i]])
+			return GetKeyItemValue(keyItems.ids[order[i]]);
+
+	return nullptr;
+
+	END_TRY("Can't get repo value");
+}
+
+bool ClientRepo::IsConflicted(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	return !!keyItems.ids[ItemStatuses::conflictClient];
+
+	END_TRY("Can't get is repo value conflicted");
+}
+
+ptr<File> ClientRepo::GetConflictServerValue(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	Data::SqliteTransaction transaction(db);
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	if(!keyItems.ids[ItemStatuses::conflictClient])
+		THROW("Key is not in conflict");
+
+	if(keyItems.ids[ItemStatuses::server])
+		return GetKeyItemValue(keyItems.ids[ItemStatuses::server]);
+
+	return nullptr;
+
+	END_TRY("Can't get repo conflict server value");
+}
+
+ptr<File> ClientRepo::GetConflictBaseValue(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	Data::SqliteTransaction transaction(db);
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	if(!keyItems.ids[ItemStatuses::conflictClient])
+		THROW("Key is not in conflict");
+
+	if(keyItems.ids[ItemStatuses::conflictBase])
+		return GetKeyItemValue(keyItems.ids[ItemStatuses::conflictBase]);
+
+	return nullptr;
+
+	END_TRY("Can't get repo conflict base value");
 }
 
 void ClientRepo::Push(StreamWriter* writer)
@@ -556,8 +656,8 @@ void ClientRepo::Pull(StreamReader* reader)
 			// read revision
 			long long revision = reader->ReadShortlyBig();
 
-			ptr<File> keyFile = NEW(PartFile(keyBufferFile, 0, keySize));
-			ptr<File> valueFile = NEW(PartFile(valueBufferFile, 0, valueSize));
+			ptr<File> keyFile = NEW(PartFile(keyBufferFile, key, keySize));
+			ptr<File> valueFile = NEW(PartFile(valueBufferFile, value, valueSize));
 
 			// get acquainted with this key
 			KeyItems keyItems = GetKeyItems(keyFile);
@@ -593,7 +693,7 @@ void ClientRepo::Pull(StreamReader* reader)
 	END_TRY("Can't pull repo");
 }
 
-void ClientRepo::CleanupTransients()
+void ClientRepo::Cleanup()
 {
 	BEGIN_TRY();
 
