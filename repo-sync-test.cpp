@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 BEGIN_INANITY_OIL
 
@@ -23,6 +24,7 @@ private:
 
 	struct Client
 	{
+		std::string name;
 		ptr<ClientRepo> repo;
 
 		ptr<File> pushFile;
@@ -47,7 +49,7 @@ public:
 	}
 
 	/// Client commits changes to server.
-	void Push(Client& client)
+	void Push(Client& client, std::ostream& outProtocol)
 	{
 		THROW_ASSERT(!client.pushFile && !client.pullFile);
 
@@ -57,6 +59,9 @@ public:
 		client.repo->Push(&writer);
 
 		client.pushFile = stream->ToFile();
+
+		outProtocol << "PUSH " << client.name << "\t";
+		OutputProtocol(client.pushFile, outProtocol);
 	}
 
 	/// Server processes client's commits and respondes back.
@@ -75,9 +80,12 @@ public:
 	}
 
 	/// Client processes server's response.
-	void Pull(Client& client)
+	void Pull(Client& client, std::ostream& outProtocol)
 	{
 		THROW_ASSERT(!client.pushFile && client.pullFile);
+
+		outProtocol << "PULL " << client.name << "\t";
+		OutputProtocol(client.pullFile, outProtocol);
 
 		StreamReader reader(NEW(FileInputStream(client.pullFile)));
 
@@ -116,6 +124,22 @@ public:
 		END_TRY("Can't convert value");
 	}
 
+	void OutputProtocol(ptr<File> file, std::ostream& out)
+	{
+		const char* data = (const char*)file->GetData();
+		size_t size = file->GetSize();
+		out << "(" << size << ")\t";
+		for(size_t i = 0; i < size; ++i)
+		{
+			char c = data[i];
+			if(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9')
+				out << c;
+			else
+				out << "\\x" << std::setw(2) << std::setiosflags(std::ios::hex) << std::setfill('0') << (int)c;
+		}
+		out << "\n";
+	}
+
 	static bool IsValuesEqual(ptr<File> a, ptr<File> b)
 	{
 		if(!a || !b)
@@ -127,7 +151,7 @@ public:
 		return memcmp(a->GetData(), b->GetData(), as) == 0;
 	}
 
-	void Run(std::istream& in, std::ostream& out)
+	void Run(std::istream& in, std::ostream& out, std::ostream& outProtocol)
 	{
 		in.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 
@@ -158,6 +182,7 @@ public:
 					std::string name;
 					std::getline(in, name);
 					out << "TEST #" << (++testNumber) << name << "\n";
+					outProtocol << "TEST #" << testNumber << name << "\n";
 
 					// do cleanup
 					std::string dbName = ":memory:";
@@ -185,6 +210,7 @@ public:
 						dbName = ss.str();
 					}
 					Client& client = clients[name];
+					client.name = name;
 					client.repo = NEW(ClientRepo(dbName.c_str()));
 					SetConstraints(client);
 				}
@@ -216,7 +242,7 @@ public:
 				{
 					std::string clientName;
 					in >> clientName;
-					Push(GetClient(clientName));
+					Push(GetClient(clientName), outProtocol);
 				}
 				else if(command == "sync")
 				{
@@ -228,16 +254,16 @@ public:
 				{
 					std::string clientName;
 					in >> clientName;
-					Pull(GetClient(clientName));
+					Pull(GetClient(clientName), outProtocol);
 				}
 				else if(command == "psp")
 				{
 					std::string clientName;
 					in >> clientName;
 					Client& client = GetClient(clientName);
-					Push(client);
+					Push(client, outProtocol);
 					Sync(client);
-					Pull(client);
+					Pull(client, outProtocol);
 				}
 				else if(command == "check")
 				{
@@ -309,7 +335,10 @@ void Run()
 {
 	try
 	{
-		Tester(false).Run(std::fstream("repo-sync-test.txt", std::ios::in), std::cout);
+		Tester(false).Run(
+			std::fstream("repo-sync-test.txt", std::ios::in),
+			std::cout,
+			std::fstream("repo-sync-test-protocol.txt", std::ios::out));
 	}
 	catch(Exception* exception)
 	{
