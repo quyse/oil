@@ -28,6 +28,8 @@ private:
 public:
 	ServerRepo(const char* fileName);
 
+	/// Write manifest.
+	void WriteManifest(StreamWriter* writer);
 	/// Sync with client.
 	void Sync(StreamReader* reader, StreamWriter* writer);
 };

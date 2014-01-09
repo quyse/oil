@@ -132,6 +132,7 @@ public:
 	In case there is no base (because conflict of new values), returns 0. */
 	ptr<File> GetConflictBaseValue(ptr<File> key);
 
+	void ReadServerManifest(StreamReader* reader);
 	void Push(StreamWriter* writer);
 	void Pull(StreamReader* reader);
 	void Cleanup();

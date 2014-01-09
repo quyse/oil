@@ -23,6 +23,10 @@ BEGIN_INANITY_OIL
 class Repo : public Object
 {
 public:
+	/// Protocol magic value.
+	static const char protocolMagic[14];
+	/// Protocol version.
+	static const int protocolVersion;
 	//*** Default security constraints.
 	static const size_t defaultMaxKeySize;
 	static const size_t defaultMaxValueSize;

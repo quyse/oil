@@ -5,6 +5,8 @@
 
 BEGIN_INANITY_OIL
 
+const char Repo::protocolMagic[14] = { 'I', 'N', 'A', 'N', 'I', 'T', 'Y', 'O', 'I', 'L', 'R', 'E', 'P', 'O' };
+const int Repo::protocolVersion = 1;
 const size_t Repo::defaultMaxKeySize = 128;
 const size_t Repo::defaultMaxValueSize = 1024 * 1024 * 16;
 const int Repo::defaultMaxPushKeysCount = 128;

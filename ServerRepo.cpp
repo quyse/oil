@@ -88,6 +88,25 @@ long long ServerRepo::GetMaxRevision()
 	return stmtGetMaxRevision->ColumnInt64(0);
 }
 
+void ServerRepo::WriteManifest(StreamWriter* writer)
+{
+	BEGIN_TRY();
+
+	// write protocol magic
+	writer->Write(protocolMagic, sizeof(protocolMagic));
+	// write protocol version
+	writer->WriteShortly(1);
+	// write constraints
+	writer->WriteShortly(maxKeySize);
+	writer->WriteShortly(maxValueSize);
+	writer->WriteShortly(maxPushKeysCount);
+	writer->WriteShortly(maxPushTotalSize);
+	writer->WriteShortly(maxPullKeysCount);
+	writer->WriteShortly(maxPullTotalSize);
+
+	END_TRY("Can't write server repo manifest");
+}
+
 void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 {
 	BEGIN_TRY();

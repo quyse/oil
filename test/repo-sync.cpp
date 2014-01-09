@@ -38,14 +38,17 @@ public:
 	Tester(bool persistentDb = false)
 	: testNumber(0), persistentDb(persistentDb) {}
 
-	void SetConstraints(Client& client)
+	void SendServerManifest(Client& client)
 	{
-		client.repo->maxKeySize = serverRepo->maxKeySize;
-		client.repo->maxValueSize = serverRepo->maxValueSize;
-		client.repo->maxPushKeysCount = serverRepo->maxPushKeysCount;
-		client.repo->maxPushTotalSize = serverRepo->maxPushTotalSize;
-		client.repo->maxPullKeysCount = serverRepo->maxPullKeysCount;
-		client.repo->maxPullTotalSize = serverRepo->maxPullTotalSize;
+		ptr<MemoryStream> stream = NEW(MemoryStream());
+		StreamWriter writer(stream);
+
+		serverRepo->WriteManifest(&writer);
+
+		ptr<File> file = stream->ToFile();
+		StreamReader reader(NEW(FileInputStream(file)));
+
+		client.repo->ReadServerManifest(&reader);
 	}
 
 	/// Client commits changes to server.
@@ -212,7 +215,7 @@ public:
 					Client& client = clients[name];
 					client.name = name;
 					client.repo = NEW(ClientRepo(dbName.c_str()));
-					SetConstraints(client);
+					SendServerManifest(client);
 				}
 				else if(command == "constraints")
 				{
@@ -224,7 +227,7 @@ public:
 						>> serverRepo->maxPullKeysCount
 						>> serverRepo->maxPullTotalSize;
 					for(Clients::iterator i = clients.begin(); i != clients.end(); ++i)
-						SetConstraints(i->second);
+						SendServerManifest(i->second);
 				}
 				else if(command == "change")
 				{

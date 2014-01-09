@@ -555,6 +555,31 @@ ptr<File> ClientRepo::GetConflictBaseValue(ptr<File> key)
 	END_TRY("Can't get repo conflict base value");
 }
 
+void ClientRepo::ReadServerManifest(StreamReader* reader)
+{
+	BEGIN_TRY();
+
+	// read and check protocol magic
+	char protocolMagicValue[sizeof(protocolMagic)];
+	reader->Read(protocolMagicValue, sizeof(protocolMagic));
+	if(memcmp(protocolMagicValue, protocolMagic, sizeof(protocolMagic)) != 0)
+		THROW("Invalid protocol magic");
+	// read and check protocol version
+	if(reader->ReadShortly() != protocolVersion)
+		THROW("Invalid protocol version");
+	// read constraints
+	maxKeySize = reader->ReadShortly();
+	maxValueSize = reader->ReadShortly();
+	maxPushKeysCount = reader->ReadShortly();
+	maxPushTotalSize = reader->ReadShortly();
+	maxPullKeysCount = reader->ReadShortly();
+	maxPullTotalSize = reader->ReadShortly();
+	// check end
+	reader->ReadEnd();
+
+	END_TRY("Can't read server repo manifest");
+}
+
 void ClientRepo::Push(StreamWriter* writer)
 {
 	BEGIN_TRY();
