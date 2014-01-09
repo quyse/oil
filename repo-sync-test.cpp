@@ -4,7 +4,7 @@
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/StreamWriter.hpp"
 #include "../inanity/FileInputStream.hpp"
-#include "../inanity/File.hpp"
+#include "../inanity/MemoryFile.hpp"
 #include "../inanity/Strings.hpp"
 #include "../inanity/Exception.hpp"
 #include <unordered_map>
@@ -35,6 +35,16 @@ private:
 public:
 	Tester(bool persistentDb = false)
 	: testNumber(0), persistentDb(persistentDb) {}
+
+	void SetConstraints(Client& client)
+	{
+		client.repo->maxKeySize = serverRepo->maxKeySize;
+		client.repo->maxValueSize = serverRepo->maxValueSize;
+		client.repo->maxPushKeysCount = serverRepo->maxPushKeysCount;
+		client.repo->maxPushTotalSize = serverRepo->maxPushTotalSize;
+		client.repo->maxPullKeysCount = serverRepo->maxPullKeysCount;
+		client.repo->maxPullTotalSize = serverRepo->maxPullTotalSize;
+	}
 
 	/// Client commits changes to server.
 	void Push(Client& client)
@@ -96,9 +106,14 @@ public:
 
 	static ptr<File> Convert(const std::string& value)
 	{
+		BEGIN_TRY();
+
 		if(value == "null")
 			return nullptr;
+
 		return Strings::String2File(value);
+
+		END_TRY("Can't convert value");
 	}
 
 	static bool IsValuesEqual(ptr<File> a, ptr<File> b)
@@ -169,7 +184,21 @@ public:
 						ss << "test/client_" << testNumber << "_" << name;
 						dbName = ss.str();
 					}
-					clients[name].repo = NEW(ClientRepo(dbName.c_str()));
+					Client& client = clients[name];
+					client.repo = NEW(ClientRepo(dbName.c_str()));
+					SetConstraints(client);
+				}
+				else if(command == "constraints")
+				{
+					in
+						>> serverRepo->maxKeySize
+						>> serverRepo->maxValueSize
+						>> serverRepo->maxPushKeysCount
+						>> serverRepo->maxPushTotalSize
+						>> serverRepo->maxPullKeysCount
+						>> serverRepo->maxPullTotalSize;
+					for(Clients::iterator i = clients.begin(); i != clients.end(); ++i)
+						SetConstraints(i->second);
 				}
 				else if(command == "change")
 				{
@@ -200,6 +229,15 @@ public:
 					std::string clientName;
 					in >> clientName;
 					Pull(GetClient(clientName));
+				}
+				else if(command == "psp")
+				{
+					std::string clientName;
+					in >> clientName;
+					Client& client = GetClient(clientName);
+					Push(client);
+					Sync(client);
+					Pull(client);
 				}
 				else if(command == "check")
 				{

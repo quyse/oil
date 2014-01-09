@@ -10,69 +10,71 @@ client B
 # A adds (k aaa), transfer to B
 change A k aaa
 	check A k aaa
-push A sync A pull A
-push B sync B pull B
+psp A
+psp B
 	check B k aaa
 
 # A changes (k bbb), transfer to B
 change A k bbb
 	check A k bbb
-push A sync A pull A
-push B sync B pull B
+psp A
+psp B
 	check B k bbb
 
 # A removes k, transfer to B
 change A k null
 	check A k null
-push A sync A pull A
-push B sync B pull B
+psp A
+psp B
 	check B k null
 
 
 
-begin Add conflict
+begin Simple conflicts
 
 client A
 client B
 
-# A adds k=aaa, and sync (just adds new key)
+# A adds k=aaa and sync (just adds new key)
 	check_conflict A k 0
 change A k aaa
 	check_conflict A k 0
-push A sync A pull A
+psp A
 	check_conflict A k 0
 	check A k aaa
 	check_conflict A k 0
 
-# B adds k=bbb, and sync (adds new key, but doesn't know that its already added)
+# B adds k=bbb and sync (adds new key, gets conflict)
 change B k bbb
-push B sync B pull B
+psp B
 	check B k bbb
 	check_conflict B k 1
 	check_conflict_base B k null
 	check_conflict_server B k aaa
 
-# B changes k=ccc, and sync
+# B changes k=ccc and sync (change while conflicted)
 change B k ccc
 	check B k ccc
 	check_conflict B k 1
 	check_conflict_base B k null
 	check_conflict_server B k aaa
-push B sync B pull B
+psp B
 	check B k ccc
 	check_conflict B k 1
 	check_conflict_base B k null
 	check_conflict_server B k aaa
+psp A
 	check A k aaa
 	check_conflict A k 0
 
-# A changes k=ddd, and sync, B sync too
+# A changes k=ddd and sync, B sync too (B changes conflicted server value)
 change A k ddd
 	check A k ddd
-push A sync A pull A
+	check_conflict A k 0
+psp A
 	check A k ddd
 	check_conflict A k 0
-push B sync B pull B
+psp B
 	check A k ddd
 	check_conflict A k 0
 	check B k ccc
@@ -80,16 +82,244 @@ push B sync B pull B
 	check_conflict_base B k null
 	check_conflict_server B k ddd
 
-# B resolves k (==ccc) and sync
+# B resolves k (==ccc) and sync, A sync too (B resolves to his value)
 resolve B k
 	check B k ccc
 	check_conflict B k 0
-push B sync B pull B
+psp B
 	check B k ccc
 	check_conflict B k 0
-push A sync A pull A
+psp A
 	check B k ccc
 	check_conflict B k 0
 	check A k ccc
 	check_conflict A k 0
 
+# B changes k=eee and sync (just change)
+change B k eee
+	check B k eee
+	check_conflict B k 0
+psp B
+	check B k eee
+	check_conflict B k 0
+
+# A changes k=fff and sync (conflicted change)
+change A k fff
+	check A k fff
+	check_conflict A k 0
+psp A
+	check A k fff
+	check_conflict A k 1
+	check_conflict_base A k ccc
+	check_conflict_server A k eee
+psp B
+	check B k eee
+	check_conflict B k 0
+
+# B changes k=ggg and sync, A sync too (A changes conflicted server value)
+change B k ggg
+	check B k ggg
+	check_conflict B k 0
+psp B
+	check B k ggg
+	check_conflict B k 0
+psp A
+	check A k fff
+	check_conflict A k 1
+	check_conflict_base A k ccc
+	check_conflict_server A k ggg
+
+# A resolves k (==fff) and sync, B sync too (A resolves to his value)
+resolve A k
+	check A k fff
+	check_conflict A k 0
+psp A
+	check A k fff
+	check_conflict A k 0
+psp B
+	check B k fff
+	check_conflict B k 0
+
+
+
+begin Conflict after resolve (check changed conflict base)
+
+client A
+client B
+
+change A k aaa
+psp A
+psp B
+change A k bbb
+psp A
+change B k ccc
+psp B
+	check_conflict B k 1
+	check_conflict_base B k aaa
+	check_conflict_server B k bbb
+resolve B k
+	check B k ccc
+	check_conflict B k 0
+change A k ddd
+psp A
+psp B
+	check_conflict B k 1
+	check_conflict_base B k bbb
+	check_conflict_server B k ddd
+
+
+
+begin Postponed change
+
+client A
+client B
+
+change A k aaa
+push A
+change A k bbb
+	check A k bbb
+sync A pull A
+	check A k bbb
+	check_conflict A k 0
+psp B
+	check B k aaa
+	check_conflict B k 0
+psp A
+	check A k bbb
+	check_conflict A k 0
+psp B
+	check B k bbb
+	check_conflict B k 0
+
+
+
+begin Partial push
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k1 111
+change A k2 222
+psp A
+	check A k1 111
+	check A k2 222
+psp B
+	check B k1 111
+	check B k2 null
+psp B
+	check B k1 111
+	check B k2 null
+psp A
+	check A k1 111
+	check A k2 222
+psp B
+	check B k1 111
+	check B k2 222
+
+
+
+begin Partial simultaneous push & conflicts
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+# adds
+change A k1 aaa111
+change A k2 aaa222
+change B k1 bbb111
+change B k2 bbb222
+
+psp A
+psp B
+	check A k1 aaa111
+	check_conflict A k1 0
+	check A k2 aaa222
+	check_conflict A k2 0
+	check B k1 bbb111
+	check_conflict B k1 1
+	check_conflict_base B k1 null
+	check_conflict_server B k1 aaa111
+	check B k2 bbb222
+	check_conflict B k2 0
+psp A
+psp B
+	check A k1 aaa111
+	check_conflict A k1 0
+	check A k2 aaa222
+	check_conflict A k2 0
+	check B k1 bbb111
+	check_conflict B k1 1
+	check_conflict_base B k1 null
+	check_conflict_server B k1 aaa111
+	check B k2 bbb222
+	check_conflict B k2 1
+	check_conflict_base B k2 null
+	check_conflict_server B k2 aaa222
+
+# changes
+change A k1 a1a1
+change A k2 a2a2
+change B k1 b1b1
+change B k2 b2b2
+
+psp A
+psp B
+	check A k1 a1a1
+	check_conflict A k1 0
+	check A k2 a2a2
+	check_conflict A k2 0
+	check B k1 b1b1
+	check_conflict B k1 1
+	check_conflict_base B k1 null
+	check_conflict_server B k1 a1a1
+	check B k2 b2b2
+	check_conflict B k2 1
+	check_conflict_base B k2 null
+	check_conflict_server B k2 aaa222
+psp A
+psp B
+	check A k1 a1a1
+	check_conflict A k1 0
+	check A k2 a2a2
+	check_conflict A k2 0
+	check B k1 b1b1
+	check_conflict B k1 1
+	check_conflict_base B k1 null
+	check_conflict_server B k1 a1a1
+	check B k2 b2b2
+	check_conflict B k2 1
+	check_conflict_base B k2 null
+	check_conflict_server B k2 a2a2
+
+
+
+begin Deferred add conflict
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k1 aaa111
+change A k2 aaa222
+psp A
+psp A
+change B k2 bbb222
+psp B
+	check B k1 aaa111
+	check_conflict B k1 0
+	check B k2 bbb222
+	check_conflict B k2 1
+	check_conflict_base B k2 null
+	check_conflict_server B k2 null
+psp B
+	check B k1 aaa111
+	check_conflict B k1 0
+	check B k2 bbb222
+	check_conflict B k2 1
+	check_conflict_base B k2 null
+	check_conflict_server B k2 aaa222
