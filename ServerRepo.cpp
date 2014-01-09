@@ -5,7 +5,6 @@
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/StreamWriter.hpp"
 #include "../inanity/Exception.hpp"
-#include <sstream>
 
 BEGIN_INANITY_OIL
 
@@ -63,26 +62,16 @@ ServerRepo::ServerRepo(const char* fileName)
 	stmtGetMaxRevision = db->CreateStatement("SELECT MAX(rev) FROM revs");
 	stmtCheckConflict = db->CreateStatement("SELECT COUNT(*) FROM revs WHERE key = ?1 AND rev > ?2");
 	stmtWrite = db->CreateStatement("INSERT INTO revs (key, value) VALUES (?1, ?2)");
-	{
-		const char* subquery = "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key";
-		{
-			std::ostringstream ss;
-			ss
-				<< "SELECT rev, key, value FROM revs NATURAL JOIN ("
-				<< subquery
-				<< ") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT "
-				<< maxPullKeysCount;
-			stmtPull = db->CreateStatement(ss.str().c_str());
-		}
-		{
-			std::ostringstream ss;
-			ss
-				<< "SELECT rev FROM revs NATURAL JOIN ("
-				<< subquery
-				<< ") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT 1";
-			stmtGetWeakRevision = db->CreateStatement(ss.str().c_str());
-		}
-	}
+#define SUBQUERY "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key"
+	stmtPull = db->CreateStatement(
+		"SELECT rev, key, value FROM revs NATURAL JOIN ("
+		SUBQUERY
+		") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT ?3");
+	stmtGetWeakRevision = db->CreateStatement(
+		"SELECT rev FROM revs NATURAL JOIN ("
+		SUBQUERY
+		") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT 1");
+#undef SUBQUERY
 	stmtPullTotalSize = db->CreateStatement(
 		"SELECT COUNT(DISTINCT key) FROM revs WHERE rev > ?1");
 
@@ -209,6 +198,7 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 	stmtPull->Bind(1, clientRevision);
 	stmtPull->Bind(2, clientUpperRevision);
+	stmtPull->Bind(3, maxPullKeysCount);
 
 	long long lastKnownClientRevision = clientRevision;
 

@@ -5,14 +5,20 @@
 
 BEGIN_INANITY_OIL
 
-const size_t Repo::maxKeySize = 128;
-const size_t Repo::maxValueSize = 1024 * 1024 * 16;
-const int Repo::maxPushKeysCount = 128;
-const size_t Repo::maxPushTotalSize = 1024 * 1024 * 32;
-const int Repo::maxPullKeysCount = 256;
-const size_t Repo::maxPullTotalSize = 1024 * 1024 * 32;
+const size_t Repo::defaultMaxKeySize = 128;
+const size_t Repo::defaultMaxValueSize = 1024 * 1024 * 16;
+const int Repo::defaultMaxPushKeysCount = 128;
+const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 32;
+const int Repo::defaultMaxPullKeysCount = 256;
+const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 32;
 
-Repo::Repo(const char* fileName)
+Repo::Repo(const char* fileName) :
+	maxKeySize(defaultMaxKeySize),
+	maxValueSize(defaultMaxValueSize),
+	maxPushKeysCount(defaultMaxPushKeysCount),
+	maxPushTotalSize(defaultMaxPushTotalSize),
+	maxPullKeysCount(defaultMaxPullKeysCount),
+	maxPullTotalSize(defaultMaxPullTotalSize)
 {
 	BEGIN_TRY();
 

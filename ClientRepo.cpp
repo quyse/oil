@@ -195,7 +195,7 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtChangeKeyItemValue = db->CreateStatement("UPDATE items SET value = ?2 WHERE id = ?1");
 	{
 		std::ostringstream ss;
-		ss << "SELECT id, key, value FROM items WHERE status = " << ItemStatuses::client << " LIMIT " << maxPushKeysCount;
+		ss << "SELECT id, key, value FROM items WHERE status = " << ItemStatuses::client << " ORDER BY id LIMIT ?1";
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
@@ -577,9 +577,11 @@ void ClientRepo::Push(StreamWriter* writer)
 	}
 
 	// select keys to push
+	THROW_ASSERT(transientIds.empty());
+
 	Data::SqliteQuery query(stmtSelectKeysToPush);
 
-	THROW_ASSERT(transientIds.empty());
+	stmtSelectKeysToPush->Bind(1, maxPushKeysCount);
 
 	// control total size of push
 	size_t totalPushSize = 0;

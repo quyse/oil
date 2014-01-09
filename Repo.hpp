@@ -23,17 +23,17 @@ BEGIN_INANITY_OIL
 class Repo : public Object
 {
 public:
-	//*** Security constraints.
-	static const size_t maxKeySize;
-	static const size_t maxValueSize;
+	//*** Default security constraints.
+	static const size_t defaultMaxKeySize;
+	static const size_t defaultMaxValueSize;
 	/// Maximum number key-value pairs in a push.
-	static const int maxPushKeysCount;
+	static const int defaultMaxPushKeysCount;
 	/// Maximum total size of values in a push.
-	static const size_t maxPushTotalSize;
+	static const size_t defaultMaxPushTotalSize;
 	/// Maximum number of key-value pairs in a pull response.
-	static const int maxPullKeysCount;
+	static const int defaultMaxPullKeysCount;
 	/// Maximum total size of values in a pull response.
-	static const size_t maxPullTotalSize;
+	static const size_t defaultMaxPullTotalSize;
 
 protected:
 	/// SQLite database.
@@ -44,6 +44,15 @@ protected:
 	ptr<MemoryFile> keyBufferFile;
 	/// Value buffer.
 	ptr<MemoryFile> valueBufferFile;
+
+public: // for simplicity
+	//*** Security constraints.
+	size_t maxKeySize;
+	size_t maxValueSize;
+	int maxPushKeysCount;
+	size_t maxPushTotalSize;
+	int maxPullKeysCount;
+	size_t maxPullTotalSize;
 
 public:
 	Repo(const char* fileName);
