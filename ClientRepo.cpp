@@ -133,6 +133,13 @@ ClientRepo::ClientRepo(const char* fileName)
 {
 	BEGIN_TRY();
 
+	// enable exclusive locking mode
+	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
+	// disable syncing
+	if(sqlite3_exec(*db, "PRAGMA synchronous = OFF", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't disable db sync", db->Error());
+
 	// create table manifest
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS manifest ("
@@ -167,6 +174,14 @@ ClientRepo::ClientRepo(const char* fileName)
 			THROW_SECONDARY("Can't create index items_status_partial", db->Error());
 	}
 
+	// create table chunks
+	if(sqlite3_exec(*db,
+		"CREATE TABLE IF NOT EXISTS chunks ("
+		"prerev INTEGER PRIMARY KEY, "
+		"postrev INTEGER NOT NULL)",
+		0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't create table chunks", db->Error());
+
 	// create statements
 
 	stmtManifestGet = db->CreateStatement("SELECT value FROM manifest WHERE key = ?1");
@@ -184,6 +199,10 @@ ClientRepo::ClientRepo(const char* fileName)
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
+	stmtAddChunk = db->CreateStatement("INSERT INTO chunks (prerev, postrev) VALUES (?1, ?2)");
+	stmtPreCutChunks = db->CreateStatement("SELECT MAX(postrev) FROM chunks WHERE prerev <= ?1");
+	stmtCutChunks = db->CreateStatement("DELETE FROM chunks WHERE prerev <= ?1");
+	stmtGetUpperRevision = db->CreateStatement("SELECT MIN(prerev) FROM chunks");
 
 	// create helper empty file
 	emptyFile = NEW(PartFile(keyBufferFile, keyBufferFile->GetData(), 0));
@@ -347,6 +366,58 @@ void ClientRepo::SetManifestValue(int key, long long value)
 		THROW_SECONDARY("Error setting manifest value", db->Error());
 }
 
+void ClientRepo::AddChunk(long long prePushRevision, long long postPushRevision)
+{
+	Data::SqliteQuery query(stmtAddChunk);
+
+	stmtAddChunk->Bind(1, prePushRevision);
+	stmtAddChunk->Bind(2, postPushRevision);
+
+	if(stmtAddChunk->Step() != SQLITE_DONE)
+		THROW_SECONDARY("Error adding chunk", db->Error());
+}
+
+void ClientRepo::CutChunks(long long& globalRevision)
+{
+	// increase global revision if chunks allow
+	{
+		Data::SqliteQuery query(stmtPreCutChunks);
+
+		stmtPreCutChunks->Bind(1, globalRevision);
+
+		if(stmtPreCutChunks->Step() != SQLITE_ROW)
+			THROW_SECONDARY("Error getting pre-cut revision", db->Error());
+
+		long long preCutRevision = stmtPreCutChunks->ColumnInt64(0);
+		if(preCutRevision > globalRevision)
+		{
+			globalRevision = preCutRevision;
+			SetManifestValue(ManifestKeys::globalRevision, globalRevision);
+		}
+	}
+
+	// remove chunks behind global revision
+	Data::SqliteQuery query(stmtCutChunks);
+
+	stmtCutChunks->Bind(1, globalRevision);
+
+	if(stmtCutChunks->Step() != SQLITE_DONE)
+		THROW_SECONDARY("Error cutting chunks", db->Error());
+}
+
+long long ClientRepo::GetUpperRevision()
+{
+	Data::SqliteQuery query(stmtGetUpperRevision);
+
+	if(stmtGetUpperRevision->Step() != SQLITE_ROW)
+		THROW_SECONDARY("Error getting upper revision", db->Error());
+
+	// If there is no chunks the result is NULL,
+	// but SQLite will automatically convert it into (int64) 0.
+	// This is our intended behavior too.
+	return stmtGetUpperRevision->ColumnInt64(0);
+}
+
 void ClientRepo::Change(ptr<File> key, ptr<File> value)
 {
 	BEGIN_TRY();
@@ -490,8 +561,20 @@ void ClientRepo::Push(StreamWriter* writer)
 
 	Data::SqliteTransaction transaction(db);
 
+	// get client revision
+	long long globalRevision = GetManifestValue(ManifestKeys::globalRevision, 0);
+
+	// cut chunks with client revision (client revision may change)
+	CutChunks(globalRevision);
+
 	// write our revision
-	writer->WriteShortlyBig(GetManifestValue(ManifestKeys::globalRevision, 0));
+	writer->WriteShortlyBig(globalRevision);
+
+	// write our upper revision
+	{
+		long long upperRevision = GetUpperRevision();
+		writer->WriteShortlyBig(upperRevision);
+	}
 
 	// select keys to push
 	Data::SqliteQuery query(stmtSelectKeysToPush);
@@ -570,13 +653,19 @@ void ClientRepo::Pull(StreamReader* reader)
 
 	Data::SqliteTransaction transaction(db);
 
-	// read number of successfully commited keys
-	size_t committedKeysCount = reader->ReadShortly();
+	// read total number of keys in pull
+	pullLag = reader->ReadShortlyBig();
+
+	// read pre-push revision
+	long long prePushRevision = reader->ReadShortlyBig();
+
 	// process commited keys
-	for(size_t i = 0; i < committedKeysCount; ++i)
+	for(;;)
 	{
-		// read key index
+		// read key index (1-based)
 		size_t keyIndex = reader->ReadShortly();
+		if(!keyIndex--)
+			break;
 		if(keyIndex >= transientIds.size())
 			THROW("Invalid commited key index");
 
@@ -596,6 +685,13 @@ void ClientRepo::Pull(StreamReader* reader)
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
 	}
+
+	// read post-push revision
+	long long postPushRevision = reader->ReadShortlyBig();
+
+	// add chunk if non-zero
+	if(prePushRevision < postPushRevision)
+		AddChunk(prePushRevision, postPushRevision);
 
 	// process conflicted keys
 	for(size_t i = 0; i < transientIds.size(); ++i)
@@ -627,13 +723,10 @@ void ClientRepo::Pull(StreamReader* reader)
 	// clear transient ids
 	transientIds.clear();
 
-	// read total number of keys in pull
-	pullLag = reader->ReadShortlyBig();
-
+	// pull keys
 	void* key = keyBufferFile->GetData();
 	void* value = valueBufferFile->GetData();
 
-	// loop for keys
 	for(;;)
 		try
 		{
@@ -678,14 +771,27 @@ void ClientRepo::Pull(StreamReader* reader)
 			// that key is ok
 			keyTransaction.Commit();
 		}
-		catch(Exception* exception)
+		catch(Exception* e)
 		{
-			// skip errors while processing key
-			// just rollback key transaction and stop processing
-			// already processed keys will be committed
-			MakePointer(exception);
-			break;
+			// There was an error while pulling key.
+			// This is sad; however, we support partial pulling.
+			// Key transaction is rollbacked already,
+			// but outer transaction could be committed.
+			// Do cleanup after that and throw an exception.
+
+			ptr<Exception> exception = e;
+
+			transaction.Commit();
+
+			// rethrow exception
+			THROW_SECONDARY("Error pulling keys", exception);
 		}
+
+	// read and save new client revision
+	SetManifestValue(ManifestKeys::globalRevision, reader->ReadShortlyBig());
+
+	// check end
+	reader->ReadEnd();
 
 	// commit
 	transaction.Commit();

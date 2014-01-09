@@ -42,17 +42,22 @@ private:
 	struct KeyItems;
 
 	//*** SQLite statements.
-	ptr<Data::SqliteStatement> stmtManifestGet;
-	ptr<Data::SqliteStatement> stmtManifestSet;
-	ptr<Data::SqliteStatement> stmtGetKeyItems;
-	ptr<Data::SqliteStatement> stmtGetKeyItemsByOneItemId;
-	ptr<Data::SqliteStatement> stmtGetKeyItemValue;
-	ptr<Data::SqliteStatement> stmtAddKeyItem;
-	ptr<Data::SqliteStatement> stmtRemoveKeyItem;
-	ptr<Data::SqliteStatement> stmtChangeKeyItemStatus;
-	ptr<Data::SqliteStatement> stmtChangeKeyItemValue;
-	ptr<Data::SqliteStatement> stmtSelectKeysToPush;
-	ptr<Data::SqliteStatement> stmtMassChangeStatus;
+	ptr<Data::SqliteStatement>
+		stmtManifestGet,
+		stmtManifestSet,
+		stmtGetKeyItems,
+		stmtGetKeyItemsByOneItemId,
+		stmtGetKeyItemValue,
+		stmtAddKeyItem,
+		stmtRemoveKeyItem,
+		stmtChangeKeyItemStatus,
+		stmtChangeKeyItemValue,
+		stmtSelectKeysToPush,
+		stmtMassChangeStatus,
+		stmtAddChunk,
+		stmtPreCutChunks,
+		stmtCutChunks,
+		stmtGetUpperRevision;
 
 	/// Helper empty file.
 	ptr<File> emptyFile;
@@ -86,6 +91,15 @@ private:
 	//*** Manifest methods.
 	long long GetManifestValue(int key, long long defaultValue);
 	void SetManifestValue(int key, long long value);
+
+	//*** Chunks methods.
+	void AddChunk(long long prePushRevision, long long postPushRevision);
+	/// Removes chunks which behind global revision.
+	/// Assigns global revision to post-push revision of last removed chunk.
+	void CutChunks(long long& globalRevision);
+	/// Get upper revision for pulling.
+	/** 0 if no upper bound for pulling. */
+	long long GetUpperRevision();
 
 	void DoPush(StreamWriter* writer);
 

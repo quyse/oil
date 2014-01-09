@@ -2,7 +2,6 @@
 #define ___INANITY_OIL_SERVER_REPO_HPP___
 
 #include "Repo.hpp"
-#include <vector>
 
 BEGIN_INANITY
 
@@ -17,17 +16,14 @@ class ServerRepo : public Repo
 {
 private:
 	//*** SQLite statements.
+	ptr<Data::SqliteStatement> stmtGetMaxRevision;
 	ptr<Data::SqliteStatement> stmtCheckConflict;
 	ptr<Data::SqliteStatement> stmtWrite;
 	ptr<Data::SqliteStatement> stmtPull;
+	ptr<Data::SqliteStatement> stmtGetWeakRevision;
 	ptr<Data::SqliteStatement> stmtPullTotalSize;
 
-	//*** Temporaries.
-	/// Indexes of written values.
-	std::vector<size_t> written;
-
-	void DoPush(long long clientRevision, StreamReader* reader);
-	void DoPull(long long clientRevision, StreamWriter* writer);
+	long long GetMaxRevision();
 
 public:
 	ServerRepo(const char* fileName);

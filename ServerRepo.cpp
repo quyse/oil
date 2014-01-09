@@ -9,6 +9,37 @@
 
 BEGIN_INANITY_OIL
 
+/*
+
+Push:
+
+-> client revision (shortly big)
+-> client upper revision (shortly big)
+->{
+    key size (shortly)
+    key data[key size]
+    value size (shortly)
+    value data[value size]
+  }
+  0 (shortly)
+
+<- total number of changed unique keys since client revision (shortly big)
+<- pre-push revision (shortly big)
+<- 1-based index of write[number of successful writes] (shortly)
+<- 0 (shortly)
+<- post-push revision (shortly big)
+<-{
+    key size (shortly)
+    key data[key size]
+    value size (shortly)
+    value data[value size]
+    revision (shortly big)
+  }
+  0 (shortly)
+<- new client revision (shortly big)
+
+*/
+
 ServerRepo::ServerRepo(const char* fileName)
 : Repo(fileName)
 {
@@ -29,21 +60,43 @@ ServerRepo::ServerRepo(const char* fileName)
 		THROW_SECONDARY("Can't create index revs_key_rev", db->Error());
 
 	// create statements
+	stmtGetMaxRevision = db->CreateStatement("SELECT MAX(rev) FROM revs");
 	stmtCheckConflict = db->CreateStatement("SELECT COUNT(*) FROM revs WHERE key = ?1 AND rev > ?2");
 	stmtWrite = db->CreateStatement("INSERT INTO revs (key, value) VALUES (?1, ?2)");
 	{
-		std::ostringstream ss;
-		ss <<
-			"SELECT rev, key, value FROM revs NATURAL JOIN ("
-				"SELECT key, MAX(rev) AS maxrev FROM revs WHERE rev > ?1 GROUP BY key"
-				") WHERE rev = maxrev ORDER BY rev LIMIT "
-			<< maxPullKeysCount;
-		stmtPull = db->CreateStatement(ss.str().c_str());
+		const char* subquery = "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key";
+		{
+			std::ostringstream ss;
+			ss
+				<< "SELECT rev, key, value FROM revs NATURAL JOIN ("
+				<< subquery
+				<< ") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT "
+				<< maxPullKeysCount;
+			stmtPull = db->CreateStatement(ss.str().c_str());
+		}
+		{
+			std::ostringstream ss;
+			ss
+				<< "SELECT rev FROM revs NATURAL JOIN ("
+				<< subquery
+				<< ") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT 1";
+			stmtGetWeakRevision = db->CreateStatement(ss.str().c_str());
+		}
 	}
 	stmtPullTotalSize = db->CreateStatement(
 		"SELECT COUNT(DISTINCT key) FROM revs WHERE rev > ?1");
 
 	END_TRY("Can't create server repo");
+}
+
+long long ServerRepo::GetMaxRevision()
+{
+	Data::SqliteQuery query(stmtGetMaxRevision);
+
+	if(stmtGetMaxRevision->Step() != SQLITE_ROW)
+		THROW_SECONDARY("Can't get max revision", db->Error());
+
+	return stmtGetMaxRevision->ColumnInt64(0);
 }
 
 void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
@@ -53,38 +106,39 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 	// push & pull should be in a one transaction
 	Data::SqliteTransaction transaction(db);
 
+	// get initial revision
+	long long prePushRevision = GetMaxRevision();
+
 	// read client revision
 	long long clientRevision = reader->ReadShortlyBig();
+	// read client upper revision
+	long long clientUpperRevision = reader->ReadShortlyBig();
+	// correct upper revision
+	if(clientUpperRevision == 0 || clientUpperRevision > prePushRevision)
+		clientUpperRevision = prePushRevision;
 
-	// do actual push
-	DoPush(clientRevision, reader);
+	// determine total size of the pull
+	{
+		Data::SqliteQuery queryPullTotalSize(stmtPullTotalSize);
 
-	// output number of successful writes
-	writer->WriteShortly(written.size());
-	// output successful writes
-	for(size_t i = 0; i < written.size(); ++i)
-		writer->WriteShortly(written[i]);
+		stmtPullTotalSize->Bind(1, clientRevision);
+		if(stmtPullTotalSize->Step() != SQLITE_ROW)
+			THROW("Can't determine total pull size");
 
-	// now do pull
-	DoPull(clientRevision, writer);
+		// output total size of pull
+		long long pullTotalSize = stmtPullTotalSize->ColumnInt64(0);
+		writer->WriteShortlyBig(pullTotalSize);
+	}
 
-	// commit transaction
-	transaction.Commit();
+	//*** push
 
-	// output final zero (which is signal that's all right)
-	writer->WriteShortly(0);
-
-	END_TRY("Can't sync server repo");
-}
-
-void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
-{
 	void* key = keyBufferFile->GetData();
 	void* value = valueBufferFile->GetData();
 
-	written.clear();
-
 	size_t totalPushSize = 0;
+
+	// output pre-push revision
+	writer->WriteShortlyBig(prePushRevision);
 
 	// loop for push keys
 	for(size_t i = 0; ; ++i)
@@ -136,31 +190,27 @@ void ServerRepo::DoPush(long long clientRevision, StreamReader* reader)
 		if(stmtWrite->Step() != SQLITE_DONE)
 			THROW_SECONDARY("Can't do write", db->Error());
 
-		// remember write
-		written.push_back(i);
+		// output write
+		writer->WriteShortly(i + 1);
 	}
 
 	// ensure request is over
 	reader->ReadEnd();
-}
 
-void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
-{
-	// determine total size of the pull
-	{
-		Data::SqliteQuery queryPullTotalSize(stmtPullTotalSize);
+	// output zero
+	writer->WriteShortly(0);
 
-		stmtPullTotalSize->Bind(1, clientRevision);
-		if(stmtPullTotalSize->Step() != SQLITE_ROW)
-			THROW("Can't determine total pull size");
+	// retrieve and output post-push revision
+	long long postPushRevision = GetMaxRevision();
+	writer->WriteShortlyBig(postPushRevision);
 
-		// output total size of pull
-		writer->WriteShortlyBig(stmtPullTotalSize->ColumnInt64(0));
-	}
-
+	//*** pull
 	Data::SqliteQuery queryPull(stmtPull);
 
 	stmtPull->Bind(1, clientRevision);
+	stmtPull->Bind(2, clientUpperRevision);
+
+	long long lastKnownClientRevision = clientRevision;
 
 	size_t totalPullSize = 0;
 	bool done = false;
@@ -170,7 +220,7 @@ void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
 		{
 		case SQLITE_ROW:
 			// check total pull size
-			totalPullSize += stmtPull->ColumnBlobSize(1);
+			totalPullSize += stmtPull->ColumnBlobSize(2);
 			if(totalPullSize > maxPullTotalSize)
 			{
 				// stop pull, that's enough
@@ -192,8 +242,14 @@ void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
 				writer->WriteShortly(valueSize);
 				writer->Write(value->GetData(), valueSize);
 			}
-			// output revision
-			writer->WriteShortlyBig(stmtPull->ColumnInt64(0));
+			{
+				// output revision
+				long long revision = stmtPull->ColumnInt64(0);
+				writer->WriteShortlyBig(revision);
+
+				// remember last revision
+				lastKnownClientRevision = revision;
+			}
 
 			break;
 
@@ -207,6 +263,37 @@ void ServerRepo::DoPull(long long clientRevision, StreamWriter* writer)
 			THROW_SECONDARY("Error pulling changes", db->Error());
 		}
 	}
+
+	// write final zero
+	writer->WriteShortly(0);
+
+	// write new client revision
+	{
+		Data::SqliteQuery query(stmtGetWeakRevision);
+
+		stmtGetWeakRevision->Bind(1, lastKnownClientRevision);
+		stmtGetWeakRevision->Bind(2, clientUpperRevision);
+
+		long long newClientRevision;
+		switch(stmtGetWeakRevision->Step())
+		{
+		case SQLITE_ROW:
+			newClientRevision = stmtGetWeakRevision->ColumnInt64(0) - 1;
+			break;
+		case SQLITE_DONE:
+			newClientRevision = clientUpperRevision;
+			break;
+		default:
+			THROW_SECONDARY("Error getting new client revision", db->Error());
+		}
+
+		writer->WriteShortlyBig(newClientRevision);
+	}
+
+	// commit transaction
+	transaction.Commit();
+
+	END_TRY("Can't sync server repo");
 }
 
 END_INANITY_OIL
