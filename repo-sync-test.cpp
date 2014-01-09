@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 BEGIN_INANITY_OIL
 
@@ -17,6 +18,8 @@ class Tester
 {
 private:
 	ptr<ServerRepo> serverRepo;
+	int testNumber;
+	bool persistentDb;
 
 	struct Client
 	{
@@ -30,6 +33,8 @@ private:
 	Clients clients;
 
 public:
+	Tester(bool persistentDb = false)
+	: testNumber(0), persistentDb(persistentDb) {}
 
 	/// Client commits changes to server.
 	void Push(Client& client)
@@ -131,15 +136,23 @@ public:
 					// skip the rest of the line
 					std::string line;
 					std::getline(in, line);
+					out << "#" << line << "\n";
 				}
 				else if(command == "begin")
 				{
 					std::string name;
 					std::getline(in, name);
-					out << "TEST" << name << "\n";
+					out << "TEST #" << (++testNumber) << name << "\n";
 
 					// do cleanup
-					serverRepo = NEW(ServerRepo(":memory:"));
+					std::string dbName = ":memory:";
+					if(persistentDb)
+					{
+						std::ostringstream ss;
+						ss << "test/server_" << testNumber;
+						dbName = ss.str();
+					}
+					serverRepo = NEW(ServerRepo(dbName.c_str()));
 					clients.clear();
 				}
 				else if(command == "client")
@@ -148,7 +161,15 @@ public:
 					in >> name;
 					if(clients.find(name) != clients.end())
 						THROW("Client with such name already exists: " + name);
-					clients[name].repo = NEW(ClientRepo(":memory:"));
+
+					std::string dbName = ":memory:";
+					if(persistentDb)
+					{
+						std::ostringstream ss;
+						ss << "test/client_" << testNumber << "_" << name;
+						dbName = ss.str();
+					}
+					clients[name].repo = NEW(ClientRepo(dbName.c_str()));
 				}
 				else if(command == "change")
 				{
@@ -222,6 +243,11 @@ public:
 						? "OK  " : "FAIL");
 					out << " check_conflict_base " << clientName << " " << key << " " << baseValue << "\n";
 				}
+				else if(command == "exit")
+				{
+					out << "EXIT\n";
+					break;
+				}
 				else
 					THROW("Unknown command: " + command);
 			}
@@ -245,7 +271,7 @@ void Run()
 {
 	try
 	{
-		Tester().Run(std::fstream("repo-sync-test.txt", std::ios::in), std::cout);
+		Tester(false).Run(std::fstream("repo-sync-test.txt", std::ios::in), std::cout);
 	}
 	catch(Exception* exception)
 	{
