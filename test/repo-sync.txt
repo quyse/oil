@@ -323,3 +323,82 @@ psp B
 	check_conflict B k2 1
 	check_conflict_base B k2 null
 	check_conflict_server B k2 aaa222
+
+
+
+begin Deferred change push/pull conflicts
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k2 aaa222
+psp A
+psp B
+change A k1 aaa111
+psp A
+psp B
+change A k1 a1a1
+psp A
+change A k2 a2a2
+psp A
+change B k2 b2b2
+change B k1 b1b1
+psp B
+	check A k1 a1a1
+	check_conflict A k1 0
+	check A k2 a2a2
+	check_conflict A k2 0
+	check B k1 b1b1
+	check_conflict B k1 1
+	check_conflict_base B k1 aaa111
+	check_conflict_server B k1 a1a1
+	check B k2 b2b2
+	check_conflict B k2 1
+	check_conflict_base B k2 aaa222
+	check_conflict_server B k2 null
+psp B
+	check B k1 b1b1
+	check_conflict B k1 1
+	check_conflict_base B k1 aaa111
+	check_conflict_server B k1 a1a1
+	check B k2 b2b2
+	check_conflict B k2 1
+	check_conflict_base B k2 aaa222
+	check_conflict_server B k2 a2a2
+
+
+
+begin Pull add conflict
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k1 aaa111
+change A k2 aaa222
+psp A
+psp A
+change B k3 bbb333
+change B k1 bbb111
+psp B
+	check B k3 bbb333
+	check_conflict B k3 0
+	check B k1 bbb111
+	check_conflict B k1 1
+	check_conflict_base B k1 null
+	check_conflict_server B k1 aaa111
+psp A
+	check A k3 bbb333
+	check_conflict A k3 0
+resolve B k1
+	check B k1 bbb111
+	check_conflict B k1 0
+psp B
+	check B k1 bbb111
+	check_conflict B k1 0
+psp A
+	check A k1 bbb111
+	check_conflict A k1 0

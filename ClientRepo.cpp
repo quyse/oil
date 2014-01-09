@@ -757,15 +757,24 @@ void ClientRepo::Pull(StreamReader* reader)
 			// get acquainted with this key
 			KeyItems keyItems = GetKeyItems(keyFile);
 
+			// if there is 'client', it's pull conflict
+			if(keyItems.ids[ItemStatuses::client])
+			{
+				// 'client' becomes 'conflictClient'
+				ChangeKeyItemStatus(keyItems.ids[ItemStatuses::client], ItemStatuses::conflictClient);
+				// if there is 'server', it becomes 'conflictBase'
+				if(keyItems.ids[ItemStatuses::server])
+				{
+					ChangeKeyItemStatus(keyItems.ids[ItemStatuses::server], ItemStatuses::conflictBase);
+					keyItems.ids[ItemStatuses::server] = 0;
+				}
+			}
+
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
 				ChangeKeyItemValue(keyItems.ids[ItemStatuses::server], valueFile);
 			else
 				AddKeyItem(keyFile, valueFile, ItemStatuses::server);
-
-			// if there is 'client', it becomes 'conflictClient'
-			if(keyItems.ids[ItemStatuses::client])
-				ChangeKeyItemStatus(keyItems.ids[ItemStatuses::client], ItemStatuses::conflictClient);
 
 			// set new global revision
 			SetManifestValue(ManifestKeys::globalRevision, revision);
