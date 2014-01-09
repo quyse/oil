@@ -1,12 +1,12 @@
-#include "ServerRepo.hpp"
-#include "ClientRepo.hpp"
-#include "../inanity/MemoryStream.hpp"
-#include "../inanity/StreamReader.hpp"
-#include "../inanity/StreamWriter.hpp"
-#include "../inanity/FileInputStream.hpp"
-#include "../inanity/MemoryFile.hpp"
-#include "../inanity/Strings.hpp"
-#include "../inanity/Exception.hpp"
+#include "../ServerRepo.hpp"
+#include "../ClientRepo.hpp"
+#include "../../inanity/MemoryStream.hpp"
+#include "../../inanity/StreamReader.hpp"
+#include "../../inanity/StreamWriter.hpp"
+#include "../../inanity/FileInputStream.hpp"
+#include "../../inanity/MemoryFile.hpp"
+#include "../../inanity/Strings.hpp"
+#include "../../inanity/Exception.hpp"
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
@@ -336,9 +336,9 @@ void Run()
 	try
 	{
 		Tester(false).Run(
-			std::fstream("repo-sync-test.txt", std::ios::in),
+			std::fstream("test/repo-sync.txt", std::ios::in),
 			std::cout,
-			std::fstream("repo-sync-test-protocol.txt", std::ios::out));
+			std::fstream("test/repo-sync-protocol.txt", std::ios::out));
 	}
 	catch(Exception* exception)
 	{

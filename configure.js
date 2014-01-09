@@ -50,8 +50,8 @@ var executables = {
 			],
 		'dynamicLibraries-win32': ['ws2_32.lib']
 	},
-	'repo-sync-test': {
-		objects: ['repo-sync-test', 'Repo', 'ServerRepo', 'ClientRepo'],
+	'test-repo-sync': {
+		objects: ['test.repo-sync', 'Repo', 'ServerRepo', 'ClientRepo'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
 			'../inanity//libinanity-sqlite',
