@@ -44,6 +44,9 @@ ServerRepo::ServerRepo(const char* fileName)
 {
 	BEGIN_TRY();
 
+	// check format version
+	CheckAppVersion(serverRepoAppVersion);
+
 	// create table revs
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS revs ("

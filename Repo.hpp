@@ -27,6 +27,14 @@ public:
 	static const char protocolMagic[14];
 	/// Protocol version.
 	static const int protocolVersion;
+
+	/// Server repo application version.
+	/** Stored in SQLite db with pragma application_id. */
+	static const int serverRepoAppVersion;
+	/// Client repo application version.
+	/** Stored in SQLite db with pragma application_id. */
+	static const int clientRepoAppVersion;
+
 	//*** Default security constraints.
 	static const size_t defaultMaxKeySize;
 	static const size_t defaultMaxValueSize;
@@ -48,6 +56,8 @@ protected:
 	ptr<MemoryFile> keyBufferFile;
 	/// Value buffer.
 	ptr<MemoryFile> valueBufferFile;
+
+	void CheckAppVersion(int appVersion);
 
 public: // for simplicity
 	//*** Security constraints.
