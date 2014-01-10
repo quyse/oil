@@ -15,7 +15,7 @@ struct ClientRepo::ItemStatuses
 {
 	enum _
 	{
-		/// server version in case of no conflict
+		/// server version
 		server,
 		/// client change based on 'server' in case of no conflict
 		client,
@@ -265,6 +265,39 @@ ClientRepo::KeyItems ClientRepo::FillKeyItems(Data::SqliteStatement* stmt)
 			THROW_SECONDARY("Error getting key items", db->Error());
 		}
 	}
+
+#ifdef _DEBUG
+	{
+		// check that this is a reasonable combination
+		static const int reasonable[] =
+		{
+			0,
+			(1 << ItemStatuses::client),
+			(1 << ItemStatuses::transient),
+			(1 << ItemStatuses::transient) | (1 << ItemStatuses::postponed),
+			(1 << ItemStatuses::conflictClient),
+			(1 << ItemStatuses::conflictBase) | (1 << ItemStatuses::conflictClient)
+		};
+		static const int meaningful[] =
+		{
+			ItemStatuses::client,
+			ItemStatuses::transient,
+			ItemStatuses::postponed,
+			ItemStatuses::conflictBase,
+			ItemStatuses::conflictClient
+		};
+		int c = 0;
+		for(size_t i = 0; i < sizeof(meaningful) / sizeof(meaningful[0]); ++i)
+			if(keyItems.ids[meaningful[i]])
+				c |= 1 << meaningful[i];
+		size_t i;
+		for(i = 0; i < sizeof(reasonable) / sizeof(reasonable[0]); ++i)
+			if(reasonable[i] == c)
+				break;
+		if(i >= sizeof(reasonable) / sizeof(reasonable[0]))
+			THROW("Key items combination are not reasonable");
+	}
+#endif
 
 	return keyItems;
 }
