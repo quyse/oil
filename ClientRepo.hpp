@@ -21,25 +21,44 @@ public:
 	enum KeyStatus
 	{
 		/// client and server values are the same
-		keyStatusSynced,
+		keyStatusSync,
 		/// client value has changed after server value
-		keyStatusChanged,
+		keyStatusAhead,
 		/// client and server values diverged
 		keyStatusConflicted
 	};
 
+	enum EventFlags
+	{
+		/// Value has been changed.
+		/** Happens with any key status. */
+		eventChanged = 1,
+
+		//*** Status events.
+		/// Value has become in sync.
+		eventSync = 2,
+		/// Value has become ahead of server.
+		eventAhead = 4,
+		/// Value has become conflicted.
+		eventConflicted = 8,
+
+		/// Conflicted server value has become identified.
+		/** Could arrive with eventConflicted or separate. */
+		eventBranch = 16
+	};
+
 	/// Interface to receive notifications about values.
-	class ChangeHandler : public Object
+	class EventHandler : public Object
 	{
 	public:
-		virtual void ValueChanged(ptr<File> key, ptr<File> clientValue, ptr<File> serverValue) = 0;
-		virtual void StatusChanged(ptr<File> key, KeyStatus status) = 0;
+		virtual void OnEvent(ptr<File> key, int eventFlags);
 	};
 
 private:
 	struct ItemStatuses;
 	struct ManifestKeys;
 	struct KeyItems;
+	class EventQueueTransaction;
 
 	//*** SQLite statements.
 	ptr<Data::SqliteStatement>
@@ -47,6 +66,7 @@ private:
 		stmtManifestSet,
 		stmtGetKeyItems,
 		stmtGetKeyItemsByOneItemId,
+		stmtGetKeyItemKey,
 		stmtGetKeyItemValue,
 		stmtAddKeyItem,
 		stmtRemoveKeyItem,
@@ -68,6 +88,10 @@ private:
 	/// Number of keys to pull more (estimated).
 	long long pullLag;
 
+	ptr<EventHandler> eventHandler;
+	/// Deferred events queue.
+	std::vector<std::pair<ptr<File>, int> > events;
+
 	//*** Internal help methods.
 	/// Check item status for validity.
 	void CheckItemStatus(int itemStatus);
@@ -77,6 +101,8 @@ private:
 	KeyItems GetKeyItems(ptr<File> key);
 	/// Get basic info about key using id of one of key items.
 	KeyItems GetKeyItemsByOneItemId(long long itemId);
+	/// Get key of key item.
+	ptr<File> GetKeyItemKey(long long itemId);
 	/// Get value of key item.
 	ptr<File> GetKeyItemValue(long long itemId);
 	/// Add new key item (replacing old one if exists).
@@ -101,7 +127,8 @@ private:
 	/** 0 if no upper bound for pulling. */
 	long long GetUpperRevision();
 
-	void DoPush(StreamWriter* writer);
+	/// Add deferred event.
+	void QueueEvent(ptr<File> key, int eventFlags);
 
 public:
 	ClientRepo(const char* fileName);
@@ -136,6 +163,11 @@ public:
 	void Push(StreamWriter* writer);
 	void Pull(StreamReader* reader);
 	void Cleanup();
+
+	/// Set event handler.
+	void SetEventHandler(ptr<EventHandler> eventHandler);
+	/// Send deferred events to event handler.
+	void ProcessEvents();
 };
 
 END_INANITY_OIL

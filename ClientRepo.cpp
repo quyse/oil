@@ -56,6 +56,27 @@ struct ClientRepo::KeyItems
 	}
 };
 
+class ClientRepo::EventQueueTransaction
+{
+private:
+	ClientRepo* repo;
+	size_t eventsCount;
+
+public:
+	EventQueueTransaction(ClientRepo* repo)
+	: repo(repo), eventsCount(repo->events.size()) {}
+
+	~EventQueueTransaction()
+	{
+		repo->events.resize(eventsCount);
+	}
+
+	void Commit()
+	{
+		eventsCount = repo->events.size();
+	}
+};
+
 /*
 
 Possible combinations of items with the same key:
@@ -188,6 +209,7 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtManifestSet = db->CreateStatement("INSERT OR REPLACE INTO manifest (key, value) VALUES (?1, ?2)");
 	stmtGetKeyItems = db->CreateStatement("SELECT id, status FROM items WHERE key = ?1");
 	stmtGetKeyItemsByOneItemId = db->CreateStatement("SELECT id, status FROM items WHERE key = (SELECT key FROM items WHERE id = ?1)");
+	stmtGetKeyItemKey = db->CreateStatement("SELECT key FROM items WHERE id = ?1");
 	stmtGetKeyItemValue = db->CreateStatement("SELECT value FROM items WHERE id = ?1");
 	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status) VALUES (?1, ?2, ?3)");
 	stmtRemoveKeyItem = db->CreateStatement("DELETE FROM items WHERE id = ?1");
@@ -265,6 +287,20 @@ ClientRepo::KeyItems ClientRepo::GetKeyItemsByOneItemId(long long itemId)
 	stmtGetKeyItemsByOneItemId->Bind(1, itemId);
 
 	return FillKeyItems(stmtGetKeyItemsByOneItemId);
+}
+
+ptr<File> ClientRepo::GetKeyItemKey(long long itemId)
+{
+	THROW_ASSERT(itemId > 0);
+
+	Data::SqliteQuery query(stmtGetKeyItemKey);
+
+	stmtGetKeyItemKey->Bind(1, itemId);
+
+	if(stmtGetKeyItemKey->Step() != SQLITE_ROW)
+		THROW_SECONDARY("Error getting key item key", db->Error());
+
+	return stmtGetKeyItemKey->ColumnBlob(0);
 }
 
 ptr<File> ClientRepo::GetKeyItemValue(long long itemId)
@@ -418,6 +454,11 @@ long long ClientRepo::GetUpperRevision()
 	return stmtGetUpperRevision->ColumnInt64(0);
 }
 
+void ClientRepo::QueueEvent(ptr<File> key, int eventFlags)
+{
+	events.push_back(std::pair<ptr<File>, int>(key, eventFlags));
+}
+
 void ClientRepo::Change(ptr<File> key, ptr<File> value)
 {
 	BEGIN_TRY();
@@ -435,6 +476,8 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	// get acquainted with this key
 	KeyItems keyItems = GetKeyItems(key);
 
+	int eventFlags = eventChanged;
+
 	// select status for the change
 	int status;
 	if(keyItems.ids[ItemStatuses::transient])
@@ -449,9 +492,14 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 		ChangeKeyItemValue(keyItems.ids[status], value);
 	// else add new item
 	else
+	{
 		AddKeyItem(key, value, status);
+		eventFlags |= eventAhead;
+	}
 
 	transaction.Commit();
+
+	QueueEvent(key, eventFlags);
 
 	END_TRY("Can't change repo value");
 }
@@ -478,7 +526,26 @@ void ClientRepo::Resolve(ptr<File> key)
 
 	transaction.Commit();
 
+	QueueEvent(key, eventAhead);
+
 	END_TRY("Can't resolve repo conflict");
+}
+
+ClientRepo::KeyStatus ClientRepo::GetKeyStatus(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	if(keyItems.ids[ItemStatuses::conflictClient])
+		return keyStatusConflicted;
+
+	if(keyItems.ids[ItemStatuses::client] || keyItems.ids[ItemStatuses::transient])
+		return keyStatusAhead;
+
+	return keyStatusSync;
+
+	END_TRY("Can't get key status");
 }
 
 ptr<File> ClientRepo::GetValue(ptr<File> key)
@@ -679,6 +746,7 @@ void ClientRepo::Pull(StreamReader* reader)
 	BEGIN_TRY();
 
 	Data::SqliteTransaction transaction(db);
+	EventQueueTransaction eventQueueTransaction(this);
 
 	// read total number of keys in pull
 	pullLag = reader->ReadShortlyBig();
@@ -711,6 +779,8 @@ void ClientRepo::Pull(StreamReader* reader)
 		// 'postponed' (if presents) becomes 'client'
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
+		else
+			QueueEvent(GetKeyItemKey(keyItems.ids[ItemStatuses::transient]), eventSync);
 	}
 
 	// read post-push revision
@@ -732,19 +802,31 @@ void ClientRepo::Pull(StreamReader* reader)
 
 		// committed key, even failed, can't be conflicted before
 
+		int eventFlags = eventConflicted;
+		long long someItemId;
+
 		// if 'postponed' presents, it becomes 'conflictClient', and 'transient' disappears
 		if(keyItems.ids[ItemStatuses::postponed])
 		{
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::conflictClient);
 			RemoveKeyItem(keyItems.ids[ItemStatuses::transient]);
+			someItemId = keyItems.ids[ItemStatuses::postponed];
 		}
 		// else 'transient' becomes 'conflictClient'
 		else
+		{
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::conflictClient);
+			someItemId = keyItems.ids[ItemStatuses::transient];
+		}
 
 		// 'server' (if presents) becomes 'conflictBase'
 		if(keyItems.ids[ItemStatuses::server])
+		{
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::server], ItemStatuses::conflictBase);
+			eventFlags |= eventBranch;
+		}
+
+		QueueEvent(GetKeyItemKey(someItemId), eventFlags);
 	}
 
 	// clear transient ids
@@ -782,9 +864,12 @@ void ClientRepo::Pull(StreamReader* reader)
 			// get acquainted with this key
 			KeyItems keyItems = GetKeyItems(keyFile);
 
+			int eventFlags;
+
 			// if there is 'client', it's pull conflict
 			if(keyItems.ids[ItemStatuses::client])
 			{
+				eventFlags = eventConflicted;
 				// 'client' becomes 'conflictClient'
 				ChangeKeyItemStatus(keyItems.ids[ItemStatuses::client], ItemStatuses::conflictClient);
 				// if there is 'server', it becomes 'conflictBase'
@@ -792,8 +877,13 @@ void ClientRepo::Pull(StreamReader* reader)
 				{
 					ChangeKeyItemStatus(keyItems.ids[ItemStatuses::server], ItemStatuses::conflictBase);
 					keyItems.ids[ItemStatuses::server] = 0;
+					eventFlags |= eventBranch;
 				}
 			}
+			else
+				eventFlags = eventChanged;
+
+			QueueEvent(MemoryFile::CreateViaCopy(keyFile), eventFlags);
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
@@ -818,6 +908,7 @@ void ClientRepo::Pull(StreamReader* reader)
 			ptr<Exception> exception = e;
 
 			transaction.Commit();
+			eventQueueTransaction.Commit();
 
 			// rethrow exception
 			THROW_SECONDARY("Error pulling keys", exception);
@@ -831,6 +922,7 @@ void ClientRepo::Pull(StreamReader* reader)
 
 	// commit
 	transaction.Commit();
+	eventQueueTransaction.Commit();
 
 	END_TRY("Can't pull repo");
 }
@@ -865,6 +957,22 @@ void ClientRepo::Cleanup()
 	}
 
 	END_TRY("Can't cleanup repo transients");
+}
+
+void ClientRepo::SetEventHandler(ptr<EventHandler> eventHandler)
+{
+	this->eventHandler = eventHandler;
+}
+
+void ClientRepo::ProcessEvents()
+{
+	if(eventHandler)
+		for(size_t i = 0; i < events.size(); ++i)
+		{
+			eventHandler->OnEvent(events[i].first, events[i].second);
+			events[i].first = nullptr;
+		}
+	events.clear();
 }
 
 END_INANITY_OIL
