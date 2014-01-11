@@ -17,14 +17,45 @@ private:
 public:
 	void Fire()
 	{
-		std::cerr << "accepted: " << fcgi.GetParam("REQUEST_URI");
+		std::cerr << fcgi.GetParam("REQUEST_URI") << '\n';
 
-		//fcgi.OutputContentType("application/octet-stream");
-		fcgi.OutputContentType("text/plain");
-		fcgi.OutputStatus("200 OK");
-		fcgi.OutputBeginResponse();
+		try
+		{
+			const char* query = fcgi.GetParam("QUERY_STRING");
+			if(!query)
+				query = "";
 
-		std::cerr << "\n";
+			if(strcmp(query, "manifest") == 0)
+			{
+				fcgi.OutputContentType("application/x-inanityoil-manifest");
+				fcgi.OutputStatus("200 OK");
+				fcgi.OutputBeginResponse();
+				repo->WriteManifest(writer);
+				return;
+			}
+
+			if(strcmp(query, "sync") == 0)
+			{
+				fcgi.OutputContentType("application/x-inanityoil-sync");
+				fcgi.OutputStatus("200 OK");
+				fcgi.OutputBeginResponse();
+				repo->Sync(reader, writer);
+				return;
+			}
+
+			// unknown query
+			fcgi.OutputContentType("text/plain");
+			fcgi.OutputStatus("400 Bad Request");
+			fcgi.OutputBeginResponse();
+			static const char response[] =
+				"Unknown query string";
+			writer->Write(response, sizeof(response) - 1);
+		}
+		catch(Exception* exception)
+		{
+			MakePointer(exception)->PrintStack(std::cerr);
+			std::cerr << '\n';
+		}
 	}
 
 	int Run(int argc, char** argv)
