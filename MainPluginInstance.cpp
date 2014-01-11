@@ -20,6 +20,7 @@ MainPluginInstance::MainPluginInstance()
 {
 	if(instance)
 		THROW("Only one main instance of Oil plugin allowed");
+	instance = this;
 
 	name = "Inanity Oil NPAPI Main Plugin";
 	description = name;
