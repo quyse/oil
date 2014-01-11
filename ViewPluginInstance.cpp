@@ -9,13 +9,20 @@
 BEGIN_INANITY_OIL
 
 ViewPluginInstance::ViewPluginInstance()
-: NpapiPluginInstance(true) {}
+: NpapiPluginInstance(true)
+{
+	name = "Inanity Oil NPAPI View Plugin";
+	description = name;
+	windowless = false;
+}
 
 #ifdef ___INANITY_PLATFORM_WINDOWS
 
 void ViewPluginInstance::Paint(HDC hdc)
 {
-	TextOut(hdc, 0, 0, L"V", 1);
+	std::wostringstream ss;
+	ss << L"V " << width << L'x' << height;
+	TextOut(hdc, 0, 0, ss.str().c_str(), ss.str().length());
 }
 
 #endif

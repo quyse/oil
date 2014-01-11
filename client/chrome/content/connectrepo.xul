@@ -9,12 +9,48 @@
 	buttonlabelaccept="Connect"
 	>
 
+	<script src="connectrepo.js" />
+
+	<commandset>
+		<command id="commandCheckUrl" oncommand="checkUrl()" />
+	</commandset>
+
 	<dialogheader title="Connect to Repo" />
 
-	<label control="textBoxUrl" value="Please type in a repo URL:" />
-	<menulist id="textBoxUrl" editable="true">
-		<menupopup>
-		</menupopup>
-	</menulist>
+	<grid>
+		<columns>
+			<column />
+			<column flex="1" minwidth="300" />
+			<column />
+		</columns>
+		<rows>
+			<row align="baseline">
+				<label control="menulistUrl" value="Repo URL:" />
+				<menulist id="menulistUrl" editable="true">
+					<menupopup>
+					</menupopup>
+				</menulist>
+				<button id="buttonCheckUrl" label="Check" command="commandCheckUrl" />
+			</row>
+			<row align="baseline">
+				<label control="textBoxLogin" value="Username:" />
+				<textbox id="textBoxLogin" />
+			</row>
+			<row align="baseline">
+				<label control="textBoxPassword" value="Password:" />
+				<textbox id="textBoxPassword" type="password" />
+			</row>
+			<separator />
+			<row align="baseline">
+				<label control="textBoxLocation" value="Cache location:" />
+				<textbox id="textBoxLocation" />
+				<button id="buttonBrowseLocation" label="Browse..." />
+			</row>
+		</rows>
+	</grid>
+
+	<panel id="panelCheckUrl">
+		<label id="labelCheckUrlMessage" />
+	</panel>
 
 </dialog>

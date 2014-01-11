@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<page id="view"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml">
+
+	<stack flex="1">
+		<html:embed type="application/x-inanityoil" oiltype="view" width="256px" height="256px" />
+	</stack>
+
+</page>
