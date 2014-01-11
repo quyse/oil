@@ -5,6 +5,7 @@
 #include "../inanity/script/script.hpp"
 #include "../inanity/script/np/np.hpp"
 #include "../inanity/meta/decl.hpp"
+#include "../inanity/String.hpp"
 
 BEGIN_INANITY
 
@@ -26,17 +27,24 @@ END_INANITY_NP
 
 BEGIN_INANITY_OIL
 
+class ScriptRepo;
+
 class ScriptObject : public Object
 {
 private:
 	ptr<Script::Np::State> scriptState;
 	ptr<FileSystem> nativeFileSystem;
+	/// Current repo.
+	ptr<ScriptRepo> repo;
+
+	class CheckRepoHandler;
 
 public:
 	ScriptObject(ptr<Script::Np::State> scriptState);
 
 	ptr<Script::Any> GetRootNamespace() const;
 	ptr<FileSystem> GetNativeFileSystem() const;
+	void CheckRepo(const String& url, ptr<Script::Any> callback);
 
 	META_DECLARE_CLASS(ScriptObject);
 };

@@ -8,4 +8,5 @@
 META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(GetRootNamespace);
 	META_METHOD(GetNativeFileSystem);
+	META_METHOD(CheckRepo);
 META_CLASS_END();

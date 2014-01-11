@@ -22,7 +22,16 @@ var libraries = {
 
 var executables = {
 	npoil: {
-		objects: ['npoil', 'MainPluginInstance', 'ViewPluginInstance', 'ScriptObject', 'meta'],
+		objects: [
+			'npoil',
+			'MainPluginInstance',
+			'ViewPluginInstance',
+			'ScriptObject',
+			'ScriptRepo',
+			'Repo',
+			'ClientRepo',
+			'meta'
+		],
 		staticLibraries: [
 			'../inanity//libinanity-base',
 			'../inanity//libinanity-graphics',
@@ -33,7 +42,9 @@ var executables = {
 			'../inanity//libinanity-npapi',
 			'../inanity//libinanity-np',
 			'../inanity//libinanity-input',
-			'../inanity/deps/glew//libglew'
+			'../inanity//libinanity-sqlite',
+			'../inanity/deps/glew//libglew',
+			'../inanity/deps/sqlite//libsqlite'
 		],
 		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
