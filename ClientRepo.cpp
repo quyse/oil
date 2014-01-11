@@ -235,6 +235,11 @@ ClientRepo::ClientRepo(const char* fileName)
 	END_TRY("Can't create client repo");
 }
 
+ptr<ClientRepo> ClientRepo::CreateInMemory()
+{
+	return NEW(ClientRepo(":memory:"));
+}
+
 ptr<Data::SqliteDb> ClientRepo::GetDb() const
 {
 	return db;

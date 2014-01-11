@@ -133,6 +133,8 @@ private:
 public:
 	ClientRepo(const char* fileName);
 
+	static ptr<ClientRepo> CreateInMemory();
+
 	ptr<Data::SqliteDb> GetDb() const;
 
 	/// Add client change.
