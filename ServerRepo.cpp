@@ -19,6 +19,7 @@ Push:
     key data[key size]
     value size (shortly)
     value data[value size]
+    base revision (shortly big)
   }
   0 (shortly)
 
@@ -26,7 +27,6 @@ Push:
 <- pre-push revision (shortly big)
 <- 1-based index of write[number of successful writes] (shortly)
 <- 0 (shortly)
-<- post-push revision (shortly big)
 <-{
     key size (shortly)
     key data[key size]
@@ -178,6 +178,9 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 		if(valueSize)
 			reader->Read(value, valueSize);
 
+		// read base revision
+		long long baseRevision = reader->ReadShortlyBig();
+
 		// check total push size
 		totalPushSize += valueSize;
 		if(totalPushSize > maxPushTotalSize)
@@ -187,7 +190,7 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 		Data::SqliteQuery queryCheckConflict(stmtCheckConflict);
 		ptr<File> keyFile = NEW(PartFile(keyBufferFile, key, keySize));
 		stmtCheckConflict->Bind(1, keyFile);
-		stmtCheckConflict->Bind(2, clientRevision);
+		stmtCheckConflict->Bind(2, baseRevision);
 		if(stmtCheckConflict->Step() != SQLITE_ROW)
 			THROW_SECONDARY("Can't check conflict", db->Error());
 		if(stmtCheckConflict->ColumnInt(0) > 0)
@@ -210,10 +213,6 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 	// output zero
 	writer->WriteShortly(0);
-
-	// retrieve and output post-push revision
-	long long postPushRevision = GetMaxRevision();
-	writer->WriteShortlyBig(postPushRevision);
 
 	//*** pull
 	Data::SqliteQuery queryPull(stmtPull);

@@ -71,7 +71,9 @@ private:
 		stmtAddKeyItem,
 		stmtRemoveKeyItem,
 		stmtChangeKeyItemStatus,
+		stmtChangeKeyItemStatusAndRev,
 		stmtChangeKeyItemValue,
+		stmtChangeKeyItemValueAndRev,
 		stmtSelectKeysToPush,
 		stmtMassChangeStatus,
 		stmtAddChunk,
@@ -106,13 +108,15 @@ private:
 	/// Get value of key item.
 	ptr<File> GetKeyItemValue(long long itemId);
 	/// Add new key item (replacing old one if exists).
-	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
+	void AddKeyItem(ptr<File> key, ptr<File> value, int status, long long revision);
 	/// Remove key item.
 	void RemoveKeyItem(long long itemId);
 	/// Change key item status (replacing old item if exists).
 	void ChangeKeyItemStatus(long long itemId, int newItemStatus);
+	void ChangeKeyItemStatusAndRev(long long itemId, int newItemStatus, long long newRevision);
 	/// Change key item value.
 	void ChangeKeyItemValue(long long itemId, ptr<File> newValue);
+	void ChangeKeyItemValueAndRev(long long itemId, ptr<File> newValue, long long newRevision);
 
 	//*** Manifest methods.
 	long long GetManifestValue(int key, long long defaultValue);

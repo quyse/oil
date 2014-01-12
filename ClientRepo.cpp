@@ -178,7 +178,8 @@ ClientRepo::ClientRepo(const char* fileName)
 		"id INTEGER PRIMARY KEY, "
 		"value BLOB NOT NULL, " // value comes first to decrease moving large blob
 		"key BLOB NOT NULL, "
-		"status INTEGER NOT NULL)", // see ItemStatus enum
+		"status INTEGER NOT NULL, " // see ItemStatus enum
+		"rev INTEGER NOT NULL)", // revision for 'server' and 'conflictBase', 0 for others
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table items", db->Error());
 	// create index items_key_status
@@ -214,13 +215,20 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtGetKeyItemsByOneItemId = db->CreateStatement("SELECT id, status FROM items WHERE key = (SELECT key FROM items WHERE id = ?1)");
 	stmtGetKeyItemKey = db->CreateStatement("SELECT key FROM items WHERE id = ?1");
 	stmtGetKeyItemValue = db->CreateStatement("SELECT value FROM items WHERE id = ?1");
-	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status) VALUES (?1, ?2, ?3)");
+	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status, rev) VALUES (?1, ?2, ?3, ?4)");
 	stmtRemoveKeyItem = db->CreateStatement("DELETE FROM items WHERE id = ?1");
 	stmtChangeKeyItemStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE id = ?1");
+	stmtChangeKeyItemStatusAndRev = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2, rev = ?3 WHERE id = ?1");
 	stmtChangeKeyItemValue = db->CreateStatement("UPDATE items SET value = ?2 WHERE id = ?1");
+	stmtChangeKeyItemValueAndRev = db->CreateStatement("UPDATE items SET value = ?2, rev = ?3 WHERE id = ?1");
 	{
 		std::ostringstream ss;
-		ss << "SELECT id, key, value FROM items WHERE status = " << ItemStatuses::client << " ORDER BY id LIMIT ?1";
+		ss <<
+			"SELECT a.id, a.key, a.value, b.rev"
+			" FROM items AS a LEFT JOIN items AS b ON a.key = b.key"
+			" AND b.status = " << ItemStatuses::server
+			<< " WHERE a.status = " << ItemStatuses::client
+			<< " ORDER BY a.id LIMIT ?1";
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
@@ -361,13 +369,14 @@ ptr<File> ClientRepo::GetKeyItemValue(long long itemId)
 	return result;
 }
 
-void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status)
+void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status, long long revision)
 {
 	Data::SqliteQuery query(stmtAddKeyItem);
 
 	stmtAddKeyItem->Bind(1, key);
 	stmtAddKeyItem->Bind(2, value);
 	stmtAddKeyItem->Bind(3, status);
+	stmtAddKeyItem->Bind(4, revision);
 
 	if(stmtAddKeyItem->Step() != SQLITE_DONE)
 		THROW_SECONDARY("Error adding key item", db->Error());
@@ -398,6 +407,20 @@ void ClientRepo::ChangeKeyItemStatus(long long itemId, int newItemStatus)
 		THROW_SECONDARY("Error changing key item status", db->Error());
 }
 
+void ClientRepo::ChangeKeyItemStatusAndRev(long long itemId, int newItemStatus, long long newRevision)
+{
+	THROW_ASSERT(itemId > 0);
+
+	Data::SqliteQuery query(stmtChangeKeyItemStatusAndRev);
+
+	stmtChangeKeyItemStatusAndRev->Bind(1, itemId);
+	stmtChangeKeyItemStatusAndRev->Bind(2, newItemStatus);
+	stmtChangeKeyItemStatusAndRev->Bind(3, newRevision);
+
+	if(stmtChangeKeyItemStatusAndRev->Step() != SQLITE_DONE)
+		THROW_SECONDARY("Error changing key item status", db->Error());
+}
+
 void ClientRepo::ChangeKeyItemValue(long long itemId, ptr<File> newValue)
 {
 	THROW_ASSERT(itemId > 0);
@@ -409,6 +432,20 @@ void ClientRepo::ChangeKeyItemValue(long long itemId, ptr<File> newValue)
 
 	if(stmtChangeKeyItemValue->Step() != SQLITE_DONE)
 		THROW_SECONDARY("Error changing key item value", db->Error());
+}
+
+void ClientRepo::ChangeKeyItemValueAndRev(long long itemId, ptr<File> newValue, long long newRevision)
+{
+	THROW_ASSERT(itemId > 0);
+
+	Data::SqliteQuery query(stmtChangeKeyItemValueAndRev);
+
+	stmtChangeKeyItemValueAndRev->Bind(1, itemId);
+	stmtChangeKeyItemValueAndRev->Bind(2, newValue);
+	stmtChangeKeyItemValueAndRev->Bind(3, newRevision);
+
+	if(stmtChangeKeyItemValueAndRev->Step() != SQLITE_DONE)
+		THROW_SECONDARY("Error changing key item value and revision", db->Error());
 }
 
 long long ClientRepo::GetManifestValue(int key, long long defaultValue)
@@ -534,7 +571,7 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	// else add new item
 	else
 	{
-		AddKeyItem(key, value, status);
+		AddKeyItem(key, value, status, 0);
 		eventFlags |= eventAhead;
 	}
 
@@ -748,6 +785,8 @@ void ClientRepo::Push(StreamWriter* writer)
 				if(valueSize)
 					writer->Write(value->GetData(), valueSize);
 			}
+			// output base revision
+			writer->WriteShortlyBig(stmtSelectKeysToPush->ColumnInt64(3));
 
 			{
 				// get id of item
@@ -796,6 +835,7 @@ void ClientRepo::Pull(StreamReader* reader)
 	long long prePushRevision = reader->ReadShortlyBig();
 
 	// process commited keys
+	long long pushRevision = prePushRevision;
 	for(;;)
 	{
 		// read key index (1-based)
@@ -815,8 +855,11 @@ void ClientRepo::Pull(StreamReader* reader)
 
 		// committed key can't be conflicted
 
+		// get right revision
+		++pushRevision;
+
 		// 'transient' becomes 'server'
-		ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::server);
+		ChangeKeyItemStatusAndRev(keyItems.ids[ItemStatuses::transient], ItemStatuses::server, pushRevision);
 		// 'postponed' (if presents) becomes 'client'
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
@@ -824,8 +867,8 @@ void ClientRepo::Pull(StreamReader* reader)
 			QueueEvent(GetKeyItemKey(keyItems.ids[ItemStatuses::transient]), eventSync);
 	}
 
-	// read post-push revision
-	long long postPushRevision = reader->ReadShortlyBig();
+	// remember post-push revision
+	long long postPushRevision = pushRevision;
 
 	// add chunk if non-zero
 	if(prePushRevision < postPushRevision)
@@ -928,9 +971,9 @@ void ClientRepo::Pull(StreamReader* reader)
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
-				ChangeKeyItemValue(keyItems.ids[ItemStatuses::server], valueFile);
+				ChangeKeyItemValueAndRev(keyItems.ids[ItemStatuses::server], valueFile, revision);
 			else
-				AddKeyItem(keyFile, valueFile, ItemStatuses::server);
+				AddKeyItem(keyFile, valueFile, ItemStatuses::server, revision);
 
 			// set new global revision
 			SetManifestValue(ManifestKeys::globalRevision, revision);
