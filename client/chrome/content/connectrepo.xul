@@ -12,10 +12,10 @@
 	<script src="connectrepo.js" />
 
 	<commandset>
-		<command id="commandCheckUrl" oncommand="checkUrl()" />
+		<command id="commandOnChangeRemoteType" oncommand="onChangeRemoteType()" />
+		<command id="commandCheckRemoteUrl" oncommand="checkRemoteUrl()" />
+		<command id="commandOnChangeCacheType" oncommand="onChangeCacheType()" />
 	</commandset>
-
-	<dialogheader title="Connect to Repo" />
 
 	<grid>
 		<columns>
@@ -24,33 +24,82 @@
 			<column />
 		</columns>
 		<rows>
+			<dialogheader title="Remote Repo" />
 			<row align="baseline">
-				<label control="menulistUrl" value="Repo URL:" />
-				<menulist id="menulistUrl" editable="true">
+				<label control="menulistRemoteType" value="Type:" />
+				<menulist id="menulistRemoteType" command="commandOnChangeRemoteType">
 					<menupopup>
+						<menuitem label="Remote URL" value="url" />
+						<menuitem label="Local File" value="file" />
+						<menuitem label="Temporary File" value="temp" />
+						<menuitem label="Memory" value="memory" />
 					</menupopup>
 				</menulist>
-				<button id="buttonCheckUrl" label="Check" command="commandCheckUrl" />
 			</row>
-			<row align="baseline">
-				<label control="textBoxLogin" value="Username:" />
-				<textbox id="textBoxLogin" />
+			<row id="rowRemoteUrl" align="baseline">
+				<label control="textboxRemoteUrl" value="Remote URL:" />
+				<textbox id="textboxRemoteUrl" placeholder="URL of server repo" oninput="onChangeRemoteUrl()" />
+				<button id="buttonCheckRemoteUrl" label="Check" command="commandCheckRemoteUrl" />
 			</row>
-			<row align="baseline">
-				<label control="textBoxPassword" value="Password:" />
-				<textbox id="textBoxPassword" type="password" />
+			<row id="rowLogin" align="baseline">
+				<label control="textboxLogin" value="Username:" />
+				<textbox id="textboxLogin" placeholder="Login if required" />
+			</row>
+			<row id="rowPassword" align="baseline">
+				<label control="textboxPassword" value="Password:" />
+				<textbox id="textboxPassword" type="password" placeholder="Password if required" />
+			</row>
+			<row id="rowRemoteFile" align="baseline">
+				<label control="textboxRemoteFile" value="Local File:" />
+				<textbox id="textboxRemoteFile" placeholder="Path to the server repo's local file" oninput="onChangeRemoteFile()" />
+				<button id="buttonBrowseRemoteFile" label="Browse..." />
+			</row>
+			<row id="rowRemoteTemp" align="baseline">
+				<box />
+				<label>
+					Server repo will be created in a temporary file which will be removed when editor closes. Use only for quick experiments!
+				</label>
+			</row>
+			<row id="rowRemoteMemory" align="baseline">
+				<box />
+				<label>
+					Server repo will be created in memory and lost after closing. Use only for quick experiments!
+				</label>
 			</row>
 			<separator />
+			<dialogheader title="Local Cache" />
 			<row align="baseline">
-				<label control="textBoxLocation" value="Cache location:" />
-				<textbox id="textBoxLocation" />
+				<label control="menulistCacheType" value="Cache Type:" command="commandCacheType" />
+				<menulist id="menulistCacheType" command="commandOnChangeCacheType">
+					<menupopup>
+						<menuitem label="File" value="file" />
+						<menuitem label="Temp File" value="temp" />
+						<menuitem label="Memory" value="memory" />
+					</menupopup>
+				</menulist>
+			</row>
+			<row id="rowCacheFile" align="baseline">
+				<label control="textboxCacheFile" value="Cache File:" />
+				<textbox id="textboxCacheFile" placeholder="Path for local cache" />
 				<button id="buttonBrowseLocation" label="Browse..." />
+			</row>
+			<row id="rowCacheTemp" align="baseline">
+				<box />
+				<label>
+					Cache will be created in a temporary file.
+				</label>
+			</row>
+			<row id="rowCacheMemory" align="baseline">
+				<box />
+				<label>
+					Cache will be created in RAM.
+				</label>
 			</row>
 		</rows>
 	</grid>
 
-	<panel id="panelCheckUrl">
-		<label id="labelCheckUrlMessage" />
+	<panel id="panelCheckRemoteUrl">
+		<label id="labelCheckRemoteUrlMessage" />
 	</panel>
 
 </dialog>
