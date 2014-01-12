@@ -19,6 +19,8 @@ public:
 	//*** RemoteRepo's methods.
 	void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler);
 	void Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler);
+
+	META_DECLARE_CLASS(UrlRemoteRepo);
 };
 
 END_INANITY_OIL

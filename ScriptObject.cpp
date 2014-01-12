@@ -1,6 +1,9 @@
 #include "ScriptObject.hpp"
 #include "ScriptRepo.hpp"
 #include "ClientRepo.hpp"
+#include "ServerRepo.hpp"
+#include "LocalRemoteRepo.hpp"
+#include "UrlRemoteRepo.hpp"
 #include "MainPluginInstance.hpp"
 #include "../inanity/Handler.hpp"
 #include "../inanity/script/np/State.hpp"
@@ -12,16 +15,16 @@
 
 BEGIN_INANITY_OIL
 
-//*** class ScriptObject::CheckRepoHandler
+//*** class ScriptObject::CheckRemoteRepoManifestHandler
 
-class ScriptObject::CheckRepoHandler : public DataHandler<ptr<File> >
+class ScriptObject::CheckRemoteRepoManifestHandler : public DataHandler<ptr<File> >
 {
 private:
 	ptr<ScriptObject> scriptObject;
 	ptr<Script::Any> callback;
 
 public:
-	CheckRepoHandler(ptr<ScriptObject> scriptObject, ptr<Script::Any> callback)
+	CheckRemoteRepoManifestHandler(ptr<ScriptObject> scriptObject, ptr<Script::Any> callback)
 	: scriptObject(scriptObject), callback(callback) {}
 
 	void OnData(ptr<File> data)
@@ -68,11 +71,29 @@ ptr<FileSystem> ScriptObject::GetNativeFileSystem() const
 	return nativeFileSystem;
 }
 
-void ScriptObject::CheckRepo(const String& url, ptr<Script::Any> callback)
+ptr<ClientRepo> ScriptObject::CreateInMemoryClientRepo()
 {
-	MainPluginInstance::GetInstance()->GetUrl(
-		url + "?manifest",
-		NEW(CheckRepoHandler(this, callback)));
+	return ClientRepo::CreateInMemory();
+}
+
+ptr<ClientRepo> ScriptObject::CreateLocalFileClientRepo(const String& fileName)
+{
+	return NEW(ClientRepo(fileName.c_str()));
+}
+
+ptr<RemoteRepo> ScriptObject::CreateLocalRemoteRepo(const String& fileName)
+{
+	return NEW(LocalRemoteRepo(NEW(ServerRepo(fileName.c_str()))));
+}
+
+ptr<RemoteRepo> ScriptObject::CreateUrlRemoteRepo(const String& url)
+{
+	return NEW(UrlRemoteRepo(url));
+}
+
+void ScriptObject::CheckRemoteRepoManifest(ptr<RemoteRepo> remoteRepo, ptr<Script::Any> callback)
+{
+	remoteRepo->GetManifest(NEW(CheckRemoteRepoManifestHandler(this, callback)));
 }
 
 END_INANITY_OIL

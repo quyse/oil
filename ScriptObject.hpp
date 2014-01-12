@@ -27,6 +27,8 @@ END_INANITY_NP
 
 BEGIN_INANITY_OIL
 
+class ClientRepo;
+class RemoteRepo;
 class ScriptRepo;
 
 class ScriptObject : public Object
@@ -37,14 +39,19 @@ private:
 	/// Current repo.
 	ptr<ScriptRepo> repo;
 
-	class CheckRepoHandler;
+	class CheckRemoteRepoManifestHandler;
 
 public:
 	ScriptObject(ptr<Script::Np::State> scriptState);
 
 	ptr<Script::Any> GetRootNamespace() const;
 	ptr<FileSystem> GetNativeFileSystem() const;
-	void CheckRepo(const String& url, ptr<Script::Any> callback);
+
+	ptr<ClientRepo> CreateInMemoryClientRepo();
+	ptr<ClientRepo> CreateLocalFileClientRepo(const String& fileName);
+	ptr<RemoteRepo> CreateLocalRemoteRepo(const String& fileName);
+	ptr<RemoteRepo> CreateUrlRemoteRepo(const String& url);
+	void CheckRemoteRepoManifest(ptr<RemoteRepo> remoteRepo, ptr<Script::Any> callback);
 
 	META_DECLARE_CLASS(ScriptObject);
 };
