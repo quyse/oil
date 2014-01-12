@@ -98,7 +98,7 @@ void ServerRepo::WriteManifest(StreamWriter* writer)
 	// write protocol magic
 	writer->Write(protocolMagic, sizeof(protocolMagic));
 	// write protocol version
-	writer->WriteShortly(1);
+	writer->WriteShortly(protocolVersion);
 	// write constraints
 	writer->WriteShortly(maxKeySize);
 	writer->WriteShortly(maxValueSize);
