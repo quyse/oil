@@ -33,7 +33,6 @@ public:
 			callback->Call(
 				scriptObject->scriptState->NewBoolean(true),
 				scriptObject->scriptState->NewString("OK"));
-				//scriptObject->scriptState->NewNumber(123));
 		}
 		catch(Exception* exception)
 		{
@@ -48,7 +47,6 @@ public:
 		callback->Call(
 			scriptObject->scriptState->NewBoolean(false),
 			scriptObject->scriptState->NewString(ss.str()));
-			//scriptObject->scriptState->NewNumber(123));
 	}
 };
 
