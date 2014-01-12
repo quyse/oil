@@ -409,6 +409,7 @@ begin Deferred push with delay
 # Detect self-conflict when one push one change of a key,
 # and then push another change of the same key,
 # while global revision is not reached the first change yet.
+# Correct behaviour - no conflict.
 
 constraints 100 100 1 100 1 100
 
@@ -424,3 +425,33 @@ psp B
 change B k3 bbb333bbb333
 psp B
 check_conflict B k3 0
+
+
+
+begin Sequence of chunks
+# Global revision should be promoted forward through several chunks.
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k1 aaa111
+change A k2 aaa222
+psp A
+psp A
+
+change B k3 bbb333
+change B k4 bbb444
+psp B
+psp B
+
+# the interesting change
+change A k5 aaa555
+psp A
+psp B
+# correct: should be already in B
+check B k5 aaa555
+# incorrect: will be in B only on next psp
+# psp B
+# check B k5 aaa555

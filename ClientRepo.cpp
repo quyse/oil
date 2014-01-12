@@ -494,6 +494,7 @@ void ClientRepo::AddChunk(long long prePushRevision, long long postPushRevision)
 void ClientRepo::CutChunks(long long& globalRevision)
 {
 	// increase global revision if chunks allow
+	for(;;)
 	{
 		Data::SqliteQuery query(stmtPreCutChunks);
 
@@ -508,6 +509,8 @@ void ClientRepo::CutChunks(long long& globalRevision)
 			globalRevision = preCutRevision;
 			SetManifestValue(ManifestKeys::globalRevision, globalRevision);
 		}
+		else
+			break;
 	}
 
 	// remove chunks behind global revision
