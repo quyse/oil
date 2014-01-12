@@ -402,3 +402,25 @@ psp B
 psp A
 	check A k1 bbb111
 	check_conflict A k1 0
+
+
+
+begin Deferred push with delay
+# Detect self-conflict when one push one change of a key,
+# and then push another change of the same key,
+# while global revision is not reached the first change yet.
+
+constraints 100 100 1 100 1 100
+
+client A
+client B
+
+change A k1 aaa111
+change A k2 aaa222
+psp A
+psp A
+change B k3 bbb333
+psp B
+change B k3 bbb333bbb333
+psp B
+check_conflict B k3 0
