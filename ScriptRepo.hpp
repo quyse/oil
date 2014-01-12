@@ -2,20 +2,20 @@
 #define ___INANITY_OIL_SCRIPT_REPO_HPP___
 
 #include "oil.hpp"
-#include "../inanity/String.hpp"
 
 BEGIN_INANITY_OIL
 
 class ClientRepo;
+class RemoteRepo;
 
 class ScriptRepo : public Object
 {
 private:
-	ptr<ClientRepo> repo;
-	String serverUrl;
+	ptr<ClientRepo> clientRepo;
+	ptr<RemoteRepo> remoteRepo;
 
 public:
-	ScriptRepo(ptr<ClientRepo> repo, const String& serverUrl);
+	ScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 };
 
 END_INANITY_OIL

@@ -30,6 +30,9 @@ var executables = {
 			'ScriptRepo',
 			'Repo',
 			'ClientRepo',
+			'ServerRepo',
+			'UrlRemoteRepo',
+			'LocalRemoteRepo',
 			'meta'
 		],
 		staticLibraries: [
