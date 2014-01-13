@@ -36,10 +36,6 @@ class ScriptObject : public Object
 private:
 	ptr<Script::Np::State> scriptState;
 	ptr<FileSystem> nativeFileSystem;
-	/// Current repo.
-	ptr<ScriptRepo> repo;
-
-	class CheckRemoteRepoManifestHandler;
 
 public:
 	ScriptObject(ptr<Script::Np::State> scriptState);
@@ -47,11 +43,16 @@ public:
 	ptr<Script::Any> GetRootNamespace() const;
 	ptr<FileSystem> GetNativeFileSystem() const;
 
-	ptr<ClientRepo> CreateInMemoryClientRepo();
-	ptr<ClientRepo> CreateLocalFileClientRepo(const String& fileName);
-	ptr<RemoteRepo> CreateLocalRemoteRepo(const String& fileName);
+	ptr<ClientRepo> CreateLocalClientRepo(const String& fileName);
+	ptr<ClientRepo> CreateTempClientRepo();
+	ptr<ClientRepo> CreateMemoryClientRepo();
+
 	ptr<RemoteRepo> CreateUrlRemoteRepo(const String& url);
-	void CheckRemoteRepoManifest(ptr<RemoteRepo> remoteRepo, ptr<Script::Any> callback);
+	ptr<RemoteRepo> CreateLocalRemoteRepo(const String& fileName);
+	ptr<RemoteRepo> CreateTempRemoteRepo();
+	ptr<RemoteRepo> CreateMemoryRemoteRepo();
+
+	ptr<ScriptRepo> CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 
 	META_DECLARE_CLASS(ScriptObject);
 };

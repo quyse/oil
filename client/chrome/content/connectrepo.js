@@ -93,9 +93,13 @@ function checkRemoteUrl() {
 
 	// create remote repo
 	var remoteRepo = OIL.core.CreateUrlRemoteRepo(url);
+	// create client repo
+	var clientRepo = OIL.core.CreateMemoryClientRepo();
+	// create script repo
+	var scriptRepo = OIL.core.CreateScriptRepo(clientRepo, remoteRepo);
 
-	// check it
-	OIL.core.CheckRemoteRepoManifest(remoteRepo, function(result, message) {
+	// initialize it
+	scriptRepo.Init(function(result, message) {
 		document.getElementById("labelCheckRemoteUrlMessage").textContent = JSON.stringify({
 			result: result,
 			message: message

@@ -8,11 +8,14 @@
 META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(GetRootNamespace);
 	META_METHOD(GetNativeFileSystem);
-	META_METHOD(CreateInMemoryClientRepo);
-	META_METHOD(CreateLocalFileClientRepo);
-	META_METHOD(CreateLocalRemoteRepo);
+	META_METHOD(CreateLocalClientRepo);
+	META_METHOD(CreateTempClientRepo);
+	META_METHOD(CreateMemoryClientRepo);
 	META_METHOD(CreateUrlRemoteRepo);
-	META_METHOD(CheckRemoteRepoManifest);
+	META_METHOD(CreateLocalRemoteRepo);
+	META_METHOD(CreateTempRemoteRepo);
+	META_METHOD(CreateMemoryRemoteRepo);
+	META_METHOD(CreateScriptRepo);
 META_CLASS_END();
 
 #include "RemoteRepo.hpp"
@@ -21,4 +24,9 @@ META_CLASS_END();
 
 #include "ClientRepo.hpp"
 META_CLASS(Inanity::Oil::ClientRepo, Inanity.Oil.ClientRepo);
+META_CLASS_END();
+
+#include "ScriptRepo.hpp"
+META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
+	META_METHOD(Init);
 META_CLASS_END();
