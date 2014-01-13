@@ -16,12 +16,13 @@ class ServerRepo : public Repo
 {
 private:
 	//*** SQLite statements.
-	ptr<Data::SqliteStatement> stmtGetMaxRevision;
-	ptr<Data::SqliteStatement> stmtCheckConflict;
-	ptr<Data::SqliteStatement> stmtWrite;
-	ptr<Data::SqliteStatement> stmtPull;
-	ptr<Data::SqliteStatement> stmtGetWeakRevision;
-	ptr<Data::SqliteStatement> stmtPullTotalSize;
+	ptr<Data::SqliteStatement>
+		stmtGetMaxRevision,
+		stmtCheckConflict,
+		stmtWrite,
+		stmtPull,
+		stmtGetWeakRevision,
+		stmtPullTotalSize;
 
 	long long GetMaxRevision();
 

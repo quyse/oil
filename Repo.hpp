@@ -47,6 +47,11 @@ public:
 	/// Maximum total size of values in a pull response.
 	static const size_t defaultMaxPullTotalSize;
 
+	/// Filename to create db in memory.
+	static const char* fileNameMemory;
+	/// Filename to create db in temporary file.
+	static const char* fileNameTemp;
+
 protected:
 	/// SQLite database.
 	ptr<Data::SqliteDb> db;

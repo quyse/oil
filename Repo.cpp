@@ -8,14 +8,19 @@ BEGIN_INANITY_OIL
 
 const char Repo::protocolMagic[14] = { 'I', 'N', 'A', 'N', 'I', 'T', 'Y', 'O', 'I', 'L', 'R', 'E', 'P', 'O' };
 const int Repo::protocolVersion = 1;
+
 const int Repo::serverRepoAppVersion = 0x414C4941; // "OILA" in little-endian
 const int Repo::clientRepoAppVersion = 0x314C494F; // "OIL1" in little-endian
+
 const size_t Repo::defaultMaxKeySize = 128;
 const size_t Repo::defaultMaxValueSize = 1024 * 1024 * 16;
 const int Repo::defaultMaxPushKeysCount = 128;
 const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 32;
 const int Repo::defaultMaxPullKeysCount = 256;
 const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 32;
+
+const char* Repo::fileNameMemory = ":memory:";
+const char* Repo::fileNameTemp = "";
 
 Repo::Repo(const char* fileName) :
 	maxKeySize(defaultMaxKeySize),
