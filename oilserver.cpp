@@ -3,6 +3,7 @@
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/StreamWriter.hpp"
 #include <iostream>
+#include <cstring>
 
 BEGIN_INANITY_OIL
 
