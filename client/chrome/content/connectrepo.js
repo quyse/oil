@@ -107,6 +107,42 @@ function checkRemoteUrl() {
 	});
 }
 
+function browseFile(settings, callback) {
+	var nsIFilePicker = Components.interfaces.nsIFilePicker;
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, settings.title, nsIFilePicker.modeSave);
+	fp.defaultExtension = "oil";
+	fp.appendFilter(settings.filterName, "*.oil");
+	fp.open({
+		done: function(result) {
+			switch(result) {
+			case nsIFilePicker.returnOK:
+			case nsIFilePicker.returnReplace:
+				callback(fp.file.path);
+				break;
+			}
+		}
+	});
+};
+
+function onBrowseRemoteFile() {
+	browseFile({
+		title: "Select Location of Oil Server Repo",
+		filterName: "Inanity Oil Server Repo"
+	}, function(fileName) {
+		document.getElementById("textboxRemoteFile").value = fileName;
+	});
+}
+
+function onBrowseCacheFile() {
+	browseFile({
+		title: "Select Location of Oil Cache File",
+		filterName: "Inanity Oil Client Repo"
+	}, function(fileName) {
+		document.getElementById("textboxCacheFile").value = fileName;
+	});
+}
+
 window.onload = function() {
 	onChangeRemoteType();
 	onChangeCacheType();

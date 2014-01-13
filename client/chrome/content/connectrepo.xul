@@ -15,6 +15,8 @@
 		<command id="commandOnChangeRemoteType" oncommand="onChangeRemoteType()" />
 		<command id="commandCheckRemoteUrl" oncommand="checkRemoteUrl()" />
 		<command id="commandOnChangeCacheType" oncommand="onChangeCacheType()" />
+		<command id="commandOnBrowseRemoteFile" oncommand="onBrowseRemoteFile()" />
+		<command id="commandOnBrowseCacheFile" oncommand="onBrowseCacheFile()" />
 	</commandset>
 
 	<grid>
@@ -51,19 +53,19 @@
 			</row>
 			<row id="rowRemoteFile" align="baseline">
 				<label control="textboxRemoteFile" value="Local File:" />
-				<textbox id="textboxRemoteFile" placeholder="Path to the server repo's local file" oninput="onChangeRemoteFile()" />
-				<button id="buttonBrowseRemoteFile" label="Browse..." />
+				<textbox id="textboxRemoteFile" placeholder="Path to create or open server repo's file" oninput="onChangeRemoteFile()" />
+				<button label="Browse..." command="commandOnBrowseRemoteFile" />
 			</row>
 			<row id="rowRemoteTemp" align="baseline">
 				<box />
 				<label>
-					Server repo will be created in a temporary file which will be removed when editor closes. Use only for quick experiments!
+					New empty server repo will be created in a temporary file which will be removed when editor closes. Use only for quick experiments!
 				</label>
 			</row>
 			<row id="rowRemoteMemory" align="baseline">
 				<box />
 				<label>
-					Server repo will be created in memory and lost after closing. Use only for quick experiments!
+					New empty server repo will be created in RAM and lost after closing. Use only for quick experiments!
 				</label>
 			</row>
 			<separator />
@@ -81,7 +83,7 @@
 			<row id="rowCacheFile" align="baseline">
 				<label control="textboxCacheFile" value="Cache File:" />
 				<textbox id="textboxCacheFile" placeholder="Path for local cache" />
-				<button id="buttonBrowseLocation" label="Browse..." />
+				<button label="Browse..." command="commandOnBrowseCacheFile" />
 			</row>
 			<row id="rowCacheTemp" align="baseline">
 				<box />
