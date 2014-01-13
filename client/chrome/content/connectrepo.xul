@@ -5,8 +5,9 @@
 <dialog id="connectrepo" title="Connect to Repo"
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons="accept,cancel"
-	ondialogaccept=""
 	buttonlabelaccept="Connect"
+	buttonlabelcancel="Cancel"
+	ondialogaccept="return onConnect()"
 	>
 
 	<script src="connectrepo.js" />
@@ -99,9 +100,5 @@
 			</row>
 		</rows>
 	</grid>
-
-	<panel id="panelCheckRemoteUrl">
-		<label id="labelCheckRemoteUrlMessage" />
-	</panel>
 
 </dialog>

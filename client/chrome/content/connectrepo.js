@@ -100,13 +100,10 @@ function checkRemoteUrl() {
 
 	// initialize it
 	scriptRepo.Init(function(result, message) {
-		document.getElementById("labelCheckRemoteUrlMessage").textContent = JSON.stringify({
+		alert(JSON.stringify({
 			result: result,
 			message: message
-		});
-		document.getElementById("panelCheckRemoteUrl").openPopup(
-			document.getElementById("textboxRemoteUrl"),
-			"after_start");
+		}));
 		button.disabled = false;
 	});
 }
@@ -146,6 +143,77 @@ function onBrowseCacheFile() {
 		document.getElementById("textboxCacheFile").value = fileName;
 	});
 }
+
+var alreadyConnected = false;
+
+function onConnect() {
+	// if called from acceptDialog()
+	if(alreadyConnected)
+		return true;
+
+	try {
+
+		window.buttondisableaccept = true;
+
+		// create remote repo
+		var remoteRepo;
+		switch(document.getElementById("menulistRemoteType").value) {
+		case "url":
+			remoteRepo = OIL.core.CreateUrlRemoteRepo(document.getElementById("textboxRemoteUrl").value);
+			break;
+		case "file":
+			remoteRepo = OIL.core.CreateLocalRemoteRepo(document.getElementById("textboxRemoteFile").value);
+			break;
+		case "temp":
+			remoteRepo = OIL.core.CreateTempRemoteRepo();
+			break;
+		case "memory":
+			remoteRepo = OIL.core.CreateMemoryRemoteRepo();
+			break;
+		default:
+			throw "wrong type of remote repo";
+		}
+
+		// create client repo
+		var clientRepo;
+		switch(document.getElementById("menulistCacheType").value) {
+		case "file":
+			clientRepo = OIL.core.CreateLocalClientRepo(document.getElementById("textboxCacheFile").value);
+			break;
+		case "temp":
+			clientRepo = OIL.core.CreateTempClientRepo();
+			break;
+		case "memory":
+			clientRepo = OIL.core.CreateMemoryClientRepo();
+			break;
+		default:
+			throw "wrong type of client repo";
+		}
+
+		// create script repo
+		var scriptRepo = OIL.core.CreateScriptRepo(clientRepo, remoteRepo);
+
+		// init it
+		scriptRepo.Init(function(ok, message) {
+			if(ok) {
+				window.arguments[0].repo = scriptRepo;
+				alreadyConnected = true;
+				var dialog = document.getElementById("connectrepo");
+				dialog.acceptDialog();
+			} else {
+				alert(message);
+				window.buttondisableaccept = false;
+			}
+		});
+
+		return false;
+
+	} catch(e) {
+		window.buttondisableaccept = false;
+		alert(e);
+		return false;
+	}
+};
 
 window.onload = function() {
 	onChangeRemoteType();

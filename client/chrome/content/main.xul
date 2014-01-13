@@ -10,7 +10,7 @@
 	<script src="main.js" />
 
 	<commandset>
-		<command id="commandRepoConnect" oncommand="window.openDialog('connectrepo.xul', '', 'chrome,modal,centerscreen,resizable');" />
+		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
 	</commandset>
 
 	<toolbox>
