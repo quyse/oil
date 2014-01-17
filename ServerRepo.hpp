@@ -24,15 +24,22 @@ private:
 		stmtGetWeakRevision,
 		stmtPullTotalSize;
 
-	long long GetMaxRevision();
-
 public:
 	ServerRepo(const char* fileName);
 
+	/// Get global revision.
+	long long GetMaxRevision();
 	/// Write manifest.
 	void WriteManifest(StreamWriter* writer);
 	/// Sync with client.
-	void Sync(StreamReader* reader, StreamWriter* writer);
+	/** Returns true if something was pushed. */
+	bool Sync(StreamReader* reader, StreamWriter* writer);
+	/// Process watch request.
+	/** Returns if watch was responded. */
+	bool Watch(StreamReader* reader, StreamWriter* writer);
+	/// Create watch response.
+	/** Should be good for every client. */
+	void RespondWatch(StreamWriter* writer);
 };
 
 END_INANITY_OIL

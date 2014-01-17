@@ -110,7 +110,7 @@ void ServerRepo::WriteManifest(StreamWriter* writer)
 	END_TRY("Can't write server repo manifest");
 }
 
-void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
+bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 {
 	BEGIN_TRY();
 
@@ -150,6 +150,8 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 	// output pre-push revision
 	writer->WriteShortlyBig(prePushRevision);
+
+	bool pushedSomething = false;
 
 	// loop for push keys
 	for(size_t i = 0; ; ++i)
@@ -206,6 +208,8 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 		// output write
 		writer->WriteShortly(i + 1);
+
+		pushedSomething = true;
 	}
 
 	// ensure request is over
@@ -304,7 +308,38 @@ void ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 	// commit transaction
 	transaction.Commit();
 
+	return pushedSomething;
+
 	END_TRY("Can't sync server repo");
+}
+
+bool ServerRepo::Watch(StreamReader* reader, StreamWriter* writer)
+{
+	BEGIN_TRY();
+
+	long long clientRevision = reader->ReadShortlyBig();
+	reader->ReadEnd();
+
+	long long maxRevision = GetMaxRevision();
+
+	if(clientRevision < maxRevision)
+	{
+		writer->WriteShortlyBig(maxRevision);
+		return true;
+	}
+
+	return false;
+
+	END_TRY("Can't process watch request");
+}
+
+void ServerRepo::RespondWatch(StreamWriter* writer)
+{
+	BEGIN_TRY();
+
+	writer->WriteShortlyBig(GetMaxRevision());
+
+	END_TRY("Can't respond to watch request");
 }
 
 END_INANITY_OIL

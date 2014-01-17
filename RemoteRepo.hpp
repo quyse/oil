@@ -19,6 +19,7 @@ class RemoteRepo : public Object
 public:
 	virtual void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler) = 0;
 	virtual void Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler) = 0;
+	virtual void Watch(ptr<File> requestData, ptr<DataHandler<ptr<File> > > watchHandler) = 0;
 };
 
 END_INANITY_OIL

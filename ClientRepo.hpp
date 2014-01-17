@@ -121,6 +121,7 @@ private:
 	//*** Manifest methods.
 	long long GetManifestValue(int key, long long defaultValue);
 	void SetManifestValue(int key, long long value);
+	long long GetGlobalRevision();
 
 	//*** Chunks methods.
 	void AddChunk(long long prePushRevision, long long postPushRevision);
@@ -165,8 +166,14 @@ public:
 
 	void ReadServerManifest(StreamReader* reader);
 	void Push(StreamWriter* writer);
-	void Pull(StreamReader* reader);
+	/// Process sync response.
+	/** Returns if something changed. */
+	bool Pull(StreamReader* reader);
 	void Cleanup();
+	void WriteWatchRequest(StreamWriter* writer);
+	/// Read watch response.
+	/** Returns if we need to sync. */
+	bool ReadWatchResponse(StreamReader* reader);
 
 	/// Set event handler.
 	void SetEventHandler(ptr<EventHandler> eventHandler);

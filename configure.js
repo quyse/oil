@@ -57,6 +57,7 @@ var executables = {
 		objects: ['oilserver', 'Repo', 'ServerRepo'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
+			'../inanity//libinanity-platform',
 			'../inanity//libinanity-sqlite',
 			'../inanity/deps/sqlite//libsqlite',
 			'../inanity//libinanity-fcgi',

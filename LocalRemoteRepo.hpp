@@ -11,6 +11,9 @@ class LocalRemoteRepo : public RemoteRepo
 {
 private:
 	ptr<ServerRepo> serverRepo;
+	ptr<DataHandler<ptr<File> > > deferredWatchHandler;
+
+	struct WatchCallback;
 
 public:
 	LocalRemoteRepo(ptr<ServerRepo> serverRepo);
@@ -18,6 +21,7 @@ public:
 	//*** RemoteRepo's methods.
 	void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler);
 	void Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler);
+	void Watch(ptr<File> requestData, ptr<DataHandler<ptr<File> > > watchHandler);
 };
 
 END_INANITY_OIL

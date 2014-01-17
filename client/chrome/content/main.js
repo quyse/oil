@@ -7,14 +7,60 @@ DebuggerServer.openListener(6000);
 
 Components.utils.import('chrome://oil/content/oil.js');
 
-/// Current opened repo. Instance of Inanity.Oil.ScriptRepo.
-var currentRepo = null;
-
 function onRepoConnect() {
 	var params = {};
 	window.openDialog('connectrepo.xul', '', 'chrome,modal,centerscreen,resizable', params);
-	if(params.repo)
-		currentRepo = params.repo;
+	if(params.repo) {
+		OIL.repo = params.repo;
+		watchRepo();
+	}
+}
+
+function onAssign() {
+	var key = document.getElementById("textboxAssignKey").value;
+	var value = document.getElementById("textboxAssignValue").value;
+	OIL.repo.Change(key, value);
+}
+
+//*** syncing
+
+var repoWatching = false;
+function watchRepo() {
+	if(repoWatching)
+		return;
+
+	repoWatching = true;
+	OIL.repo.Watch(function(ok, message) {
+		repoWatching = false;
+
+		if(ok) {
+			if(message)
+				syncRepo();
+			else
+				watchRepo();
+		}
+		else
+			alert(message);
+	});
+}
+
+var repoSyncing = false;
+function syncRepo() {
+	if(repoSyncing)
+		return;
+	repoSyncing = true;
+	OIL.repo.Sync(function(ok, message) {
+		repoSyncing = false;
+
+		if(ok) {
+			if(message)
+				syncRepo();
+			else
+				watchRepo();
+		}
+		else
+			alert(message);
+	});
 }
 
 window.onload = function() {

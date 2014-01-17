@@ -29,4 +29,6 @@ META_CLASS_END();
 #include "ScriptRepo.hpp"
 META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
 	META_METHOD(Init);
+	META_METHOD(Sync);
+	META_METHOD(Watch);
 META_CLASS_END();

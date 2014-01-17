@@ -12,6 +12,7 @@ class UrlRemoteRepo : public RemoteRepo
 private:
 	String url;
 	String syncUrl;
+	String watchUrl;
 
 public:
 	UrlRemoteRepo(const String& url);
@@ -19,6 +20,7 @@ public:
 	//*** RemoteRepo's methods.
 	void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler);
 	void Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler);
+	void Watch(ptr<File> requestData, ptr<DataHandler<ptr<File> > > watchHandler);
 
 	META_DECLARE_CLASS(UrlRemoteRepo);
 };

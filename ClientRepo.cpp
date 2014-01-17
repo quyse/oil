@@ -475,6 +475,17 @@ void ClientRepo::SetManifestValue(int key, long long value)
 		THROW_SECONDARY("Error setting manifest value", db->Error());
 }
 
+long long ClientRepo::GetGlobalRevision()
+{
+	// get client revision
+	long long globalRevision = GetManifestValue(ManifestKeys::globalRevision, 0);
+
+	// cut chunks with client revision (client revision may change)
+	CutChunks(globalRevision);
+
+	return globalRevision;
+}
+
 void ClientRepo::AddChunk(long long prePushRevision, long long postPushRevision)
 {
 	Data::SqliteQuery query(stmtAddChunk);
@@ -730,10 +741,7 @@ void ClientRepo::Push(StreamWriter* writer)
 	Data::SqliteTransaction transaction(db);
 
 	// get client revision
-	long long globalRevision = GetManifestValue(ManifestKeys::globalRevision, 0);
-
-	// cut chunks with client revision (client revision may change)
-	CutChunks(globalRevision);
+	long long globalRevision = GetGlobalRevision();
 
 	// write our revision
 	writer->WriteShortlyBig(globalRevision);
@@ -819,7 +827,7 @@ void ClientRepo::Push(StreamWriter* writer)
 	END_TRY("Can't push repo");
 }
 
-void ClientRepo::Pull(StreamReader* reader)
+bool ClientRepo::Pull(StreamReader* reader)
 {
 	BEGIN_TRY();
 
@@ -831,6 +839,8 @@ void ClientRepo::Pull(StreamReader* reader)
 
 	// read pre-push revision
 	long long prePushRevision = reader->ReadShortlyBig();
+
+	bool changedSomething = false;
 
 	// process commited keys
 	long long pushRevision = prePushRevision;
@@ -863,6 +873,8 @@ void ClientRepo::Pull(StreamReader* reader)
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
 		else
 			QueueEvent(GetKeyItemKey(keyItems.ids[ItemStatuses::transient]), eventSync);
+
+		changedSomething = true;
 	}
 
 	// remember post-push revision
@@ -978,6 +990,8 @@ void ClientRepo::Pull(StreamReader* reader)
 
 			// that key is ok
 			keyTransaction.Commit();
+
+			changedSomething = true;
 		}
 		catch(Exception* e)
 		{
@@ -1005,6 +1019,8 @@ void ClientRepo::Pull(StreamReader* reader)
 	// commit
 	transaction.Commit();
 	eventQueueTransaction.Commit();
+
+	return changedSomething;
 
 	END_TRY("Can't pull repo");
 }
@@ -1039,6 +1055,51 @@ void ClientRepo::Cleanup()
 	}
 
 	END_TRY("Can't cleanup repo transients");
+}
+
+void ClientRepo::WriteWatchRequest(StreamWriter* writer)
+{
+	BEGIN_TRY();
+
+	Data::SqliteTransaction transaction(db);
+
+	long long globalRevision = GetGlobalRevision();
+
+	writer->WriteShortlyBig(globalRevision);
+
+	END_TRY("Can't do repo watch");
+}
+
+bool ClientRepo::ReadWatchResponse(StreamReader* reader)
+{
+	BEGIN_TRY();
+
+	long long serverRevision = reader->ReadShortlyBig();
+	reader->ReadEnd();
+
+	Data::SqliteTransaction transaction(db);
+
+	// get client revision
+	long long globalRevision = GetGlobalRevision();
+
+	// if we have what to pull, sync is needed
+	if(globalRevision < serverRevision)
+		return true;
+
+	// if we have what to push, sync is needed
+	Data::SqliteQuery query(stmtSelectKeysToPush);
+	stmtSelectKeysToPush->Bind(1, 1); // maximum number of keys to push
+	switch(stmtSelectKeysToPush->Step())
+	{
+	case SQLITE_ROW:
+		return true;
+	case SQLITE_DONE:
+		return false;
+	default:
+		THROW_SECONDARY("Can't select keys to push", db->Error());
+	}
+
+	END_TRY("Can't get if repo sync needed");
 }
 
 void ClientRepo::SetEventHandler(ptr<EventHandler> eventHandler)

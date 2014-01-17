@@ -1,61 +1,179 @@
 #include "ServerRepo.hpp"
 #include "../inanity/net/Fcgi.hpp"
+#include "../inanity/MemoryStream.hpp"
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/StreamWriter.hpp"
+#include "../inanity/File.hpp"
+#include "../inanity/Thread.hpp"
+#include "../inanity/CriticalSection.hpp"
+#include "../inanity/CriticalCode.hpp"
+#include "../inanity/Time.hpp"
+#include <vector>
 #include <iostream>
 #include <cstring>
 
 BEGIN_INANITY_OIL
 
-class Server : public Handler
+class Server : public Object
 {
 private:
-	Net::Fcgi fcgi;
 	ptr<ServerRepo> repo;
-	ptr<StreamReader> reader;
-	ptr<StreamWriter> writer;
+	long long lastSyncRevision;
+	CriticalSection csRepo;
 
-public:
-	void Fire()
+	std::vector<std::pair<ptr<Net::Fcgi::Request>, Time::Tick> > watchRequests;
+	CriticalSection csWatchRequests;
+
+	Server() : lastSyncRevision(-1) {}
+
+	void Process(ptr<Net::Fcgi::Request> request)
 	{
-		std::cerr << fcgi.GetParam("REQUEST_URI") << '\n';
+		std::cerr << request->GetParam("REQUEST_URI") << '\n';
+
+		StreamReader reader(request->GetInputStream());
+		StreamWriter writer(request->GetOutputStream());
 
 		try
 		{
-			const char* query = fcgi.GetParam("QUERY_STRING");
+			const char* query = request->GetParam("QUERY_STRING");
 			if(!query)
 				query = "";
 
 			if(strcmp(query, "manifest") == 0)
 			{
-				fcgi.OutputContentType("application/x-inanityoil-manifest");
-				fcgi.OutputStatus("200 OK");
-				fcgi.OutputBeginResponse();
-				repo->WriteManifest(writer);
-				return;
-			}
+				request->OutputContentType("application/x-inanityoil-manifest");
+				request->OutputStatus("200 OK");
+				request->OutputBeginResponse();
 
-			if(strcmp(query, "sync") == 0)
+				{
+					CriticalCode cc(csRepo);
+					repo->WriteManifest(&writer);
+				}
+
+				request->End();
+			}
+			else if(strcmp(query, "sync") == 0)
 			{
-				fcgi.OutputContentType("application/x-inanityoil-sync");
-				fcgi.OutputStatus("200 OK");
-				fcgi.OutputBeginResponse();
-				repo->Sync(reader, writer);
-				return;
-			}
+				request->OutputContentType("application/x-inanityoil-sync");
+				request->OutputStatus("200 OK");
+				request->OutputBeginResponse();
 
-			// unknown query
-			fcgi.OutputContentType("text/plain");
-			fcgi.OutputStatus("400 Bad Request");
-			fcgi.OutputBeginResponse();
-			static const char response[] =
-				"Unknown query string";
-			writer->Write(response, sizeof(response) - 1);
+				ptr<File> watchResponse;
+				{
+					CriticalCode cc(csRepo);
+					repo->Sync(&reader, &writer);
+					long long maxRevision = repo->GetMaxRevision();
+					if(lastSyncRevision < 0 && lastSyncRevision < maxRevision)
+					{
+						ptr<MemoryStream> stream = NEW(MemoryStream());
+						StreamWriter writer(stream);
+						repo->RespondWatch(&writer);
+						watchResponse = stream->ToFile();
+					}
+					lastSyncRevision = maxRevision;
+				}
+
+				request->End();
+
+				if(watchResponse)
+				{
+					// respond to all watch requests
+					CriticalCode cc(csWatchRequests);
+
+					for(size_t i = 0; i < watchRequests.size(); ++i)
+						try
+						{
+							ptr<Net::Fcgi::Request> request = watchRequests[i].first;
+							request->GetOutputStream()->WriteFile(watchResponse);
+							request->End();
+						}
+						catch(Exception* exception)
+						{
+							request->End();
+							MakePointer(exception)->PrintStack(std::cerr);
+							std::cerr << '\n';
+						}
+
+					watchRequests.clear();
+				}
+			}
+			else if(strcmp(query, "watch") == 0)
+			{
+				request->OutputContentType("application/x-inanityoil-watchreply");
+				request->OutputStatus("200 OK");
+				request->OutputBeginResponse();
+
+				bool watchResponded;
+				{
+					CriticalCode cc(csRepo);
+					watchResponded = repo->Watch(&reader, &writer);
+				}
+				if(watchResponded)
+					request->End();
+				else
+				{
+					CriticalCode cc(csWatchRequests);
+					watchRequests.push_back(std::make_pair(request, Time::GetTicks()));
+				}
+			}
+			else
+			{
+				// unknown query
+				request->OutputContentType("text/plain");
+				request->OutputStatus("400 Bad Request");
+				request->OutputBeginResponse();
+				static const char response[] =
+					"Unknown query string";
+				writer.Write(response, sizeof(response) - 1);
+				request->End();
+			}
 		}
 		catch(Exception* exception)
 		{
+			request->End();
 			MakePointer(exception)->PrintStack(std::cerr);
 			std::cerr << '\n';
+		}
+	}
+
+	void BackgroundProcess(const Thread::ThreadHandler::Result& threadResult)
+	{
+		const int sleepPause = 1000;
+		const Time::Tick timeout = 20 * Time::GetTicksPerSecond();
+		for(;;)
+		{
+			{
+				Time::Tick tick = Time::GetTicks();
+				CriticalCode cc(csWatchRequests);
+
+				ptr<File> response = nullptr;
+
+				size_t j = 0;
+				for(size_t i = 0; i < watchRequests.size(); ++i)
+				{
+					if(watchRequests[i].second + timeout < tick)
+					{
+						if(!response)
+						{
+							ptr<MemoryStream> stream = NEW(MemoryStream());
+							StreamWriter writer(stream);
+							{
+								CriticalCode cc(csRepo);
+								repo->RespondWatch(&writer);
+							}
+							response = stream->ToFile();
+						}
+
+						watchRequests[i].first->GetOutputStream()->WriteFile(response);
+						watchRequests[i].first->End();
+					}
+					else
+						watchRequests[j++] = watchRequests[i];
+				}
+				watchRequests.resize(j);
+			}
+
+			Thread::Sleep(sleepPause);
 		}
 	}
 
@@ -116,16 +234,19 @@ public:
 
 		repo = NEW(ServerRepo(fileName));
 
-		reader = NEW(StreamReader(fcgi.GetInputStream()));
-		writer = NEW(StreamWriter(fcgi.GetOutputStream()));
+		MakePointer(NEW(Thread(Thread::ThreadHandler::Bind<Server>(this, &Server::BackgroundProcess))));
 
-		fcgi.Run(socketName, backlogSize, this);
+		Net::Fcgi fcgi(socketName, backlogSize);
+
+		while(ptr<Net::Fcgi::Request> request = fcgi.Accept())
+			Process(request);
 
 		std::cerr << "end\n";
 
 		return 0;
 	}
 
+public:
 	static int Main(int argc, char** argv)
 	{
 		try
@@ -135,7 +256,7 @@ public:
 		catch(Exception* exception)
 		{
 			MakePointer(exception)->PrintStack(std::cerr);
-			return 10;
+			return 1;
 		}
 	}
 };

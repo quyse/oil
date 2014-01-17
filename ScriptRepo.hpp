@@ -27,11 +27,15 @@ private:
 	ptr<RemoteRepo> remoteRepo;
 
 	class InitHandler;
+	class PullHandler;
+	class WatchHandler;
 
 public:
 	ScriptRepo(ptr<Script::State> scriptState, ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 
 	void Init(ptr<Script::Any> callback);
+	void Sync(ptr<Script::Any> callback);
+	void Watch(ptr<Script::Any> callback);
 
 	META_DECLARE_CLASS(ScriptRepo);
 };
