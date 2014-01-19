@@ -2,7 +2,14 @@
 #define ___INANITY_OIL_URL_REMOTE_REPO_HPP___
 
 #include "RemoteRepo.hpp"
+#include "../inanity/platform/platform.hpp"
 #include "../inanity/String.hpp"
+
+BEGIN_INANITY_PLATFORM
+
+class NpapiPluginInstance;
+
+END_INANITY_PLATFORM
 
 BEGIN_INANITY_OIL
 
@@ -10,12 +17,13 @@ BEGIN_INANITY_OIL
 class UrlRemoteRepo : public RemoteRepo
 {
 private:
+	Platform::NpapiPluginInstance* pluginInstance;
 	String url;
 	String syncUrl;
 	String watchUrl;
 
 public:
-	UrlRemoteRepo(const String& url);
+	UrlRemoteRepo(Platform::NpapiPluginInstance* pluginInstance, const String& url);
 
 	//*** RemoteRepo's methods.
 	void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler);

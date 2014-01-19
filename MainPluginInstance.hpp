@@ -24,8 +24,6 @@ BEGIN_INANITY_OIL
 class MainPluginInstance : public Platform::NpapiPluginInstance
 {
 private:
-	static MainPluginInstance* instance;
-
 	ptr<Script::Np::State> scriptState;
 
 	ptr<Graphics::System> graphicsSystem;
@@ -39,9 +37,6 @@ private:
 
 public:
 	MainPluginInstance();
-	~MainPluginInstance();
-
-	static MainPluginInstance* GetInstance();
 
 	ptr<Graphics::Device> GetGraphicsDevice() const;
 };

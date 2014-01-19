@@ -43,7 +43,7 @@ ptr<ClientRepo> ScriptObject::CreateMemoryClientRepo()
 
 ptr<RemoteRepo> ScriptObject::CreateUrlRemoteRepo(const String& url)
 {
-	return NEW(UrlRemoteRepo(url));
+	return NEW(UrlRemoteRepo(scriptState->GetPluginInstance(), url));
 }
 
 ptr<RemoteRepo> ScriptObject::CreateLocalRemoteRepo(const String& fileName)

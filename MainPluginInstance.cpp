@@ -13,28 +13,12 @@
 
 BEGIN_INANITY_OIL
 
-MainPluginInstance* MainPluginInstance::instance = nullptr;
-
 MainPluginInstance::MainPluginInstance()
 : NpapiPluginInstance(false)
 {
-	if(instance)
-		THROW("Only one main instance of Oil plugin allowed");
-	instance = this;
-
 	name = "Inanity Oil NPAPI Main Plugin";
 	description = name;
 	windowless = true;
-}
-
-MainPluginInstance::~MainPluginInstance()
-{
-	instance = nullptr;
-}
-
-MainPluginInstance* MainPluginInstance::GetInstance()
-{
-	return instance;
 }
 
 ptr<Graphics::Device> MainPluginInstance::GetGraphicsDevice() const

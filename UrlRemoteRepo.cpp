@@ -1,5 +1,5 @@
 #include "UrlRemoteRepo.hpp"
-#include "MainPluginInstance.hpp"
+#include "../inanity/platform/NpapiPluginInstance.hpp"
 #include "../inanity/StreamReader.hpp"
 #include "../inanity/FileInputStream.hpp"
 #include "../inanity/File.hpp"
@@ -8,8 +8,8 @@ BEGIN_INANITY_OIL
 
 //*** class UrlRemoteRepo
 
-UrlRemoteRepo::UrlRemoteRepo(const String& url)
-: url(url)
+UrlRemoteRepo::UrlRemoteRepo(Platform::NpapiPluginInstance* pluginInstance, const String& url)
+: pluginInstance(pluginInstance), url(url)
 {
 	syncUrl = url + "?sync";
 	watchUrl = url + "?watch";
@@ -17,17 +17,17 @@ UrlRemoteRepo::UrlRemoteRepo(const String& url)
 
 void UrlRemoteRepo::GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler)
 {
-	MainPluginInstance::GetInstance()->GetUrl(url + "?manifest", manifestHandler);
+	pluginInstance->GetUrl(url + "?manifest", manifestHandler);
 }
 
 void UrlRemoteRepo::Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler)
 {
-	MainPluginInstance::GetInstance()->PostUrl(syncUrl, pushData, pullHandler);
+	pluginInstance->PostUrl(syncUrl, pushData, pullHandler);
 }
 
 void UrlRemoteRepo::Watch(ptr<File> requestData, ptr<DataHandler<ptr<File> > > watchHandler)
 {
-	MainPluginInstance::GetInstance()->PostUrl(watchUrl, requestData, watchHandler);
+	pluginInstance->PostUrl(watchUrl, requestData, watchHandler);
 }
 
 END_INANITY_OIL
