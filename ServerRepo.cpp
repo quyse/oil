@@ -19,14 +19,12 @@ Push:
     key data[key size]
     value size (shortly)
     value data[value size]
-    base revision (shortly big)
   }
   0 (shortly)
 
 <- total number of changed unique keys since client revision (shortly big)
 <- pre-push revision (shortly big)
-<- 1-based index of write[number of successful writes] (shortly)
-<- 0 (shortly)
+<- post-push revision (shortly big)
 <-{
     key size (shortly)
     key data[key size]
@@ -63,7 +61,6 @@ ServerRepo::ServerRepo(const char* fileName)
 
 	// create statements
 	stmtGetMaxRevision = db->CreateStatement("SELECT MAX(rev) FROM revs");
-	stmtCheckConflict = db->CreateStatement("SELECT COUNT(*) FROM revs WHERE key = ?1 AND rev > ?2");
 	stmtWrite = db->CreateStatement("INSERT INTO revs (key, value) VALUES (?1, ?2)");
 #define SUBQUERY "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key"
 	stmtPull = db->CreateStatement(
@@ -180,24 +177,12 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 		if(valueSize)
 			reader->Read(value, valueSize);
 
-		// read base revision
-		long long baseRevision = reader->ReadShortlyBig();
-
 		// check total push size
 		totalPushSize += valueSize;
 		if(totalPushSize > maxPushTotalSize)
 			THROW("Too big push total size");
 
-		// check for conflict
-		Data::SqliteQuery queryCheckConflict(stmtCheckConflict);
 		ptr<File> keyFile = NEW(PartFile(keyBufferFile, key, keySize));
-		stmtCheckConflict->Bind(1, keyFile);
-		stmtCheckConflict->Bind(2, baseRevision);
-		if(stmtCheckConflict->Step() != SQLITE_ROW)
-			THROW_SECONDARY("Can't check conflict", db->Error());
-		if(stmtCheckConflict->ColumnInt(0) > 0)
-			// conflict, skip this
-			continue;
 
 		// do write
 		Data::SqliteQuery queryWrite(stmtWrite);
@@ -206,17 +191,14 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 		if(stmtWrite->Step() != SQLITE_DONE)
 			THROW_SECONDARY("Can't do write", db->Error());
 
-		// output write
-		writer->WriteShortly(i + 1);
-
 		pushedSomething = true;
 	}
 
 	// ensure request is over
 	reader->ReadEnd();
 
-	// output zero
-	writer->WriteShortly(0);
+	// output post-push revision
+	writer->WriteShortlyBig(GetMaxRevision());
 
 	//*** pull
 	Data::SqliteQuery queryPull(stmtPull);

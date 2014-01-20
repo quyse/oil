@@ -235,12 +235,6 @@ public:
 					in >> clientName >> key >> value;
 					GetClient(clientName).repo->Change(Convert(key), Convert(value));
 				}
-				else if(command == "resolve")
-				{
-					std::string clientName, key;
-					in >> clientName >> key;
-					GetClient(clientName).repo->Resolve(Convert(key));
-				}
 				else if(command == "push")
 				{
 					std::string clientName;
@@ -278,37 +272,6 @@ public:
 						Convert(value))
 						? "OK  " : "FAIL");
 					out << " check " << clientName << " " << key << " " << value << "\n";
-				}
-				else if(command == "check_conflict")
-				{
-					std::string clientName, key;
-					bool conflict;
-					in >> clientName >> key >> conflict;
-					out << (GetClient(clientName).repo->IsConflicted(Convert(key)) == conflict
-						? "OK  " : "FAIL");
-					out << " check_conflict " << clientName << " " << key << " " << conflict << "\n";
-				}
-				else if(command == "check_conflict_server")
-				{
-					std::string clientName, key, serverValue;
-					in >> clientName >> key >> serverValue;
-					out << (IsValuesEqual(
-						GetClient(clientName).repo->GetConflictServerValue(
-							Convert(key)),
-						Convert(serverValue))
-						? "OK  " : "FAIL");
-					out << " check_conflict_server " << clientName << " " << key << " " << serverValue << "\n";
-				}
-				else if(command == "check_conflict_base")
-				{
-					std::string clientName, key, baseValue;
-					in >> clientName >> key >> baseValue;
-					out << (IsValuesEqual(
-						GetClient(clientName).repo->GetConflictBaseValue(
-							Convert(key)),
-						Convert(baseValue))
-						? "OK  " : "FAIL");
-					out << " check_conflict_base " << clientName << " " << key << " " << baseValue << "\n";
 				}
 				else if(command == "exit")
 				{

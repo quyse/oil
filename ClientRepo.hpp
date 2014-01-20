@@ -23,9 +23,7 @@ public:
 		/// client and server values are the same
 		keyStatusSync,
 		/// client value has changed after server value
-		keyStatusAhead,
-		/// client and server values diverged
-		keyStatusConflicted
+		keyStatusAhead
 	};
 
 	enum EventFlags
@@ -38,13 +36,7 @@ public:
 		/// Value has become in sync.
 		eventSync = 2,
 		/// Value has become ahead of server.
-		eventAhead = 4,
-		/// Value has become conflicted.
-		eventConflicted = 8,
-
-		/// Conflicted server value has become identified.
-		/** Could arrive with eventConflicted or separate. */
-		eventBranch = 16
+		eventAhead = 4
 	};
 
 	/// Interface to receive notifications about values.
@@ -71,9 +63,7 @@ private:
 		stmtAddKeyItem,
 		stmtRemoveKeyItem,
 		stmtChangeKeyItemStatus,
-		stmtChangeKeyItemStatusAndRev,
 		stmtChangeKeyItemValue,
-		stmtChangeKeyItemValueAndRev,
 		stmtSelectKeysToPush,
 		stmtMassChangeStatus,
 		stmtAddChunk,
@@ -108,15 +98,13 @@ private:
 	/// Get value of key item.
 	ptr<File> GetKeyItemValue(long long itemId);
 	/// Add new key item (replacing old one if exists).
-	void AddKeyItem(ptr<File> key, ptr<File> value, int status, long long revision);
+	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
 	/// Remove key item.
 	void RemoveKeyItem(long long itemId);
 	/// Change key item status (replacing old item if exists).
 	void ChangeKeyItemStatus(long long itemId, int newItemStatus);
-	void ChangeKeyItemStatusAndRev(long long itemId, int newItemStatus, long long newRevision);
 	/// Change key item value.
 	void ChangeKeyItemValue(long long itemId, ptr<File> newValue);
-	void ChangeKeyItemValueAndRev(long long itemId, ptr<File> newValue, long long newRevision);
 
 	//*** Manifest methods.
 	long long GetManifestValue(int key, long long defaultValue);
@@ -144,25 +132,11 @@ public:
 	/** If the key is conflicted, just change the client value.
 	To remove key-value pair specify value = nullptr. */
 	void Change(ptr<File> key, ptr<File> value);
-	/// Resolve conflicting change.
-	/** In case of no conflict throws.
-	Just set that client change is not conflicted anymore. */
-	void Resolve(ptr<File> key);
 
 	/// Get key status.
 	KeyStatus GetKeyStatus(ptr<File> key);
 	/// Get client value.
 	ptr<File> GetValue(ptr<File> key);
-	/// Get is value in conflict.
-	bool IsConflicted(ptr<File> key);
-	/// Get conflicting (server) value.
-	/** In case of no conflict throws.
-	In case conflict server value isn't known yet, returns 0. */
-	ptr<File> GetConflictServerValue(ptr<File> key);
-	/// Get conflict base value.
-	/** In case of no conflict throws.
-	In case there is no base (because conflict of new values), returns 0. */
-	ptr<File> GetConflictBaseValue(ptr<File> key);
 
 	void ReadServerManifest(StreamReader* reader);
 	void Push(StreamWriter* writer);

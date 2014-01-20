@@ -35,161 +35,60 @@ begin Simple conflicts
 client A
 client B
 
-# A adds k=aaa and sync (just adds new key)
-	check_conflict A k 0
-change A k aaa
-	check_conflict A k 0
+# add conflict
+change A k aaa111
+change B k bbb111
+	check A k aaa111
+	check B k bbb111
 psp A
-	check_conflict A k 0
-	check A k aaa
-	check_conflict A k 0
-
-# B adds k=bbb and sync (adds new key, gets conflict)
-change B k bbb
 psp B
-	check B k bbb
-	check_conflict B k 1
-	check_conflict_base B k null
-	check_conflict_server B k aaa
-
-# B changes k=ccc and sync (change while conflicted)
-change B k ccc
-	check B k ccc
-	check_conflict B k 1
-	check_conflict_base B k null
-	check_conflict_server B k aaa
-psp B
-	check B k ccc
-	check_conflict B k 1
-	check_conflict_base B k null
-	check_conflict_server B k aaa
 psp A
-	check A k aaa
-	check_conflict A k 0
+	check A k bbb111
+	check B k bbb111
 
-# A changes k=ddd and sync, B sync too (B changes conflicted server value)
-change A k ddd
-	check A k ddd
-	check_conflict A k 0
+# change conflict
+change A k aaa222
+change B k bbb222
+psp B
 psp A
-	check A k ddd
-	check_conflict A k 0
 psp B
-	check A k ddd
-	check_conflict A k 0
-	check B k ccc
-	check_conflict B k 1
-	check_conflict_base B k null
-	check_conflict_server B k ddd
+	check A k aaa222
+	check B k aaa222
 
-# B resolves k (==ccc) and sync, A sync too (B resolves to his value)
-resolve B k
-	check B k ccc
-	check_conflict B k 0
-psp B
-	check B k ccc
-	check_conflict B k 0
+# remove conflict
+change A k aaa333
+change B k null
 psp A
-	check B k ccc
-	check_conflict B k 0
-	check A k ccc
-	check_conflict A k 0
-
-# B changes k=eee and sync (just change)
-change B k eee
-	check B k eee
-	check_conflict B k 0
 psp B
-	check B k eee
-	check_conflict B k 0
-
-# A changes k=fff and sync (conflicted change)
-change A k fff
-	check A k fff
-	check_conflict A k 0
 psp A
-	check A k fff
-	check_conflict A k 1
-	check_conflict_base A k ccc
-	check_conflict_server A k eee
-psp B
-	check B k eee
-	check_conflict B k 0
-
-# B changes k=ggg and sync, A sync too (A changes conflicted server value)
-change B k ggg
-	check B k ggg
-	check_conflict B k 0
-psp B
-	check B k ggg
-	check_conflict B k 0
-psp A
-	check A k fff
-	check_conflict A k 1
-	check_conflict_base A k ccc
-	check_conflict_server A k ggg
-
-# A resolves k (==fff) and sync, B sync too (A resolves to his value)
-resolve A k
-	check A k fff
-	check_conflict A k 0
-psp A
-	check A k fff
-	check_conflict A k 0
-psp B
-	check B k fff
-	check_conflict B k 0
+	check A k null
+	check B k null
 
 
 
-begin Conflict after resolve (check changed conflict base)
+begin Pull conflict
+
+constraints 100 100 1 100 1 100
 
 client A
 client B
 
-change A k aaa
+change A k2 aaa222
 psp A
+change B k1 bbb111
+change B k2 bbb222
 psp B
-change A k bbb
+	check B k1 bbb111
+	check B k2 bbb222
 psp A
-change B k ccc
+	check A k1 bbb111
+	check A k2 aaa222
 psp B
-	check_conflict B k 1
-	check_conflict_base B k aaa
-	check_conflict_server B k bbb
-resolve B k
-	check B k ccc
-	check_conflict B k 0
-change A k ddd
+	check B k1 bbb111
+	check B k2 bbb222
 psp A
-psp B
-	check_conflict B k 1
-	check_conflict_base B k bbb
-	check_conflict_server B k ddd
-
-
-
-begin Postponed change
-
-client A
-client B
-
-change A k aaa
-push A
-change A k bbb
-	check A k bbb
-sync A pull A
-	check A k bbb
-	check_conflict A k 0
-psp B
-	check B k aaa
-	check_conflict B k 0
-psp A
-	check A k bbb
-	check_conflict A k 0
-psp B
-	check B k bbb
-	check_conflict B k 0
+	check A k1 bbb111
+	check A k2 bbb222
 
 
 
@@ -200,258 +99,36 @@ constraints 100 100 1 100 1 100
 client A
 client B
 
-change A k1 111
-change A k2 222
-psp A
-	check A k1 111
-	check A k2 222
-psp B
-	check B k1 111
-	check B k2 null
-psp B
-	check B k1 111
-	check B k2 null
-psp A
-	check A k1 111
-	check A k2 222
-psp B
-	check B k1 111
-	check B k2 222
-
-
-
-begin Partial simultaneous push & conflicts
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-# adds
 change A k1 aaa111
 change A k2 aaa222
-change B k1 bbb111
-change B k2 bbb222
-
+change A k3 aaa333
+	check A k1 aaa111
+	check A k2 aaa222
+	check A k3 aaa333
+	check B k1 null
+	check B k2 null
+	check B k3 null
 psp A
 psp B
 	check A k1 aaa111
-	check_conflict A k1 0
 	check A k2 aaa222
-	check_conflict A k2 0
-	check B k1 bbb111
-	check_conflict B k1 1
-	check_conflict_base B k1 null
-	check_conflict_server B k1 aaa111
-	check B k2 bbb222
-	check_conflict B k2 0
+	check A k3 aaa333
+	check B k1 aaa111
+	check B k2 null
+	check B k3 null
 psp A
 psp B
 	check A k1 aaa111
-	check_conflict A k1 0
 	check A k2 aaa222
-	check_conflict A k2 0
-	check B k1 bbb111
-	check_conflict B k1 1
-	check_conflict_base B k1 null
-	check_conflict_server B k1 aaa111
-	check B k2 bbb222
-	check_conflict B k2 1
-	check_conflict_base B k2 null
-	check_conflict_server B k2 aaa222
-
-# changes
-change A k1 a1a1
-change A k2 a2a2
-change B k1 b1b1
-change B k2 b2b2
-
-psp A
-psp B
-	check A k1 a1a1
-	check_conflict A k1 0
-	check A k2 a2a2
-	check_conflict A k2 0
-	check B k1 b1b1
-	check_conflict B k1 1
-	check_conflict_base B k1 null
-	check_conflict_server B k1 a1a1
-	check B k2 b2b2
-	check_conflict B k2 1
-	check_conflict_base B k2 null
-	check_conflict_server B k2 aaa222
-psp A
-psp B
-	check A k1 a1a1
-	check_conflict A k1 0
-	check A k2 a2a2
-	check_conflict A k2 0
-	check B k1 b1b1
-	check_conflict B k1 1
-	check_conflict_base B k1 null
-	check_conflict_server B k1 a1a1
-	check B k2 b2b2
-	check_conflict B k2 1
-	check_conflict_base B k2 null
-	check_conflict_server B k2 a2a2
-
-
-
-begin Deferred add conflict
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-change A k1 aaa111
-change A k2 aaa222
-psp A
-psp A
-change B k2 bbb222
-psp B
+	check A k3 aaa333
 	check B k1 aaa111
-	check_conflict B k1 0
-	check B k2 bbb222
-	check_conflict B k2 1
-	check_conflict_base B k2 null
-	check_conflict_server B k2 null
+	check B k2 aaa222
+	check B k3 null
+psp A
 psp B
+	check A k1 aaa111
+	check A k2 aaa222
+	check A k3 aaa333
 	check B k1 aaa111
-	check_conflict B k1 0
-	check B k2 bbb222
-	check_conflict B k2 1
-	check_conflict_base B k2 null
-	check_conflict_server B k2 aaa222
-
-
-
-begin Deferred change push/pull conflicts
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-change A k2 aaa222
-psp A
-psp B
-change A k1 aaa111
-psp A
-psp B
-change A k1 a1a1
-psp A
-change A k2 a2a2
-psp A
-change B k2 b2b2
-change B k1 b1b1
-psp B
-	check A k1 a1a1
-	check_conflict A k1 0
-	check A k2 a2a2
-	check_conflict A k2 0
-	check B k1 b1b1
-	check_conflict B k1 1
-	check_conflict_base B k1 aaa111
-	check_conflict_server B k1 a1a1
-	check B k2 b2b2
-	check_conflict B k2 1
-	check_conflict_base B k2 aaa222
-	check_conflict_server B k2 null
-psp B
-	check B k1 b1b1
-	check_conflict B k1 1
-	check_conflict_base B k1 aaa111
-	check_conflict_server B k1 a1a1
-	check B k2 b2b2
-	check_conflict B k2 1
-	check_conflict_base B k2 aaa222
-	check_conflict_server B k2 a2a2
-
-
-
-begin Pull add conflict
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-change A k1 aaa111
-change A k2 aaa222
-psp A
-psp A
-change B k3 bbb333
-change B k1 bbb111
-psp B
-	check B k3 bbb333
-	check_conflict B k3 0
-	check B k1 bbb111
-	check_conflict B k1 1
-	check_conflict_base B k1 null
-	check_conflict_server B k1 aaa111
-psp A
-	check A k3 bbb333
-	check_conflict A k3 0
-resolve B k1
-	check B k1 bbb111
-	check_conflict B k1 0
-psp B
-	check B k1 bbb111
-	check_conflict B k1 0
-psp A
-	check A k1 bbb111
-	check_conflict A k1 0
-
-
-
-begin Deferred push with delay
-# Detect self-conflict when one push one change of a key,
-# and then push another change of the same key,
-# while global revision is not reached the first change yet.
-# Correct behaviour - no conflict.
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-change A k1 aaa111
-change A k2 aaa222
-psp A
-psp A
-change B k3 bbb333
-psp B
-change B k3 bbb333bbb333
-psp B
-check_conflict B k3 0
-
-
-
-begin Sequence of chunks
-# Global revision should be promoted forward through several chunks.
-
-constraints 100 100 1 100 1 100
-
-client A
-client B
-
-change A k1 aaa111
-change A k2 aaa222
-psp A
-psp A
-
-change B k3 bbb333
-change B k4 bbb444
-psp B
-psp B
-
-# the interesting change
-change A k5 aaa555
-psp A
-psp B
-# correct: should be already in B
-check B k5 aaa555
-# incorrect: will be in B only on next psp
-# psp B
-# check B k5 aaa555
+	check B k2 aaa222
+	check B k3 aaa333

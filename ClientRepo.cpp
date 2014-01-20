@@ -23,10 +23,6 @@ struct ClientRepo::ItemStatuses
 		transient,
 		/// client change based on 'transient', waiting for results of commit of 'transient'
 		postponed,
-		/// old version of data, for reference only, in case of conflict
-		conflictBase,
-		/// client version in case of conflict
-		conflictClient,
 
 		_count
 	};
@@ -91,20 +87,12 @@ Possible combinations of items with the same key:
 	transient
 * client changed new data, while previous change is still committing
 	transient postponed
-* new data conflicted because someone added new data too
-	server conflictClient
-* new data conflicted, but server version isn't known yet
-	conflictClient
 * client changed data
 	server client
 * changed data is commiting to server
 	server transient
 * client changed data, while previous change is still committing
 	server transient postponed
-* changed data conflicted because someone changed this data too
-	conflictBase server conflictClient
-* changed data conflicted but server version isn't known yet
-	conflictBase conflictClient
 
 Sync includes two substeps - push and pull.
 Push tryes to commit client changes on server.
@@ -117,16 +105,9 @@ Request:
 * Transform these 'client's into 'transient's.
 * Send keys and values of the subset in order.
 Response:
-* Receive numbers of succeeded client changes.
-	* Number that missing means corresponding change was conflicted.
-* For each successful change:
+* For each change:
 	* 'transient' becomes 'server', old 'server' (if presents) disappears
 	* 'postponed' (if presents) becomes 'client'
-* For each conflicted change:
-	* if 'postponed' presents, it becomes 'conflictClient'
-	* if 'postponed' presents, 'transient' disappears
-	* if 'postponed' doesn't present, 'transient' becomes 'conflictClient'
-	* if 'server' presents, it becomes 'conflictBase'
 * Receive server changes.
 * For each server change:
 	* new data becomes 'server', old 'server' (if presents) disappears
@@ -141,11 +122,6 @@ database should be cleaned up:
 * if 'postponed' doesn't present, 'transient' becomes 'client'
 
 Cleanup procedure should run when database is opened.
-
-Note that conflict could be without 'server'. It happens when new server value
-is not arrived yet with pull. Server knew it is conflict, so it didn't
-allow commit, but server always sends updates in order of revisions.
-Client can't resolve such a conflict until update is arrived.
 
 */
 
@@ -178,8 +154,7 @@ ClientRepo::ClientRepo(const char* fileName)
 		"id INTEGER PRIMARY KEY, "
 		"value BLOB NOT NULL, " // value comes first to decrease moving large blob
 		"key BLOB NOT NULL, "
-		"status INTEGER NOT NULL, " // see ItemStatus enum
-		"rev INTEGER NOT NULL)", // revision for 'server' and 'conflictBase', 0 for others
+		"status INTEGER NOT NULL)", // see ItemStatus enum
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table items", db->Error());
 	// create index items_key_status
@@ -215,16 +190,14 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtGetKeyItemsByOneItemId = db->CreateStatement("SELECT id, status FROM items WHERE key = (SELECT key FROM items WHERE id = ?1)");
 	stmtGetKeyItemKey = db->CreateStatement("SELECT key FROM items WHERE id = ?1");
 	stmtGetKeyItemValue = db->CreateStatement("SELECT value FROM items WHERE id = ?1");
-	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status, rev) VALUES (?1, ?2, ?3, ?4)");
+	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status) VALUES (?1, ?2, ?3)");
 	stmtRemoveKeyItem = db->CreateStatement("DELETE FROM items WHERE id = ?1");
 	stmtChangeKeyItemStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE id = ?1");
-	stmtChangeKeyItemStatusAndRev = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2, rev = ?3 WHERE id = ?1");
 	stmtChangeKeyItemValue = db->CreateStatement("UPDATE items SET value = ?2 WHERE id = ?1");
-	stmtChangeKeyItemValueAndRev = db->CreateStatement("UPDATE items SET value = ?2, rev = ?3 WHERE id = ?1");
 	{
 		std::ostringstream ss;
 		ss <<
-			"SELECT a.id, a.key, a.value, b.rev"
+			"SELECT a.id, a.key, a.value"
 			" FROM items AS a LEFT JOIN items AS b ON a.key = b.key"
 			" AND b.status = " << ItemStatuses::server
 			<< " WHERE a.status = " << ItemStatuses::client
@@ -285,17 +258,13 @@ ClientRepo::KeyItems ClientRepo::FillKeyItems(Data::SqliteStatement* stmt)
 			0,
 			(1 << ItemStatuses::client),
 			(1 << ItemStatuses::transient),
-			(1 << ItemStatuses::transient) | (1 << ItemStatuses::postponed),
-			(1 << ItemStatuses::conflictClient),
-			(1 << ItemStatuses::conflictBase) | (1 << ItemStatuses::conflictClient)
+			(1 << ItemStatuses::transient) | (1 << ItemStatuses::postponed)
 		};
 		static const int meaningful[] =
 		{
 			ItemStatuses::client,
 			ItemStatuses::transient,
-			ItemStatuses::postponed,
-			ItemStatuses::conflictBase,
-			ItemStatuses::conflictClient
+			ItemStatuses::postponed
 		};
 		int c = 0;
 		for(size_t i = 0; i < sizeof(meaningful) / sizeof(meaningful[0]); ++i)
@@ -306,9 +275,10 @@ ClientRepo::KeyItems ClientRepo::FillKeyItems(Data::SqliteStatement* stmt)
 			if(reasonable[i] == c)
 				break;
 		if(i >= sizeof(reasonable) / sizeof(reasonable[0]))
-			THROW("Key items combination are not reasonable");
+			THROW("Key items combination doesn't seem reasonable");
 	}
 #endif
+
 
 	return keyItems;
 }
@@ -364,14 +334,13 @@ ptr<File> ClientRepo::GetKeyItemValue(long long itemId)
 	return result;
 }
 
-void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status, long long revision)
+void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status)
 {
 	Data::SqliteQuery query(stmtAddKeyItem);
 
 	stmtAddKeyItem->Bind(1, key);
 	stmtAddKeyItem->Bind(2, value);
 	stmtAddKeyItem->Bind(3, status);
-	stmtAddKeyItem->Bind(4, revision);
 
 	if(stmtAddKeyItem->Step() != SQLITE_DONE)
 		THROW_SECONDARY("Error adding key item", db->Error());
@@ -402,20 +371,6 @@ void ClientRepo::ChangeKeyItemStatus(long long itemId, int newItemStatus)
 		THROW_SECONDARY("Error changing key item status", db->Error());
 }
 
-void ClientRepo::ChangeKeyItemStatusAndRev(long long itemId, int newItemStatus, long long newRevision)
-{
-	THROW_ASSERT(itemId > 0);
-
-	Data::SqliteQuery query(stmtChangeKeyItemStatusAndRev);
-
-	stmtChangeKeyItemStatusAndRev->Bind(1, itemId);
-	stmtChangeKeyItemStatusAndRev->Bind(2, newItemStatus);
-	stmtChangeKeyItemStatusAndRev->Bind(3, newRevision);
-
-	if(stmtChangeKeyItemStatusAndRev->Step() != SQLITE_DONE)
-		THROW_SECONDARY("Error changing key item status", db->Error());
-}
-
 void ClientRepo::ChangeKeyItemValue(long long itemId, ptr<File> newValue)
 {
 	THROW_ASSERT(itemId > 0);
@@ -427,20 +382,6 @@ void ClientRepo::ChangeKeyItemValue(long long itemId, ptr<File> newValue)
 
 	if(stmtChangeKeyItemValue->Step() != SQLITE_DONE)
 		THROW_SECONDARY("Error changing key item value", db->Error());
-}
-
-void ClientRepo::ChangeKeyItemValueAndRev(long long itemId, ptr<File> newValue, long long newRevision)
-{
-	THROW_ASSERT(itemId > 0);
-
-	Data::SqliteQuery query(stmtChangeKeyItemValueAndRev);
-
-	stmtChangeKeyItemValueAndRev->Bind(1, itemId);
-	stmtChangeKeyItemValueAndRev->Bind(2, newValue);
-	stmtChangeKeyItemValueAndRev->Bind(3, newRevision);
-
-	if(stmtChangeKeyItemValueAndRev->Step() != SQLITE_DONE)
-		THROW_SECONDARY("Error changing key item value and revision", db->Error());
 }
 
 long long ClientRepo::GetManifestValue(int key, long long defaultValue)
@@ -569,8 +510,6 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	int status;
 	if(keyItems.ids[ItemStatuses::transient])
 		status = ItemStatuses::postponed;
-	else if(keyItems.ids[ItemStatuses::conflictClient])
-		status = ItemStatuses::conflictClient;
 	else
 		status = ItemStatuses::client;
 
@@ -580,7 +519,7 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	// else add new item
 	else
 	{
-		AddKeyItem(key, value, status, 0);
+		AddKeyItem(key, value, status);
 		eventFlags |= eventAhead;
 	}
 
@@ -591,41 +530,11 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	END_TRY("Can't change repo value");
 }
 
-void ClientRepo::Resolve(ptr<File> key)
-{
-	BEGIN_TRY();
-
-	Data::SqliteTransaction transaction(db);
-
-	// get acquainted with this key
-	KeyItems keyItems = GetKeyItems(key);
-
-	// if there is no conflict, this is an error
-	if(!keyItems.ids[ItemStatuses::conflictClient])
-		THROW("Key is not in conflict");
-
-	// make client value not conflict
-	ChangeKeyItemStatus(keyItems.ids[ItemStatuses::conflictClient], ItemStatuses::client);
-
-	// if there is conflict base, remove it
-	if(keyItems.ids[ItemStatuses::conflictBase])
-		RemoveKeyItem(keyItems.ids[ItemStatuses::conflictBase]);
-
-	transaction.Commit();
-
-	QueueEvent(key, eventAhead);
-
-	END_TRY("Can't resolve repo conflict");
-}
-
 ClientRepo::KeyStatus ClientRepo::GetKeyStatus(ptr<File> key)
 {
 	BEGIN_TRY();
 
 	KeyItems keyItems = GetKeyItems(key);
-
-	if(keyItems.ids[ItemStatuses::conflictClient])
-		return keyStatusConflicted;
 
 	if(keyItems.ids[ItemStatuses::client] || keyItems.ids[ItemStatuses::transient])
 		return keyStatusAhead;
@@ -647,7 +556,6 @@ ptr<File> ClientRepo::GetValue(ptr<File> key)
 		ItemStatuses::postponed,
 		ItemStatuses::transient,
 		ItemStatuses::client,
-		ItemStatuses::conflictClient,
 		ItemStatuses::server
 	};
 
@@ -658,55 +566,6 @@ ptr<File> ClientRepo::GetValue(ptr<File> key)
 	return nullptr;
 
 	END_TRY("Can't get repo value");
-}
-
-bool ClientRepo::IsConflicted(ptr<File> key)
-{
-	BEGIN_TRY();
-
-	KeyItems keyItems = GetKeyItems(key);
-
-	return !!keyItems.ids[ItemStatuses::conflictClient];
-
-	END_TRY("Can't get is repo value conflicted");
-}
-
-ptr<File> ClientRepo::GetConflictServerValue(ptr<File> key)
-{
-	BEGIN_TRY();
-
-	Data::SqliteTransaction transaction(db);
-
-	KeyItems keyItems = GetKeyItems(key);
-
-	if(!keyItems.ids[ItemStatuses::conflictClient])
-		THROW("Key is not in conflict");
-
-	if(keyItems.ids[ItemStatuses::server])
-		return GetKeyItemValue(keyItems.ids[ItemStatuses::server]);
-
-	return nullptr;
-
-	END_TRY("Can't get repo conflict server value");
-}
-
-ptr<File> ClientRepo::GetConflictBaseValue(ptr<File> key)
-{
-	BEGIN_TRY();
-
-	Data::SqliteTransaction transaction(db);
-
-	KeyItems keyItems = GetKeyItems(key);
-
-	if(!keyItems.ids[ItemStatuses::conflictClient])
-		THROW("Key is not in conflict");
-
-	if(keyItems.ids[ItemStatuses::conflictBase])
-		return GetKeyItemValue(keyItems.ids[ItemStatuses::conflictBase]);
-
-	return nullptr;
-
-	END_TRY("Can't get repo conflict base value");
 }
 
 void ClientRepo::ReadServerManifest(StreamReader* reader)
@@ -791,8 +650,6 @@ void ClientRepo::Push(StreamWriter* writer)
 				if(valueSize)
 					writer->Write(value->GetData(), valueSize);
 			}
-			// output base revision
-			writer->WriteShortlyBig(stmtSelectKeysToPush->ColumnInt64(3));
 
 			{
 				// get id of item
@@ -839,35 +696,21 @@ bool ClientRepo::Pull(StreamReader* reader)
 
 	// read pre-push revision
 	long long prePushRevision = reader->ReadShortlyBig();
+	// read post-push revision
+	long long postPushRevision = reader->ReadShortlyBig();
 
 	bool changedSomething = false;
 
 	// process commited keys
-	long long pushRevision = prePushRevision;
-	for(;;)
+	for(size_t i = 0; i < transientIds.size(); ++i)
 	{
-		// read key index (1-based)
-		size_t keyIndex = reader->ReadShortly();
-		if(!keyIndex--)
-			break;
-		if(keyIndex >= transientIds.size())
-			THROW("Invalid commited key index");
-
-		long long transientId = transientIds[keyIndex];
-		if(!transientId)
-			THROW("Duplicate commited key index");
-		transientIds[keyIndex] = 0;
+		long long transientId = transientIds[i];
 
 		// get other key items
 		KeyItems keyItems = GetKeyItemsByOneItemId(transientId);
 
-		// committed key can't be conflicted
-
-		// get right revision
-		++pushRevision;
-
 		// 'transient' becomes 'server'
-		ChangeKeyItemStatusAndRev(keyItems.ids[ItemStatuses::transient], ItemStatuses::server, pushRevision);
+		ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::server);
 		// 'postponed' (if presents) becomes 'client'
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
@@ -877,51 +720,9 @@ bool ClientRepo::Pull(StreamReader* reader)
 		changedSomething = true;
 	}
 
-	// remember post-push revision
-	long long postPushRevision = pushRevision;
-
 	// add chunk if non-zero
 	if(prePushRevision < postPushRevision)
 		AddChunk(prePushRevision, postPushRevision);
-
-	// process conflicted keys
-	for(size_t i = 0; i < transientIds.size(); ++i)
-	{
-		long long transientId = transientIds[i];
-		if(!transientId)
-			continue;
-
-		// get other key items
-		KeyItems keyItems = GetKeyItemsByOneItemId(transientId);
-
-		// committed key, even failed, can't be conflicted before
-
-		int eventFlags = eventConflicted;
-		long long someItemId;
-
-		// if 'postponed' presents, it becomes 'conflictClient', and 'transient' disappears
-		if(keyItems.ids[ItemStatuses::postponed])
-		{
-			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::conflictClient);
-			RemoveKeyItem(keyItems.ids[ItemStatuses::transient]);
-			someItemId = keyItems.ids[ItemStatuses::postponed];
-		}
-		// else 'transient' becomes 'conflictClient'
-		else
-		{
-			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::conflictClient);
-			someItemId = keyItems.ids[ItemStatuses::transient];
-		}
-
-		// 'server' (if presents) becomes 'conflictBase'
-		if(keyItems.ids[ItemStatuses::server])
-		{
-			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::server], ItemStatuses::conflictBase);
-			eventFlags |= eventBranch;
-		}
-
-		QueueEvent(GetKeyItemKey(someItemId), eventFlags);
-	}
 
 	// clear transient ids
 	transientIds.clear();
@@ -960,30 +761,17 @@ bool ClientRepo::Pull(StreamReader* reader)
 
 			int eventFlags;
 
-			// if there is 'client', it's pull conflict
-			if(keyItems.ids[ItemStatuses::client])
-			{
-				eventFlags = eventConflicted;
-				// 'client' becomes 'conflictClient'
-				ChangeKeyItemStatus(keyItems.ids[ItemStatuses::client], ItemStatuses::conflictClient);
-				// if there is 'server', it becomes 'conflictBase'
-				if(keyItems.ids[ItemStatuses::server])
-				{
-					ChangeKeyItemStatus(keyItems.ids[ItemStatuses::server], ItemStatuses::conflictBase);
-					keyItems.ids[ItemStatuses::server] = 0;
-					eventFlags |= eventBranch;
-				}
-			}
-			else
+			// if there is no 'client', it's changed
+			if(!keyItems.ids[ItemStatuses::client])
 				eventFlags = eventChanged;
 
 			QueueEvent(MemoryFile::CreateViaCopy(keyFile), eventFlags);
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
-				ChangeKeyItemValueAndRev(keyItems.ids[ItemStatuses::server], valueFile, revision);
+				ChangeKeyItemValue(keyItems.ids[ItemStatuses::server], valueFile);
 			else
-				AddKeyItem(keyFile, valueFile, ItemStatuses::server, revision);
+				AddKeyItem(keyFile, valueFile, ItemStatuses::server);
 
 			// set new global revision
 			SetManifestValue(ManifestKeys::globalRevision, revision);
