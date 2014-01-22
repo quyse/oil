@@ -63,7 +63,7 @@ private:
 					CriticalCode cc(csRepo);
 					repo->Sync(&reader, &writer);
 					long long maxRevision = repo->GetMaxRevision();
-					if(lastSyncRevision < 0 && lastSyncRevision < maxRevision)
+					if(lastSyncRevision < maxRevision)
 					{
 						ptr<MemoryStream> stream = NEW(MemoryStream());
 						StreamWriter writer(stream);
