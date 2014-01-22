@@ -597,6 +597,9 @@ void ClientRepo::Push(StreamWriter* writer)
 {
 	BEGIN_TRY();
 
+	if(pushInProgress)
+		THROW("Push already in progress");
+
 	Data::SqliteTransaction transaction(db);
 
 	// get client revision
@@ -687,6 +690,9 @@ void ClientRepo::Push(StreamWriter* writer)
 bool ClientRepo::Pull(StreamReader* reader)
 {
 	BEGIN_TRY();
+
+	if(!pushInProgress)
+		THROW("Push isn't in progress");
 
 	Data::SqliteTransaction transaction(db);
 	EventQueueTransaction eventQueueTransaction(this);
@@ -808,6 +814,8 @@ bool ClientRepo::Pull(StreamReader* reader)
 	transaction.Commit();
 	eventQueueTransaction.Commit();
 
+	pushInProgress = false;
+
 	return changedSomething;
 
 	END_TRY("Can't pull repo");
@@ -816,6 +824,8 @@ bool ClientRepo::Pull(StreamReader* reader)
 void ClientRepo::Cleanup()
 {
 	BEGIN_TRY();
+
+	pushInProgress = false;
 
 	// clean list of transient ids
 	transientIds.clear();
