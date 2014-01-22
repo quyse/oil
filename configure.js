@@ -33,6 +33,7 @@ var executables = {
 			'ServerRepo',
 			'UrlRemoteRepo',
 			'LocalRemoteRepo',
+			'Action',
 			'meta'
 		],
 		staticLibraries: [

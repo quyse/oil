@@ -31,4 +31,15 @@ META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
 	META_METHOD(Init);
 	META_METHOD(Sync);
 	META_METHOD(Watch);
+	META_METHOD(MakeAction);
+	META_METHOD(Undo);
+	META_METHOD(Redo);
+	META_METHOD(SetUndoRedoChangedCallback);
+META_CLASS_END();
+
+#include "Action.hpp"
+META_CLASS(Inanity::Oil::Action, Inanity.Oil.Action);
+	META_CONSTRUCTOR(const String&);
+	META_METHOD(GetDescription);
+	META_METHOD(AddChange);
 META_CLASS_END();

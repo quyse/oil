@@ -8,12 +8,20 @@
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
 
+// classes only for registration in script state
+#include "Action.hpp"
+#include "../inanity/Strings.hpp"
+
 BEGIN_INANITY_OIL
 
 ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 : scriptState(scriptState)
 {
 	nativeFileSystem = Platform::FileSystem::GetNativeFileSystem();
+
+	// register some classes
+	scriptState->Register<Action>();
+	scriptState->Register<Strings>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const
