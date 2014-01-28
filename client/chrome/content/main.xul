@@ -8,6 +8,7 @@
 	persist="screenX screenY width height sizemode">
 
 	<script src="globals.js" />
+	<script src="ui.js" />
 	<script src="main.js" />
 
 	<commandset>
