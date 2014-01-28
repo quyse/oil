@@ -2,6 +2,14 @@ const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 const MIME_DRAG_TOOL_TAB = "application/x-inanityoil-ui-drag-tab";
 
+function getToolTab(tabNumber) {
+	return document.getElementById("tab" + tabNumber);
+}
+
+function getToolTabpanel(tabNumber) {
+	return document.getElementById("tabpanel" + tabNumber);
+}
+
 var toolTabsCount = 0;
 function createToolTab(tabbox, title) {
 	// get tab number
@@ -73,15 +81,15 @@ function moveToolTab(destTabbox, sourceTabNumber, destTabNumber) {
 		return false;
 
 	// get source elements
-	var sourceTab = document.getElementById("tab" + sourceTabNumber);
-	var sourceTabpanel = document.getElementById("tabpanel" + sourceTabNumber);
+	var sourceTab = getToolTab(sourceTabNumber);
+	var sourceTabpanel = getToolTabpanel(sourceTabNumber);
 
 	var sourceTabbox = sourceTab.parentNode.parentNode;
 
 	// perform move
 	if(destTabNumber >= 0) {
-		var destTab = document.getElementById("tab" + destTabNumber);
-		var destTabpanel = document.getElementById("tabpanel" + destTabNumber);
+		var destTab = getToolTab(destTabNumber);
+		var destTabpanel = getToolTabpanel(destTabNumber);
 
 		// on same tabboxes we have to swap them carefully
 		if(sourceTabbox == destTabbox) {
