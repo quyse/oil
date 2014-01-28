@@ -15,6 +15,8 @@
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
 		<command id="commandUndo" oncommand="OIL.undo()" />
 		<command id="commandRedo" oncommand="OIL.redo()" />
+		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
+
 	</commandset>
 
 	<keyset>
@@ -34,6 +36,11 @@
 				<menupopup>
 					<menuitem id="menuUndo" accesskey="u" key="keyUndo" command="commandUndo" />
 					<menuitem id="menuRedo" accesskey="r" key="keyRedo" command="commandRedo" />
+				</menupopup>
+			</menu>
+			<menu label="Tools" accesskey="t">
+				<menupopup>
+					<menuitem id="menuConsole" label="Javascript Console..." accesskey="c" command="commandJavascriptConsole" />
 				</menupopup>
 			</menu>
 		</menubar>
