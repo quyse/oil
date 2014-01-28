@@ -17,33 +17,17 @@ BEGIN_INANITY_OIL
 class ClientRepo : public Repo
 {
 public:
-	/// Status of key.
-	enum KeyStatus
-	{
-		/// client and server values are the same
-		keyStatusSync,
-		/// client value has changed after server value
-		keyStatusAhead
-	};
-
-	enum EventFlags
-	{
-		/// Value has been changed.
-		/** Happens with any key status. */
-		eventChanged = 1,
-
-		//*** Status events.
-		/// Value has become in sync.
-		eventSync = 2,
-		/// Value has become ahead of server.
-		eventAhead = 4
-	};
-
 	/// Interface to receive notifications about values.
-	class EventHandler : public Object
+	class EventHandler
 	{
 	public:
-		virtual void OnEvent(ptr<File> key, int eventFlags);
+		virtual void OnEvent(ptr<File> key, ptr<File> value) = 0;
+	};
+
+	class KeysEnumerator
+	{
+	public:
+		virtual void OnKey(ptr<File> key) = 0;
 	};
 
 private:
@@ -60,12 +44,15 @@ private:
 		stmtGetKeyItemsByOneItemId,
 		stmtGetKeyItemKey,
 		stmtGetKeyItemValue,
+		stmtGetKeyItemValueLength,
 		stmtAddKeyItem,
 		stmtRemoveKeyItem,
 		stmtChangeKeyItemStatus,
 		stmtChangeKeyItemValue,
 		stmtSelectKeysToPush,
 		stmtMassChangeStatus,
+		stmtEnumerateKeysBegin,
+		stmtEnumerateKeysBeginEnd,
 		stmtAddChunk,
 		stmtPreCutChunks,
 		stmtCutChunks,
@@ -80,9 +67,8 @@ private:
 	/// Number of keys to pull more (estimated).
 	long long pullLag;
 
-	ptr<EventHandler> eventHandler;
 	/// Deferred events queue.
-	std::vector<std::pair<ptr<File>, int> > events;
+	std::vector<std::pair<ptr<File>, ptr<File> > > events;
 
 	//*** Internal help methods.
 	/// Check item status for validity.
@@ -97,6 +83,8 @@ private:
 	ptr<File> GetKeyItemKey(long long itemId);
 	/// Get value of key item.
 	ptr<File> GetKeyItemValue(long long itemId);
+	/// Get value length of key item.
+	size_t GetKeyItemValueLength(long long itemId);
 	/// Add new key item (replacing old one if exists).
 	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
 	/// Remove key item.
@@ -121,7 +109,7 @@ private:
 	long long GetUpperRevision();
 
 	/// Add deferred event.
-	void QueueEvent(ptr<File> key, int eventFlags);
+	void QueueEvent(ptr<File> key, ptr<File> value);
 
 public:
 	ClientRepo(const char* fileName);
@@ -133,10 +121,13 @@ public:
 	To remove key-value pair specify value = nullptr. */
 	void Change(ptr<File> key, ptr<File> value);
 
-	/// Get key status.
-	KeyStatus GetKeyStatus(ptr<File> key);
 	/// Get client value.
 	ptr<File> GetValue(ptr<File> key);
+	/// Check if client value is non-null.
+	bool HasValue(ptr<File> key);
+	/// Get keys with specified prefix.
+	/** Only keys with non-null values returned. */
+	void EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator);
 
 	void ReadServerManifest(StreamReader* reader);
 	void Push(StreamWriter* writer);
@@ -149,10 +140,8 @@ public:
 	/** Returns if we need to sync. */
 	bool ReadWatchResponse(StreamReader* reader);
 
-	/// Set event handler.
-	void SetEventHandler(ptr<EventHandler> eventHandler);
 	/// Send deferred events to event handler.
-	void ProcessEvents();
+	void ProcessEvents(EventHandler* eventHandler);
 };
 
 END_INANITY_OIL

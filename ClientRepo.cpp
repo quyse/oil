@@ -190,6 +190,7 @@ ClientRepo::ClientRepo(const char* fileName)
 	stmtGetKeyItemsByOneItemId = db->CreateStatement("SELECT id, status FROM items WHERE key = (SELECT key FROM items WHERE id = ?1)");
 	stmtGetKeyItemKey = db->CreateStatement("SELECT key FROM items WHERE id = ?1");
 	stmtGetKeyItemValue = db->CreateStatement("SELECT value FROM items WHERE id = ?1");
+	stmtGetKeyItemValueLength = db->CreateStatement("SELECT LENGTH(value) FROM items WHERE id = ?1");
 	stmtAddKeyItem = db->CreateStatement("INSERT OR REPLACE INTO items (key, value, status) VALUES (?1, ?2, ?3)");
 	stmtRemoveKeyItem = db->CreateStatement("DELETE FROM items WHERE id = ?1");
 	stmtChangeKeyItemStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE id = ?1");
@@ -205,6 +206,8 @@ ClientRepo::ClientRepo(const char* fileName)
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
+	stmtEnumerateKeysBegin = db->CreateStatement("SELECT DISTINCT key FROM items WHERE key >= ?1 ORDER BY key");
+	stmtEnumerateKeysBeginEnd = db->CreateStatement("SELECT DISTINCT key FROM items WHERE key >= ?1 AND key < ?2 ORDER BY key");
 	stmtAddChunk = db->CreateStatement("INSERT INTO chunks (prerev, postrev) VALUES (?1, ?2)");
 	stmtPreCutChunks = db->CreateStatement("SELECT MAX(postrev) FROM chunks WHERE prerev <= ?1");
 	stmtCutChunks = db->CreateStatement("DELETE FROM chunks WHERE prerev <= ?1");
@@ -332,6 +335,20 @@ ptr<File> ClientRepo::GetKeyItemValue(long long itemId)
 	if(!result->GetSize())
 		return nullptr;
 	return result;
+}
+
+size_t ClientRepo::GetKeyItemValueLength(long long itemId)
+{
+	THROW_ASSERT(itemId > 0);
+
+	Data::SqliteQuery query(stmtGetKeyItemValueLength);
+
+	stmtGetKeyItemValue->Bind(1, itemId);
+
+	if(stmtGetKeyItemValue->Step() != SQLITE_ROW)
+		THROW_SECONDARY("Error getting key item value length", db->Error());
+
+	return (size_t)stmtGetKeyItemValue->ColumnInt64(0);
 }
 
 void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status)
@@ -482,9 +499,9 @@ long long ClientRepo::GetUpperRevision()
 	return stmtGetUpperRevision->ColumnInt64(0);
 }
 
-void ClientRepo::QueueEvent(ptr<File> key, int eventFlags)
+void ClientRepo::QueueEvent(ptr<File> key, ptr<File> value)
 {
-	events.push_back(std::pair<ptr<File>, int>(key, eventFlags));
+	events.push_back(std::pair<ptr<File>, ptr<File> >(key, value));
 }
 
 void ClientRepo::Change(ptr<File> key, ptr<File> value)
@@ -496,15 +513,12 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 		THROW("Key length should be positive");
 
 	// replace value with zero file
-	if(!value)
-		value = emptyFile;
+	ptr<File> valueToWrite = value ? value : emptyFile;
 
 	Data::SqliteTransaction transaction(db);
 
 	// get acquainted with this key
 	KeyItems keyItems = GetKeyItems(key);
-
-	int eventFlags = eventChanged;
 
 	// select status for the change
 	int status;
@@ -515,33 +529,16 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 
 	// if item is present, change it
 	if(keyItems.ids[status])
-		ChangeKeyItemValue(keyItems.ids[status], value);
+		ChangeKeyItemValue(keyItems.ids[status], valueToWrite);
 	// else add new item
 	else
-	{
-		AddKeyItem(key, value, status);
-		eventFlags |= eventAhead;
-	}
+		AddKeyItem(key, valueToWrite, status);
 
 	transaction.Commit();
 
-	QueueEvent(key, eventFlags);
+	QueueEvent(key, value);
 
 	END_TRY("Can't change repo value");
-}
-
-ClientRepo::KeyStatus ClientRepo::GetKeyStatus(ptr<File> key)
-{
-	BEGIN_TRY();
-
-	KeyItems keyItems = GetKeyItems(key);
-
-	if(keyItems.ids[ItemStatuses::client] || keyItems.ids[ItemStatuses::transient])
-		return keyStatusAhead;
-
-	return keyStatusSync;
-
-	END_TRY("Can't get key status");
 }
 
 ptr<File> ClientRepo::GetValue(ptr<File> key)
@@ -566,6 +563,81 @@ ptr<File> ClientRepo::GetValue(ptr<File> key)
 	return nullptr;
 
 	END_TRY("Can't get repo value");
+}
+
+bool ClientRepo::HasValue(ptr<File> key)
+{
+	BEGIN_TRY();
+
+	Data::SqliteTransaction transaction(db);
+
+	KeyItems keyItems = GetKeyItems(key);
+
+	int order[] = {
+		ItemStatuses::postponed,
+		ItemStatuses::transient,
+		ItemStatuses::client,
+		ItemStatuses::server
+	};
+
+	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
+		if(keyItems.ids[order[i]] && GetKeyItemValueLength(keyItems.ids[order[i]]))
+			return true;
+
+	return false;
+
+	END_TRY("Can't figure out if repo has value");
+}
+
+void ClientRepo::EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator)
+{
+	BEGIN_TRY();
+
+	size_t prefixSize = prefix->GetSize();
+
+	// get upper bound for the range
+	// copy prefix
+	ptr<File> endRange = MemoryFile::CreateViaCopy(prefix->GetData(), prefixSize);
+	// "increment" prefix
+	unsigned char* endRangeData = (unsigned char*)endRange->GetData();
+	size_t i;
+	for(i = prefixSize; i > 0; --i)
+		if(endRangeData[i - 1] < 0xff)
+		{
+			++endRangeData[i - 1];
+			break;
+		}
+		else
+			endRangeData[i - 1] = 0;
+	// if we got to begin, all the data beginning from prefix belongs to the range
+	if(!i)
+		endRange = nullptr;
+
+	Data::SqliteStatement* stmt = endRange ? stmtEnumerateKeysBeginEnd : stmtEnumerateKeysBegin;
+
+	Data::SqliteQuery query(stmt);
+
+	stmt->Bind(1, prefix);
+	if(endRange)
+		stmt->Bind(2, endRange);
+
+	bool done = false;
+	while(!done)
+	{
+		switch(stmt->Step())
+		{
+		case SQLITE_ROW:
+			enumerator->OnKey(stmt->ColumnBlob(0));
+			break;
+		case SQLITE_DONE:
+			done = true;
+			break;
+		default:
+			THROW_SECONDARY("Error enumerating keys", db->Error());
+		}
+	}
+
+	END_TRY("Can't enumerate keys");
 }
 
 void ClientRepo::ReadServerManifest(StreamReader* reader)
@@ -720,8 +792,6 @@ bool ClientRepo::Pull(StreamReader* reader)
 		// 'postponed' (if presents) becomes 'client'
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
-		else
-			QueueEvent(GetKeyItemKey(keyItems.ids[ItemStatuses::transient]), eventSync);
 
 		changedSomething = true;
 	}
@@ -765,13 +835,7 @@ bool ClientRepo::Pull(StreamReader* reader)
 			// get acquainted with this key
 			KeyItems keyItems = GetKeyItems(keyFile);
 
-			int eventFlags;
-
-			// if there is no 'client', it's changed
-			if(!keyItems.ids[ItemStatuses::client])
-				eventFlags = eventChanged;
-
-			QueueEvent(MemoryFile::CreateViaCopy(keyFile), eventFlags);
+			QueueEvent(MemoryFile::CreateViaCopy(keyFile), MemoryFile::CreateViaCopy(valueFile));
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
@@ -900,18 +964,14 @@ bool ClientRepo::ReadWatchResponse(StreamReader* reader)
 	END_TRY("Can't get if repo sync needed");
 }
 
-void ClientRepo::SetEventHandler(ptr<EventHandler> eventHandler)
-{
-	this->eventHandler = eventHandler;
-}
-
-void ClientRepo::ProcessEvents()
+void ClientRepo::ProcessEvents(EventHandler* eventHandler)
 {
 	if(eventHandler)
 		for(size_t i = 0; i < events.size(); ++i)
 		{
 			eventHandler->OnEvent(events[i].first, events[i].second);
 			events[i].first = nullptr;
+			events[i].second = nullptr;
 		}
 	events.clear();
 }
