@@ -1,5 +1,23 @@
 Components.utils.import('chrome://oil/content/oil.js');
 
+function onChangeSomething(types, currentType) {
+	// adjust visibility of all controls
+	for(var type in types) {
+		var hidden = type != currentType;
+		var typeControls = types[type].controls;
+		for(var i in typeControls)
+			document.getElementById(typeControls[i]).hidden = hidden;
+	}
+
+	// perform necessary update
+	if(types[currentType].update)
+		types[currentType].update();
+
+	// focus element if needed
+	if(types[currentType].focus)
+		document.getElementById(types[currentType].focus).focus();
+}
+
 function onChangeRemoteType() {
 	var remoteType = document.getElementById("menulistRemoteType").value;
 
@@ -22,38 +40,26 @@ function onChangeRemoteType() {
 		}
 	};
 
-	// adjust visibility of all remote-type related controls
-	for(var type in types) {
-		var hidden = type != remoteType;
-		var typeControls = types[type].controls;
-		for(var i in typeControls)
-			document.getElementById(typeControls[i]).hidden = hidden;
-	}
-
-	// perform necessary update
-	if(types[remoteType].update)
-		types[remoteType].update();
-
-	// focus element if needed
-	if(types[remoteType].focus)
-		document.getElementById(types[remoteType].focus).focus();
+	onChangeSomething(types, remoteType);
 }
 
 function onChangeCacheType() {
 	var cacheType = document.getElementById("menulistCacheType").value;
 
-	var controls = {
-		file: ['rowCacheFile'],
-		temp: ['rowCacheTemp'],
-		memory: ['rowCacheMemory']
+	var types = {
+		file: {
+			controls: ['rowCacheFile'],
+			focus: 'textboxCacheFile'
+		},
+		temp: {
+			controls: ['rowCacheTemp']
+		},
+		memory: {
+			controls: ['rowCacheMemory']
+		}
 	};
 
-	for(var type in controls) {
-		var hidden = type != cacheType;
-		var typeControls = controls[type];
-		for(var i in typeControls)
-			document.getElementById(typeControls[i]).hidden = hidden;
-	}
+	onChangeSomething(types, cacheType);
 }
 
 var defaultDocumentsPath =

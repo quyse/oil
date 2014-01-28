@@ -12,57 +12,29 @@ function onRepoConnect() {
 	window.openDialog('connectrepo.xul', '', 'chrome,modal,centerscreen,resizable', params);
 	if(params.repo) {
 		OIL.repo = params.repo;
-		watchRepo();
+		OIL.watchRepo();
+		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
 	}
 }
 
-function onAssign() {
-	var key = document.getElementById("textboxAssignKey").value;
-	var value = document.getElementById("textboxAssignValue").value;
-	OIL.repo.Change(key, value);
-}
-
-//*** syncing
-
-var repoWatching = false;
-function watchRepo() {
-	if(repoWatching)
-		return;
-
-	repoWatching = true;
-	OIL.repo.Watch(function(ok, message) {
-		repoWatching = false;
-
-		if(ok) {
-			if(message)
-				syncRepo();
-			else
-				watchRepo();
+function onUndoRedoChanged(undoAction, redoAction) {
+	var update = function(action, menuId, commandId, label) {
+		var menuitem = document.getElementById(menuId);
+		var command = document.getElementById(commandId);
+		if(action) {
+			menuitem.label = label + " " + action.GetDescription();
+			command.setAttribute("disabled", "false");
+		} else {
+			menuitem.label = label;
+			command.setAttribute("disabled", "true");
 		}
-		else
-			alert(message);
-	});
-}
+	};
 
-var repoSyncing = false;
-function syncRepo() {
-	if(repoSyncing)
-		return;
-	repoSyncing = true;
-	OIL.repo.Sync(function(ok, message) {
-		repoSyncing = false;
-
-		if(ok) {
-			if(message)
-				syncRepo();
-			else
-				watchRepo();
-		}
-		else
-			alert(message);
-	});
+	update(undoAction, "menuUndo", "commandUndo", "Undo");
+	update(redoAction, "menuRedo", "commandRedo", "Redo");
 }
 
 window.onload = function() {
 	OIL.init(document.getElementById('oil'));
+	onUndoRedoChanged(null, null);
 };

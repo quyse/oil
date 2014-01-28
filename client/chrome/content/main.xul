@@ -7,19 +7,32 @@
 	xmlns:html="http://www.w3.org/1999/xhtml"
 	persist="screenX screenY width height sizemode">
 
+	<script src="globals.js" />
 	<script src="main.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
+		<command id="commandUndo" oncommand="OIL.undo()" />
+		<command id="commandRedo" oncommand="OIL.redo()" />
 	</commandset>
+
+	<keyset>
+		<key id="keyUndo" modifiers="control" key="z" />
+		<key id="keyRedo" modifiers="control shift" key="z" />
+	</keyset>
 
 	<toolbox>
 		<menubar>
-			<menu label="Repo">
+			<menu label="Repo" accesskey="r">
 				<menupopup>
-					<menuitem label="Connect..." command="commandRepoConnect" />
-					<menuitem label="Open offline..." />
-					<menuitem label="Disconnect" />
+					<menuitem label="Connect..." accesskey="c" command="commandRepoConnect" />
+					<menuitem label="Quit" accesskey="q" />
+				</menupopup>
+			</menu>
+			<menu label="Edit" accesskey="e">
+				<menupopup>
+					<menuitem id="menuUndo" accesskey="u" key="keyUndo" command="commandUndo" />
+					<menuitem id="menuRedo" accesskey="r" key="keyRedo" command="commandRedo" />
 				</menupopup>
 			</menu>
 		</menubar>
