@@ -20,7 +20,6 @@ END_INANITY_SCRIPT
 
 BEGIN_INANITY_NP
 
-class State;
 class Any;
 
 END_INANITY_NP
@@ -29,6 +28,7 @@ BEGIN_INANITY_OIL
 
 class ClientRepo;
 class RemoteRepo;
+class EntityManager;
 class Action;
 
 /// Class which combines client and remote repos.
@@ -36,14 +36,14 @@ class Action;
 class ScriptRepo : public Object
 {
 private:
-	ptr<Script::Np::State> scriptState;
 	ptr<ClientRepo> clientRepo;
 	ptr<RemoteRepo> remoteRepo;
+	ptr<EntityManager> entityManager;
 
 	std::vector<ptr<Action> > undoActions;
 	std::vector<ptr<Action> > redoActions;
 
-	ptr<Script::Any> undoRedoChangedCallback;
+	ptr<Script::Np::Any> undoRedoChangedCallback;
 
 	class InitHandler;
 	class PullHandler;
@@ -54,12 +54,18 @@ private:
 
 	void FireUndoRedoChangedCallback();
 
+	void OnChange(ptr<File> key, ptr<File> value);
+
 public:
-	ScriptRepo(ptr<Script::Np::State> scriptState, ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
+	ScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo, ptr<EntityManager> entityManager);
+
+	ptr<EntityManager> GetEntityManager() const;
 
 	void Init(ptr<Script::Any> callback);
 	void Sync(ptr<Script::Any> callback);
 	void Watch(ptr<Script::Any> callback);
+
+	void ProcessEvents();
 
 	void Change(ptr<File> key, ptr<File> value);
 	/// Subscribe for changes in keys with specified prefix.
