@@ -24,10 +24,16 @@ public:
 		virtual void OnEvent(ptr<File> key, ptr<File> value) = 0;
 	};
 
-	class KeysEnumerator
+	class KeyEnumerator
 	{
 	public:
-		virtual void OnKey(ptr<File> key) = 0;
+		virtual bool OnKey(ptr<File> key) = 0;
+	};
+
+	class KeyValueEnumerator
+	{
+	public:
+		virtual bool OnKeyValue(ptr<File> key, ptr<File> value) = 0;
 	};
 
 private:
@@ -127,7 +133,10 @@ public:
 	bool HasValue(ptr<File> key);
 	/// Get keys with specified prefix.
 	/** Only keys with non-null values returned. */
-	void EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator);
+	void EnumerateKeys(ptr<File> prefix, KeyEnumerator* enumerator);
+	/// Get keys with specified prefix, with corresponding values.
+	/** Only keys with non-null values returned. */
+	void EnumerateKeyValues(ptr<File> prefix, KeyValueEnumerator* enumerator);
 
 	void ReadServerManifest(StreamReader* reader);
 	void Push(StreamWriter* writer);

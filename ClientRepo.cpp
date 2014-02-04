@@ -589,7 +589,7 @@ bool ClientRepo::HasValue(ptr<File> key)
 	END_TRY("Can't figure out if repo has value");
 }
 
-void ClientRepo::EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator)
+void ClientRepo::EnumerateKeys(ptr<File> prefix, KeyEnumerator* enumerator)
 {
 	BEGIN_TRY();
 
@@ -627,7 +627,8 @@ void ClientRepo::EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator)
 		switch(stmt->Step())
 		{
 		case SQLITE_ROW:
-			enumerator->OnKey(stmt->ColumnBlob(0));
+			if(!enumerator->OnKey(stmt->ColumnBlob(0)))
+				done = true;
 			break;
 		case SQLITE_DONE:
 			done = true;
@@ -637,7 +638,32 @@ void ClientRepo::EnumerateKeys(ptr<File> prefix, KeysEnumerator* enumerator)
 		}
 	}
 
-	END_TRY("Can't enumerate keys");
+	END_TRY("Can't enumerate repo keys");
+}
+
+void ClientRepo::EnumerateKeyValues(ptr<File> prefix, KeyValueEnumerator* enumerator)
+{
+	BEGIN_TRY();
+
+	class Enumerator : public KeyEnumerator
+	{
+	private:
+		ClientRepo* repo;
+		KeyValueEnumerator* enumerator;
+
+	public:
+		Enumerator(ClientRepo* repo, KeyValueEnumerator* enumerator)
+		: repo(repo), enumerator(enumerator) {}
+
+		bool OnKey(ptr<File> key)
+		{
+			return enumerator->OnKeyValue(key, repo->GetValue(key));
+		}
+	};
+
+	EnumerateKeys(prefix, &Enumerator(this, enumerator));
+
+	END_TRY("Can't enumerate repo key values");
 }
 
 void ClientRepo::ReadServerManifest(StreamReader* reader)
