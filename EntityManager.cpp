@@ -1,9 +1,9 @@
 #include "EntityManager.hpp"
+#include "Entity.hpp"
 #include "EntityScheme.hpp"
 #include "EntitySchemeManager.hpp"
-#include "EntityData.hpp"
 #include "ClientRepo.hpp"
-#include "../inanity/MemoryFile.hpp"
+#include "../inanity/File.hpp"
 #include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
@@ -11,15 +11,25 @@ BEGIN_INANITY_OIL
 EntityManager::EntityManager(ptr<ClientRepo> repo, ptr<EntitySchemeManager> schemeManager)
 : repo(repo), schemeManager(schemeManager) {}
 
-void EntityManager::OnChange(
-	const void* keyData,
-	size_t keySize,
-	const void* valueData,
-	size_t valueSize)
+ptr<ClientRepo> EntityManager::GetRepo() const
 {
+	return repo;
+}
+
+ptr<EntitySchemeManager> EntityManager::GetSchemeManager() const
+{
+	return schemeManager;
+}
+
+void EntityManager::OnChange(ptr<File> key, ptr<File> value)
+{
+	size_t keySize = key->GetSize();
+
 	// if key is too short, nothing have to be done
 	if(keySize < EntityId::size)
 		return;
+
+	const char* keyData = (const char*)key->GetData();
 
 	// get an entity id
 	EntityId entityId = EntityId::FromData(keyData);
@@ -31,7 +41,6 @@ void EntityManager::OnChange(
 		return;
 
 	ptr<Entity> entity = entityIterator->second;
-	ptr<EntityData> entityData = entity->GetData();
 
 	// if it's main entity key (scheme key)
 	if(keySize == EntityId::size)
@@ -39,28 +48,20 @@ void EntityManager::OnChange(
 		// value should be entity scheme id and has appropriate size
 		// if it not, think like there is no scheme
 		ptr<EntityScheme> scheme;
-		if(valueSize == EntitySchemeId::size)
-			scheme = schemeManager->TryGet(EntitySchemeId::FromData(valueData));
+		if(value->GetSize() == EntitySchemeId::size)
+			scheme = schemeManager->TryGet(EntitySchemeId::FromData(value->GetData()));
 
-		// if sheme doesn't match
-		if(entityData->GetScheme() != scheme)
-		{
-			if(scheme)
-				// recreate data
-				CreateData(entity, scheme);
-			else
-				// delete data
-				entity->SetData(nullptr);
-		}
+		// if scheme doesn't match, recreate or delete data
+		if(entity->GetScheme() != scheme)
+			entity->SetScheme(scheme);
 	}
 	else
 	{
-		// else change should be transmitted to entity if there is data
-		if(entityData)
-			entityData->OnChange(
-				(const char*)keyData + EntityId::size,
-				keySize - EntityId::size,
-				valueData, valueSize);
+		// else change should be transmitted to entity
+		entity->OnChange(
+			keyData + EntityId::size,
+			keySize - EntityId::size,
+			value);
 	}
 }
 
@@ -78,21 +79,6 @@ void EntityManager::OnFreeEntity(const EntityId& entityId)
 	entities.erase(i);
 }
 
-void EntityManager::CreateData(Entity* entity, EntityScheme* scheme)
-{
-	entity->SetData(scheme->CreateData(repo, entity->GetId()));
-}
-
-ptr<File> EntityManager::GetEntityTagKey(const EntityId& entityId, const EntityTagId& tagId)
-{
-	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + EntityTagId::size));
-	char* keyData = (char*)key->GetData();
-	memcpy(keyData, entityId.data, EntityId::size);
-	keyData[EntityId::size] = 't';
-	memcpy(keyData + EntityId::size + 1, tagId.data, EntityTagId::size);
-	return key;
-}
-
 ptr<Entity> EntityManager::CreateEntity(const EntitySchemeId& schemeId)
 {
 	BEGIN_TRY();
@@ -106,8 +92,8 @@ ptr<Entity> EntityManager::CreateEntity(const EntitySchemeId& schemeId)
 	// create entity
 	ptr<Entity> entity = NEW(Entity(this, entityId));
 
-	// create data
-	CreateData(entity, scheme);
+	// set scheme
+	entity->SetScheme(scheme);
 
 	return entity;
 
@@ -134,23 +120,11 @@ ptr<Entity> EntityManager::GetEntity(const EntityId& entityId)
 	if(schemeIdFile && schemeIdFile->GetSize() == EntitySchemeId::size)
 		scheme = schemeManager->TryGet(EntitySchemeId::FromData(schemeIdFile->GetData()));
 
-	// if there is a scheme, create data
-	if(scheme)
-		CreateData(entity, scheme);
+	entity->SetScheme(scheme);
 
 	return entity;
 
 	END_TRY("Can't get entity");
-}
-
-ptr<File> EntityManager::GetEntityTag(const EntityId& entityId, const EntityTagId& tagId)
-{
-	return repo->GetValue(GetEntityTagKey(entityId, tagId));
-}
-
-void EntityManager::SetEntityTag(const EntityId& entityId, const EntityTagId& tagId, ptr<File> tagData)
-{
-	repo->Change(GetEntityTagKey(entityId, tagId), tagData);
 }
 
 END_INANITY_OIL

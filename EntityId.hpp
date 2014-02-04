@@ -2,6 +2,7 @@
 #define ___INANITY_OIL_ENTITY_ID_HPP___
 
 #include "oil.hpp"
+#include "../inanity/String.hpp"
 
 BEGIN_INANITY
 
@@ -16,6 +17,7 @@ struct EntityId
 	static const size_t size = 16;
 	unsigned char data[size];
 
+	String ToString() const;
 	ptr<File> ToFile() const;
 
 	static EntityId FromString(const char* string);

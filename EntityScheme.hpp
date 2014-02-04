@@ -2,24 +2,36 @@
 #define ___INANITY_OIL_ENTITY_SCHEME_HPP___
 
 #include "EntityId.hpp"
+#include <vector>
 
 BEGIN_INANITY_OIL
 
-class ClientRepo;
-class EntityData;
+class Entity;
+class EntityFieldType;
 
+/// Scheme of fields in entity.
 class EntityScheme : public Object
 {
-protected:
-	EntitySchemeId schemeId;
+public:
+	struct Field
+	{
+		EntityFieldType* type;
+		String name;
+	};
+	typedef std::vector<Field> Fields;
+
+private:
+	EntitySchemeId id;
+
+	/// Fields of scheme.
+	Fields fields;
 
 public:
-	EntityScheme(const EntitySchemeId& schemeId);
+	EntityScheme(const EntitySchemeId& id);
 
 	EntitySchemeId GetId() const;
 
-	/// Create an entity data.
-	virtual ptr<EntityData> CreateData(ClientRepo* repo, const EntityId& entityId) = 0;
+	const Fields& GetFields() const;
 };
 
 END_INANITY_OIL

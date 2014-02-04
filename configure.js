@@ -34,7 +34,9 @@ var executables = {
 			'UrlRemoteRepo',
 			'LocalRemoteRepo',
 			'Action',
-			'EntityId', 'Entity', 'EntityManager', 'EntityData', 'EntityScheme', 'EntitySchemeManager',
+			'EntityId', 'Entity', 'EntityManager', 'EntityScheme', 'EntitySchemeManager',
+			'EntityFieldTypes',
+			'uuids',
 			'meta'
 		],
 		staticLibraries: [

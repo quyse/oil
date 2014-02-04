@@ -246,7 +246,7 @@ void ScriptRepo::FireUndoRedoChangedCallback()
 
 void ScriptRepo::OnChange(ptr<File> key, ptr<File> value)
 {
-	entityManager->OnChange(key->GetData(), key->GetSize(), value->GetData(), value->GetSize());
+	entityManager->OnChange(key, value);
 }
 
 void ScriptRepo::MakeAction(ptr<Action> action)

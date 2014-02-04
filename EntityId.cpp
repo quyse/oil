@@ -14,6 +14,20 @@ bool operator<(const EntityId& a, const EntityId& b)
 	return memcmp(a.data, b.data, EntityId::size) < 0;
 }
 
+String EntityId::ToString() const
+{
+	try
+	{
+		boost::uuids::uuid uuid;
+		std::copy(data, data + size, uuid.begin());
+		return boost::lexical_cast<String>(uuid);
+	}
+	catch(const boost::bad_lexical_cast&)
+	{
+		THROW("Can't convert entity id to string");
+	}
+}
+
 ptr<File> EntityId::ToFile() const
 {
 	return MemoryFile::CreateViaCopy(data, size);

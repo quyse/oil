@@ -4,9 +4,13 @@
 #include "ServerRepo.hpp"
 #include "LocalRemoteRepo.hpp"
 #include "UrlRemoteRepo.hpp"
+#include "EntityManager.hpp"
+#include "EntityScheme.hpp"
+#include "EntitySchemeManager.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
+#include "../inanity/MemoryFile.hpp"
 
 // classes only for registration in script state
 #include "Action.hpp"
@@ -18,6 +22,9 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 : scriptState(scriptState)
 {
 	nativeFileSystem = Platform::FileSystem::GetNativeFileSystem();
+
+	// create entity scheme manager and register schemes
+	entitySchemeManager = NEW(EntitySchemeManager());
 
 	// register some classes
 	scriptState->Register<Action>();
@@ -71,7 +78,10 @@ ptr<RemoteRepo> ScriptObject::CreateMemoryRemoteRepo()
 
 ptr<ScriptRepo> ScriptObject::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo)
 {
-	return NEW(ScriptRepo(scriptState, clientRepo, remoteRepo));
+	return NEW(ScriptRepo(
+		clientRepo,
+		remoteRepo,
+		NEW(EntityManager(clientRepo, entitySchemeManager))));
 }
 
 END_INANITY_OIL

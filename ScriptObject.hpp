@@ -10,6 +10,7 @@
 BEGIN_INANITY
 
 class FileSystem;
+class File;
 
 END_INANITY
 
@@ -30,12 +31,14 @@ BEGIN_INANITY_OIL
 class ClientRepo;
 class RemoteRepo;
 class ScriptRepo;
+class EntitySchemeManager;
 
 class ScriptObject : public Object
 {
 private:
 	ptr<Script::Np::State> scriptState;
 	ptr<FileSystem> nativeFileSystem;
+	ptr<EntitySchemeManager> entitySchemeManager;
 
 public:
 	ScriptObject(ptr<Script::Np::State> scriptState);
