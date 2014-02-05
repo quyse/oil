@@ -27,8 +27,9 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	entitySchemeManager = NEW(EntitySchemeManager());
 
 	// register some classes
-	scriptState->Register<Action>();
 	scriptState->Register<Strings>();
+	scriptState->Register<Action>();
+	scriptState->Register<EntityScheme>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const

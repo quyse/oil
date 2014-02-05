@@ -76,17 +76,47 @@ META_CLASS(Inanity::Oil::Action, Inanity.Oil.Action);
 	META_METHOD(AddChange);
 META_CLASS_END();
 
+#include "Entity.hpp"
+META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
+	META_METHOD(GetManager);
+	META_METHOD(GetId);
+	META_METHOD(GetScheme);
+	META_METHOD(ReadTag);
+	META_METHOD(WriteTag);
+	META_METHOD(RawReadField);
+	META_METHOD(RawWriteField);
+	META_METHOD(ReadField);
+	META_METHOD(WriteField);
+	META_METHOD(AddCallback);
+META_CLASS_END();
+
 #include "EntityManager.hpp"
 META_CLASS(Inanity::Oil::EntityManager, Inanity.Oil.EntityManager);
+	META_METHOD(GetRepo);
+	META_METHOD(GetSchemeManager);
 	META_METHOD(CreateEntity);
 	META_METHOD(GetEntity);
 META_CLASS_END();
 
-#include "Entity.hpp"
-META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
-	META_METHOD(ReadTag);
-	META_METHOD(WriteTag);
-	META_METHOD(ReadField);
-	META_METHOD(WriteField);
-	META_METHOD(SetCallback);
+#include "EntityScheme.hpp"
+META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
+	META_CONSTRUCTOR(const Oil::EntitySchemeId&, const String&);
+	META_METHOD(GetId);
+	META_METHOD(GetName);
+	META_METHOD(GetFieldsCount);
+	META_METHOD(GetFieldType);
+	META_METHOD(GetFieldName);
+META_CLASS_END();
+
+#include "EntitySchemeManager.hpp"
+META_CLASS(Inanity::Oil::EntitySchemeManager, Inanity.Oil.EntitySchemeManager);
+	META_METHOD(TryGet);
+	META_METHOD(Get);
+	META_METHOD(Register);
+META_CLASS_END();
+
+#include "EntityCallback.hpp"
+META_CLASS(Inanity::Oil::EntityCallback, Inanity.Oil.EntityCallback);
+	META_METHOD(EnumerateFields);
+	META_METHOD(EnumerateData);
 META_CLASS_END();

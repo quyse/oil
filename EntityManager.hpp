@@ -10,6 +10,7 @@ class ClientRepo;
 class Entity;
 class EntityScheme;
 class EntitySchemeManager;
+class Action;
 
 class EntityManager : public Object
 {
@@ -34,7 +35,7 @@ public:
 	void OnFreeEntity(const EntityId& entityId);
 
 	/// Creates new entity (with generated id) in repo.
-	ptr<Entity> CreateEntity(const EntitySchemeId& schemeId);
+	ptr<Entity> CreateEntity(ptr<Action> action, const EntitySchemeId& schemeId);
 	/// Gets an entity.
 	/** Works always, even if no entity in repo (in that case returns
 	entity with no data). */

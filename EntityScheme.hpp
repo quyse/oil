@@ -22,16 +22,23 @@ public:
 
 private:
 	EntitySchemeId id;
+	String name;
 
 	/// Fields of scheme.
 	Fields fields;
 
 public:
-	EntityScheme(const EntitySchemeId& id);
+	EntityScheme(const EntitySchemeId& id, const String& name);
 
 	EntitySchemeId GetId() const;
+	String GetName() const;
 
 	const Fields& GetFields() const;
+
+	//** for scripts
+	int GetFieldsCount() const;
+	const char* GetFieldType(int fieldIndex) const;
+	String GetFieldName(int fieldIndex) const;
 };
 
 END_INANITY_OIL

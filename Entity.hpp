@@ -2,7 +2,8 @@
 #define ___INANITY_OIL_ENTITY_HPP___
 
 #include "EntityManager.hpp"
-#include "../inanity/script/np/np.hpp"
+#include "../inanity/script/script.hpp"
+#include <vector>
 
 BEGIN_INANITY_SCRIPT
 
@@ -10,16 +11,11 @@ class Any;
 
 END_INANITY_SCRIPT
 
-BEGIN_INANITY_NP
-
-class Any;
-
-END_INANITY_NP
-
 BEGIN_INANITY_OIL
 
 class EntityManager;
 class EntityScheme;
+class EntityCallback;
 class Action;
 
 /// Class of an entity.
@@ -29,15 +25,16 @@ located under this prefix are reported to the entity. */
 class Entity : public Object
 {
 public:
-	//*** Standard tags.
-	static EntityTagId tagName;
-	static EntityTagId tagDescription;
-	static EntityTagId tagTags;
-
 	class FieldEnumerator
 	{
 	public:
-		virtual void OnField(size_t fieldIndex, const void* data, size_t size) = 0;
+		virtual void OnField(int fieldIndex, ptr<File> value) = 0;
+	};
+
+	class DataEnumerator
+	{
+	public:
+		virtual void OnData(ptr<File> key, ptr<File> value) = 0;
 	};
 
 private:
@@ -46,18 +43,15 @@ private:
 	/// Scheme of data.
 	/** Null if entity doesn't exist. */
 	ptr<EntityScheme> scheme;
-	/// Callback for monitoring data existence and tags.
-	ptr<Script::Np::Any> callback;
+	/// Callbacks.
+	std::vector<EntityCallback*> callbacks;
 
 	ptr<File> GetFullTagKey(const EntityTagId& tagId) const;
 	ptr<File> GetFullFieldKey(int fieldIndex) const;
+	ptr<File> GetFullDataKey(const void* nameData, size_t nameSize) const;
 	/// Tries to parse field key.
 	/** Returns -1 if wrong format. */
 	static int TryParseFieldKey(const void* data, size_t size);
-
-	void FireTagCallback(const EntityTagId& tagId, ptr<File> value);
-	void FireFieldCallback(int fieldIndex, ptr<File> value);
-	void FireDataCallback(ptr<File> key, ptr<File> value);
 
 public:
 	Entity(ptr<EntityManager> manager, const EntityId& id);
@@ -69,16 +63,25 @@ public:
 	ptr<EntityScheme> GetScheme() const;
 	void SetScheme(ptr<EntityScheme> scheme);
 
+	void OnNewCallback(EntityCallback* callback);
+	void OnFreeCallback(EntityCallback* callback);
+
 	void OnChange(const void* keyData, size_t keySize, ptr<File> value);
 
 	ptr<File> ReadTag(const EntityTagId& tagId) const;
 	void WriteTag(ptr<Action> action, const EntityTagId& tagId, ptr<File> tagData);
 
-	ptr<File> ReadField(size_t fieldIndex) const;
-	void WriteField(ptr<Action> action, size_t fieldIndex, ptr<File> data);
+	ptr<File> RawReadField(int fieldIndex) const;
+	void RawWriteField(ptr<Action> action, int fieldIndex, ptr<File> value);
 	void EnumerateFields(FieldEnumerator* enumerator);
+	ptr<Script::Any> ReadField(int fieldIndex) const;
+	void WriteField(ptr<Action> action, int fieldIndex, ptr<Script::Any> value);
 
-	void SetCallback(ptr<Script::Any> callback);
+	ptr<File> ReadData(const void* nameData, size_t nameSize) const;
+	void WriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value);
+	void EnumerateData(DataEnumerator* enumerator);
+
+	ptr<EntityCallback> AddCallback(ptr<Script::Any> callback);
 };
 
 END_INANITY_OIL

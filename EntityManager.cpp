@@ -3,6 +3,7 @@
 #include "EntityScheme.hpp"
 #include "EntitySchemeManager.hpp"
 #include "ClientRepo.hpp"
+#include "Action.hpp"
 #include "../inanity/File.hpp"
 #include "../inanity/Exception.hpp"
 
@@ -40,29 +41,11 @@ void EntityManager::OnChange(ptr<File> key, ptr<File> value)
 	if(entityIterator == entities.end())
 		return;
 
-	ptr<Entity> entity = entityIterator->second;
-
-	// if it's main entity key (scheme key)
-	if(keySize == EntityId::size)
-	{
-		// value should be entity scheme id and has appropriate size
-		// if it not, think like there is no scheme
-		ptr<EntityScheme> scheme;
-		if(value->GetSize() == EntitySchemeId::size)
-			scheme = schemeManager->TryGet(EntitySchemeId::FromData(value->GetData()));
-
-		// if scheme doesn't match, recreate or delete data
-		if(entity->GetScheme() != scheme)
-			entity->SetScheme(scheme);
-	}
-	else
-	{
-		// else change should be transmitted to entity
-		entity->OnChange(
-			keyData + EntityId::size,
-			keySize - EntityId::size,
-			value);
-	}
+	// transmit change to the entity
+	entityIterator->second->OnChange(
+		keyData + EntityId::size,
+		keySize - EntityId::size,
+		value);
 }
 
 void EntityManager::OnNewEntity(const EntityId& entityId, Entity* entity)
@@ -79,7 +62,7 @@ void EntityManager::OnFreeEntity(const EntityId& entityId)
 	entities.erase(i);
 }
 
-ptr<Entity> EntityManager::CreateEntity(const EntitySchemeId& schemeId)
+ptr<Entity> EntityManager::CreateEntity(ptr<Action> action, const EntitySchemeId& schemeId)
 {
 	BEGIN_TRY();
 
@@ -94,6 +77,9 @@ ptr<Entity> EntityManager::CreateEntity(const EntitySchemeId& schemeId)
 
 	// set scheme
 	entity->SetScheme(scheme);
+
+	// add change to action
+	action->AddChange(entityId.ToFile(), schemeId.ToFile());
 
 	return entity;
 
