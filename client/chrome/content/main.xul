@@ -10,6 +10,7 @@
 	<script src="globals.js" />
 	<script src="ui.js" />
 	<script src="main.js" />
+	<script src="uuids.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
@@ -48,49 +49,6 @@
 
 	<html:embed id="oil" type="application/x-inanityoil" oiltype="main" hidden="true" />
 
-	<hbox flex="1">
-		<tabbox>
-			<tabs>
-				<tab label="Project Tree" />
-			</tabs>
-			<tabpanels flex="1" style="padding:0 !important">
-				<tabpanel>
-					<tree class="tree" flex="1" editable="true">
-						<treecols>
-							<treecol label="Name" primary="true" ordinal="1" />
-							<splitter class="tree-splitter" ordinal="2"/>
-							<treecol label="Type" ordinal="3" flex="1" editable="true" />
-						</treecols>
-						<treechildren>
-						</treechildren>
-					</tree>
-				</tabpanel>
-			</tabpanels>
-		</tabbox>
-		<splitter collapse="before"><grippy /></splitter>
-		<tabbox flex="1">
-			<tabs>
-				<tab label="3D View" />
-			</tabs>
-			<tabpanels flex="1">
-				<tabpanel>
-					<iframe src="view.xul" flex="1" />
-				</tabpanel>
-			</tabpanels>
-		</tabbox>
-		<splitter collapse="after"><grippy /></splitter>
-		<tabbox>
-			<tabs>
-				<tab label="Properties" />
-			</tabs>
-			<tabpanels flex="1" style="padding:0 !important">
-				<tabpanel>
-					<vbox flex="1">
-						<textbox value="" />
-					</vbox>
-				</tabpanel>
-			</tabpanels>
-		</tabbox>
-	</hbox>
+	<hbox id="toolspace" flex="1" />
 
 </window>

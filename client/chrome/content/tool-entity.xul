@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<page id="tool"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml">
+
+	<script src="tool-entity.js" />
+
+	<box id="boxEmpty" flex="1" hidden="true">
+		<label value="No such entity" />
+	</box>
+
+	<button label="Duplicate" oncommand="duplicateTool()" />
+
+	<scrollbox id="boxMain" flex="1" style="overflow:auto" hidden="true">
+		<grid id="gridMain" flex="1">
+			<columns>
+				<column />
+				<column flex="1" />
+			</columns>
+			<rows>
+				<row align="baseline">
+					<label control="textboxEntityId" value="Entity ID" />
+					<textbox id="textboxEntityId" readonly="true" />
+				</row>
+				<row align="baseline">
+					<label control="textboxScheme" value="Scheme" />
+					<textbox id="textboxScheme" readonly="true" />
+				</row>
+			</rows>
+		</grid>
+	</scrollbox>
+
+</page>

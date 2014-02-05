@@ -1,4 +1,5 @@
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+OIL.XUL_NS = XUL_NS;
 
 const MIME_DRAG_TOOL_TAB = "application/x-inanityoil-ui-drag-tab";
 
@@ -44,6 +45,16 @@ function createToolTab(tabbox, title) {
 
 		moveToolTab(this.parentNode.parentNode, sourceTabNumber, tabNumber);
 	});
+	tab.addEventListener("dblclick", function(event) {
+		var tab = getToolTab(tabNumber);
+		var tabbox = tab.parentNode.parentNode;
+		tab.remove();
+		getToolTabpanel(tabNumber).remove();
+		tabbox.selectedIndex = 0;
+	});
+
+	// select new tab
+	tabbox.selectedIndex = tabbox.tabs.itemCount - 1;
 
 	return tabNumber;
 }

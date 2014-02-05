@@ -67,13 +67,24 @@ OIL.syncRepo = syncRepo;
 
 //*** actions
 
-function makeAction(description, changes) {
-	var action = new OIL.classes.Inanity.Oil.Action(description);
-	for(var i = 0; i < changes.length; ++i)
-		action.AddChange(changes[i][0], changes[i][1]);
+function createAction(description) {
+	return new OIL.classes.Inanity.Oil.Action(description);
+};
+OIL.createAction = createAction;
+
+function finishAction(action) {
 	OIL.repo.MakeAction(action);
 	OIL.repo.ProcessEvents();
 	syncRepo();
+}
+OIL.finishAction = finishAction;
+
+// fast create/add changes/finish function
+function makeAction(description, changes) {
+	var action = createAction(description);
+	for(var i = 0; i < changes.length; ++i)
+		action.AddChange(changes[i][0], changes[i][1]);
+	finishAction(action);
 }
 OIL.makeAction = makeAction;
 
@@ -88,3 +99,12 @@ function redo() {
 	syncRepo();
 }
 OIL.redo = redo;
+
+//*** things
+
+OIL.f2s = function(file) {
+	return OIL.classes.Inanity.Strings.File2String(file);
+};
+OIL.s2f = function(string) {
+	return OIL.classes.Inanity.Strings.String2File(string);
+};
