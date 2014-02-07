@@ -108,9 +108,6 @@ int Entity::TryParseFieldKey(const void* data, size_t size)
 
 void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 {
-	if(!scheme)
-		return;
-
 	// if this is a main entity key (scheme key)
 	if(!keySize)
 	{
@@ -132,6 +129,9 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 
 		return;
 	}
+
+	if(!scheme)
+		return;
 
 	// the rest is entity's tags, fields or data
 	switch(*(const char*)keyData)
