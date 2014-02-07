@@ -78,7 +78,7 @@ function createTextbox(parent, set, reset) {
 	});
 
 	return function(value) {
-		textbox.setAttribute("value", value);
+		textbox.value = value;
 	};
 }
 
@@ -194,11 +194,11 @@ function init() {
 
 	var scheme = entity.GetScheme();
 	if(!scheme) {
-		document.getElementById("boxEmpty").hidden = false;
+		document.getElementById("boxMain").remove();
 		return;
 	}
 
-	document.getElementById("boxMain").hidden = false;
+	document.getElementById("boxEmpty").remove();
 
 	schemeId = scheme.GetId();
 	var schemeName = scheme.GetName();
@@ -226,7 +226,7 @@ function init() {
 			if(lastValue !== undefined && lastValue == value)
 				return;
 
-			var action = OIL.createAction("change " + tagName + " of " + schemeName);
+			var action = OIL.createAction("change " + tagName + " of " + schemeName + " to " + JSON.stringify(value));
 			entity.WriteTag(action, tagId, OIL.s2f(value));
 			OIL.finishAction(action);
 

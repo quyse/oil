@@ -8,13 +8,9 @@
 
 	<script src="tool-entity.js" />
 
-	<box id="boxEmpty" flex="1" hidden="true">
-		<label value="No such entity" />
-	</box>
-
 	<button label="Duplicate" oncommand="duplicateTool()" />
 
-	<scrollbox id="boxMain" flex="1" style="overflow:auto" hidden="true">
+	<scrollbox id="boxMain" flex="1" style="overflow:auto">
 		<grid id="gridMain" flex="1">
 			<columns>
 				<column />
@@ -32,5 +28,7 @@
 			</rows>
 		</grid>
 	</scrollbox>
+
+	<label id="boxEmpty" value="No such entity" />
 
 </page>

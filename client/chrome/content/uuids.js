@@ -6,13 +6,13 @@ OIL.uuids = {
 	},
 	tagDescs: {
 		name: {
-			name: "Name"
+			name: "name"
 		},
 		description: {
-			name: "Description"
+			name: "description"
 		},
 		tags: {
-			name: "Tags"
+			name: "tags"
 		}
 	},
 	schemes: {
@@ -23,7 +23,7 @@ OIL.uuids = {
 OIL.registerEntitySchemes = function(schemeManager) {
 	var schemeDescs = {
 		folder: {
-			name: "Folder",
+			name: "folder",
 			fields: []
 		}
 	};
