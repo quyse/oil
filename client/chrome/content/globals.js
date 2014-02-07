@@ -100,6 +100,15 @@ function redo() {
 }
 OIL.redo = redo;
 
+//*** console
+
+var consoleService = Components.classes['@mozilla.org/consoleservice;1']
+		.getService(Components.interfaces.nsIConsoleService);
+function log(str) {
+	consoleService.logStringMessage(str);
+}
+OIL.log = log;
+
 //*** things
 
 OIL.f2s = function(file) {
