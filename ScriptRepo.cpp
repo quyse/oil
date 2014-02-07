@@ -266,12 +266,17 @@ bool ScriptRepo::Undo()
 	if(undoActions.empty())
 		return false;
 
+	// get undo action
 	ptr<Action> undoAction = undoActions.back();
 	undoActions.pop_back();
 
+	// create redo action
+	ptr<Action> redoAction = ReverseAction(undoAction);
+
+	// apply undo action
 	ApplyAction(undoAction);
 
-	ptr<Action> redoAction = ReverseAction(undoAction);
+	// add redo action into redo stack
 	redoActions.push_back(redoAction);
 
 	FireUndoRedoChangedCallback();
@@ -284,12 +289,17 @@ bool ScriptRepo::Redo()
 	if(redoActions.empty())
 		return false;
 
+	// get redo action
 	ptr<Action> redoAction = redoActions.back();
 	redoActions.pop_back();
 
+	// create undo action
+	ptr<Action> undoAction = ReverseAction(redoAction);
+
+	// apply redo action
 	ApplyAction(redoAction);
 
-	ptr<Action> undoAction = ReverseAction(redoAction);
+	// add undo action into undo stack
 	undoActions.push_back(undoAction);
 
 	FireUndoRedoChangedCallback();
