@@ -17,7 +17,6 @@
 		<command id="commandUndo" oncommand="OIL.undo()" />
 		<command id="commandRedo" oncommand="OIL.redo()" />
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
-
 	</commandset>
 
 	<keyset>
@@ -25,23 +24,40 @@
 		<key id="keyRedo" modifiers="control shift" key="z" />
 	</keyset>
 
+	<popupset>
+		<menupopup id="contextMenuToolTab"
+			onpopupshowing="window.toolTabContextTarget=event.target.triggerNode"
+			onpopuphiding="window.toolTabContextTarget=null">
+			<menuitem label="Undock" default="true" />
+			<menuitem label="Duplicate" />
+			<menuitem label="Close" oncommand="window.toolTabContextTarget.info.close()" />
+		</menupopup>
+	</popupset>
+
 	<toolbox>
 		<menubar>
-			<menu label="Repo" accesskey="r">
+			<menu label="Repo" accesskey="R">
 				<menupopup>
-					<menuitem label="Connect..." accesskey="c" command="commandRepoConnect" />
-					<menuitem label="Quit" accesskey="q" />
+					<menuitem label="Connect..." accesskey="C" command="commandRepoConnect" />
+					<menuitem label="Quit" accesskey="Q" />
 				</menupopup>
 			</menu>
-			<menu label="Edit" accesskey="e">
+			<menu label="Edit" accesskey="E">
 				<menupopup>
-					<menuitem id="menuUndo" accesskey="u" key="keyUndo" command="commandUndo" />
-					<menuitem id="menuRedo" accesskey="r" key="keyRedo" command="commandRedo" />
+					<menuitem id="menuUndo" accesskey="U" key="keyUndo" command="commandUndo" />
+					<menuitem id="menuRedo" accesskey="R" key="keyRedo" command="commandRedo" />
+					<menuitem label="Make Test Change" oncommand="onMakeTestChange()" />
 				</menupopup>
 			</menu>
-			<menu label="Tools" accesskey="t">
+			<menu label="View" accesskey="V">
 				<menupopup>
-					<menuitem id="menuConsole" label="Javascript Console..." accesskey="c" command="commandJavascriptConsole" />
+					<menuitem label="Show Root Folder" accesskey="R" oncommand="createTool('Project','folder',OIL.uuids.rootFolder)" />
+				</menupopup>
+			</menu>
+			<menu label="Tools" accesskey="T">
+				<menupopup>
+					<menuitem id="menuConsole" label="Javascript Console..." accesskey="C" command="commandJavascriptConsole" />
+					<menuitem label="Create Root Folder" oncommand="createRootFolder()" hidden="true" />
 				</menupopup>
 			</menu>
 		</menubar>

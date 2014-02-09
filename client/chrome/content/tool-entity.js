@@ -195,7 +195,7 @@ function init() {
 		return;
 	}
 
-	document.getElementById("boxEmpty").remove();
+	document.getElementById("labelEmpty").remove();
 
 	schemeId = scheme.GetId();
 	var schemeName = scheme.GetName();

@@ -17,6 +17,9 @@ function onRepoConnect() {
 
 		OIL.watchRepo();
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
+
+		// TEST
+		createTool("Project", "folder", OIL.uuids.rootFolder);
 	}
 }
 
@@ -35,6 +38,18 @@ function onUndoRedoChanged(undoAction, redoAction) {
 
 	update(undoAction, "menuUndo", "commandUndo", "Undo");
 	update(redoAction, "menuRedo", "commandRedo", "Redo");
+}
+
+function createRootFolder() {
+	// check that there is no root folder
+	var entity = OIL.entityManager.GetEntity(OIL.uuids.rootFolder);
+	if(entity.GetScheme())
+		return;
+
+	// create (hack way)
+	var action = OIL.createAction("create root folder");
+	action.AddChange(OIL.eid2f(OIL.uuids.rootFolder), OIL.eid2f(OIL.uuids.schemes.folder));
+	OIL.finishAction(action);
 }
 
 /// Panel on which new tabs should be created.

@@ -29,6 +29,6 @@
 		</grid>
 	</scrollbox>
 
-	<label id="boxEmpty" value="No such entity" />
+	<label id="labelEmpty" value="No such entity" />
 
 </page>

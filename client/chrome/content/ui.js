@@ -19,7 +19,9 @@ function createToolTab(tabbox, title) {
 	// create tab
 	var tab = document.createElementNS(XUL_NS, "tab");
 	tab.id = "tab" + tabNumber;
+	tab.info = { tabNumber: tabNumber };
 	tab.setAttribute("label", title);
+	tab.setAttribute("context", "contextMenuToolTab");
 	tabbox.tabs.appendChild(tab);
 
 	// create tabpanel
@@ -45,13 +47,16 @@ function createToolTab(tabbox, title) {
 
 		moveToolTab(this.parentNode.parentNode, sourceTabNumber, tabNumber);
 	});
-	tab.addEventListener("dblclick", function(event) {
+	tab.info.close = function() {
 		var tab = getToolTab(tabNumber);
 		var tabbox = tab.parentNode.parentNode;
 		tab.remove();
 		getToolTabpanel(tabNumber).remove();
 		tabbox.selectedIndex = 0;
-	});
+	};
+	tab.info.setDefaultCommand = function(command) {
+		tab.addEventListener("dblclick", command);
+	};
 
 	// select new tab
 	tabbox.selectedIndex = tabbox.tabs.itemCount - 1;

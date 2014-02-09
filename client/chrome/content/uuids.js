@@ -17,16 +17,19 @@ OIL.uuids = {
 	},
 	schemes: {
 		folder: "fa327807-86bb-4d8e-9ea4-fef2e943bd47"
-	}
+	},
+	schemeDescs: {
+		folder: {
+			name: "folder",
+			fields: [],
+			icon: "chrome://global/skin/dirListing/folder.png"
+		}
+	},
+	rootFolder: "23f43821-92e3-4782-a460-d6944952e02b"
 };
 
 OIL.registerEntitySchemes = function(schemeManager) {
-	var schemeDescs = {
-		folder: {
-			name: "folder",
-			fields: []
-		}
-	};
+	var schemeDescs = OIL.uuids.schemeDescs;
 
 	for(var schemeName in schemeDescs) {
 		var schemeDesc = schemeDescs[schemeName];
