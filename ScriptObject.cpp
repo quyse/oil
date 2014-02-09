@@ -29,6 +29,7 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	// register some classes
 	scriptState->Register<Strings>();
 	scriptState->Register<Action>();
+	scriptState->Register<EntityId>();
 	scriptState->Register<EntityScheme>();
 }
 

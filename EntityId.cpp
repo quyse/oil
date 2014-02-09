@@ -33,6 +33,11 @@ ptr<File> EntityId::ToFile() const
 	return MemoryFile::CreateViaCopy(data, size);
 }
 
+ptr<File> EntityId::StaticToFile(const EntityId& id)
+{
+	return id.ToFile();
+}
+
 EntityId EntityId::FromString(const char* data)
 {
 	try

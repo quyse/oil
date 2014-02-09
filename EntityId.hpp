@@ -20,6 +20,9 @@ struct EntityId
 	String ToString() const;
 	ptr<File> ToFile() const;
 
+	// for script
+	static ptr<File> StaticToFile(const EntityId& id);
+
 	static EntityId FromString(const char* string);
 	static EntityId FromData(const void* data);
 	static EntityId FromFile(ptr<File> file);

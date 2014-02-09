@@ -121,6 +121,9 @@ OIL.s2f = function(string) {
 OIL.f2eid = function(file) {
 	return OIL.classes.Inanity.Oil.EntityId.FromFile(file);
 };
+OIL.eid2f = function(eid) {
+	return OIL.classes.Inanity.Oil.EntityId.StaticToFile(eid);
+};
 
 OIL.getEntityFromToolWindow = function(window) {
 	var a = /^\#(.+)$/.exec(window.location.hash);

@@ -76,6 +76,13 @@ META_CLASS(Inanity::Oil::Action, Inanity.Oil.Action);
 	META_METHOD(AddChange);
 META_CLASS_END();
 
+#include "EntityId.hpp"
+META_CLASS(Inanity::Oil::EntityId, Inanity.Oil.EntityId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromFile);
+	META_STATIC_METHOD(New);
+META_CLASS_END();
+
 #include "Entity.hpp"
 META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
 	META_METHOD(GetManager);
