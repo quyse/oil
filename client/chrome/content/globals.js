@@ -117,3 +117,16 @@ OIL.f2s = function(file) {
 OIL.s2f = function(string) {
 	return OIL.classes.Inanity.Strings.String2File(string);
 };
+
+OIL.f2eid = function(file) {
+	return OIL.classes.Inanity.Oil.EntityId.FromFile(file);
+};
+
+OIL.getEntityFromToolWindow = function(window) {
+	var a = /^\#(.+)$/.exec(window.location.hash);
+	if(!a) {
+		window.location = "tool-wrong.xul";
+		return null;
+	}
+	return OIL.entityManager.GetEntity(a[1]);
+};

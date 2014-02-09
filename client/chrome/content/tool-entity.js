@@ -175,10 +175,7 @@ function duplicateTool() {
 }
 
 window.addEventListener('load', function() {
-	// try to get entity id from url hash
-	var a = /^\#(.+)$/.exec(window.location.hash);
-	if(a)
-		entity = OIL.entityManager.GetEntity(a[1]);
+	entity = OIL.getEntityFromToolWindow(window);
 
 	if(!entity)
 		return;
