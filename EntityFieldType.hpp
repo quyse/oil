@@ -25,14 +25,19 @@ END_INANITY_NP
 
 BEGIN_INANITY_OIL
 
-class EntityFieldType
+class EntityManager;
+
+class EntityFieldType : public Object
 {
 public:
+	// Implemented in EntityFieldTypes.cpp.
+	static EntityFieldType* FromName(const char* name);
+
 	/// Gets name.
 	virtual const char* GetName() const = 0;
 	/// Convert value to script.
 	/** Returns null if wrong format. */
-	virtual ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value) = 0;
+	virtual ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value) = 0;
 	/// Convert value from script.
 	/** Returns null if wrong format. */
 	virtual ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value) = 0;

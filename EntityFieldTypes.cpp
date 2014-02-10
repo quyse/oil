@@ -20,6 +20,35 @@ END_INANITY_SCRIPT
 
 BEGIN_INANITY_OIL
 
+EntityFieldType* EntityFieldType::FromName(const char* name)
+{
+	static FloatEntityFieldType floatType;
+	static IntegerEntityFieldType integerType;
+	static StringEntityFieldType stringType;
+	static Vec3EntityFieldType vec3Type;
+	static Vec4EntityFieldType vec4Type;
+	static Color3EntityFieldType color3Type;
+	static Color4EntityFieldType color4Type;
+	static ReferenceEntityFieldType referenceType;
+	static EntityFieldType* types[] =
+	{
+		&floatType,
+		&integerType,
+		&stringType,
+		&vec3Type,
+		&vec4Type,
+		&color3Type,
+		&color4Type,
+		&referenceType
+	};
+
+	for(size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i)
+		if(strcmp(types[i]->GetName(), name) == 0)
+			return types[i];
+
+	return nullptr;
+}
+
 //*** class FloatEntityFieldType
 
 const char* FloatEntityFieldType::GetName() const
@@ -27,7 +56,7 @@ const char* FloatEntityFieldType::GetName() const
 	return "float";
 }
 
-ptr<Script::Any> FloatEntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> FloatEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	if(value->GetSize() != sizeof(float))
 		return nullptr;
@@ -47,7 +76,7 @@ const char* IntegerEntityFieldType::GetName() const
 	return "integer";
 }
 
-ptr<Script::Any> IntegerEntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> IntegerEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	if(value->GetSize() != sizeof(int32_t))
 		return nullptr;
@@ -67,7 +96,7 @@ const char* StringEntityFieldType::GetName() const
 	return "string";
 }
 
-ptr<Script::Any> StringEntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> StringEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	return scriptState->NewString(Strings::File2String(value));
 }
@@ -85,7 +114,7 @@ const char* Vec3EntityFieldType::GetName() const
 	return "vec3";
 }
 
-ptr<Script::Any> Vec3EntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> Vec3EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	if(value->GetSize() != sizeof(Math::vec3))
 		return nullptr;
@@ -114,7 +143,7 @@ const char* Vec4EntityFieldType::GetName() const
 	return "vec4";
 }
 
-ptr<Script::Any> Vec4EntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> Vec4EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	if(value->GetSize() != sizeof(Math::vec4))
 		return nullptr;
@@ -157,7 +186,7 @@ const char* ReferenceEntityFieldType::GetName() const
 	return "reference";
 }
 
-ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value)
+ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	try
 	{

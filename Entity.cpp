@@ -71,17 +71,13 @@ ptr<File> Entity::GetFullTagKey(const EntityTagId& tagId) const
 	return key;
 }
 
-ptr<File> Entity::GetFullFieldKey(int fieldIndex) const
+ptr<File> Entity::GetFullFieldKey(const String& fieldId) const
 {
-	if(fieldIndex >= (1 << 16))
-		THROW("Too big field index");
-
-	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + 2));
+	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + fieldId.length()));
 	char* keyData = (char*)key->GetData();
 	memcpy(keyData, id.data, EntityId::size);
 	keyData[EntityId::size] = 'f';
-	keyData[EntityId::size + 1] = fieldIndex & 0xff;
-	keyData[EntityId::size + 2] = (fieldIndex >> 8) & 0xff;
+	memcpy(keyData + EntityId::size + 1, fieldId.c_str(), fieldId.length());
 
 	return key;
 }
@@ -95,15 +91,6 @@ ptr<File> Entity::GetFullDataKey(const void* nameData, size_t nameSize) const
 	memcpy(keyData + EntityId::size + 1, nameData, nameSize);
 
 	return key;
-}
-
-int Entity::TryParseFieldKey(const void* data, size_t size)
-{
-	if(size != 2)
-		return -1;
-
-	const unsigned char* d = (const unsigned char*)data;
-	return d[0] | (d[1] << 8);
 }
 
 void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
@@ -147,11 +134,9 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 		break;
 	case 'f':
 		{
-			int fieldIndex = TryParseFieldKey((const char*)keyData + 1, keySize - 1);
-			if(fieldIndex < 0)
-				break;
+			String fieldId((const char*)keyData + 1, keySize - 1);
 			for(size_t i = 0; i < callbacks.size(); ++i)
-				callbacks[i]->FireField(fieldIndex, value);
+				callbacks[i]->FireField(fieldId, value);
 		}
 		break;
 	case 'd':
@@ -180,20 +165,14 @@ void Entity::WriteTag(ptr<Action> action, const EntityTagId& tagId, ptr<File> ta
 	action->AddChange(GetFullTagKey(tagId), tagData);
 }
 
-ptr<File> Entity::RawReadField(int fieldIndex) const
+ptr<File> Entity::RawReadField(const String& fieldId) const
 {
-	if(!scheme)
-		return nullptr;
-
-	return manager->GetRepo()->GetValue(GetFullFieldKey(fieldIndex));
+	return manager->GetRepo()->GetValue(GetFullFieldKey(fieldId));
 }
 
-void Entity::RawWriteField(ptr<Action> action, int fieldIndex, ptr<File> value)
+void Entity::RawWriteField(ptr<Action> action, const String& fieldId, ptr<File> value)
 {
-	if(!scheme)
-		return;
-
-	action->AddChange(GetFullFieldKey(fieldIndex), value);
+	action->AddChange(GetFullFieldKey(fieldId), value);
 }
 
 void Entity::EnumerateFields(FieldEnumerator* enumerator)
@@ -212,14 +191,11 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 
 		bool OnKeyValue(ptr<File> key, ptr<File> value)
 		{
-			int fieldIndex = TryParseFieldKey(
-				(char*)key->GetData() + EntityId::size + 1,
-				key->GetSize() - EntityId::size - 1);
-
-			if(fieldIndex < 0)
-				return true;
-
-			enumerator->OnField(fieldIndex, value);
+			enumerator->OnField(
+				String(
+					(const char*)key->GetData() + EntityId::size + 1,
+					key->GetSize() - EntityId::size - 1),
+				value);
 			return true;
 		}
 	};
@@ -232,34 +208,37 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 	manager->GetRepo()->EnumerateKeyValues(prefix, &Enumerator(enumerator));
 }
 
-ptr<Script::Any> Entity::ReadField(int fieldIndex) const
+ptr<Script::Any> Entity::ReadField(const String& fieldId) const
 {
 	if(!scheme)
 		return nullptr;
 
 	const EntityScheme::Fields& fields = scheme->GetFields();
-	if(fieldIndex >= (int)fields.size())
+	EntityScheme::Fields::const_iterator i = fields.find(fieldId);
+	if(i == fields.end())
 		return nullptr;
 
-	return fields[fieldIndex].type->TryConvertToScript(
+	return i->second.type->TryConvertToScript(
+		manager,
 		Script::Np::State::GetCurrent(),
-		RawReadField(fieldIndex));
+		RawReadField(fieldId));
 }
 
-void Entity::WriteField(ptr<Action> action, int fieldIndex, ptr<Script::Any> value)
+void Entity::WriteField(ptr<Action> action, const String& fieldId, ptr<Script::Any> value)
 {
 	if(!scheme)
 		return;
 
 	const EntityScheme::Fields& fields = scheme->GetFields();
-	if(fieldIndex >= (int)fields.size())
+	EntityScheme::Fields::const_iterator i = fields.find(fieldId);
+	if(i == fields.end())
 		return;
 
-	ptr<File> fileValue = fields[fieldIndex].type->TryConvertFromScript(value.FastCast<Script::Np::Any>());
+	ptr<File> fileValue = i->second.type->TryConvertFromScript(value.FastCast<Script::Np::Any>());
 	if(!fileValue)
 		return;
 
-	RawWriteField(action, fieldIndex, fileValue);
+	RawWriteField(action, fieldId, fileValue);
 }
 
 ptr<File> Entity::ReadData(const void* nameData, size_t nameSize) const

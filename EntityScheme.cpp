@@ -1,5 +1,6 @@
 #include "EntityScheme.hpp"
 #include "EntityFieldType.hpp"
+#include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
 
@@ -26,14 +27,28 @@ int EntityScheme::GetFieldsCount() const
 	return (int)fields.size();
 }
 
-const char* EntityScheme::GetFieldType(int fieldIndex) const
+const char* EntityScheme::GetFieldType(const String& fieldId) const
 {
-	return fields[fieldIndex].type->GetName();
+	Fields::const_iterator i = fields.find(fieldId);
+	if(i == fields.end())
+		THROW("No such field");
+	return i->second.type->GetName();
 }
 
-String EntityScheme::GetFieldName(int fieldIndex) const
+String EntityScheme::GetFieldName(const String& fieldId) const
 {
-	return fields[fieldIndex].name;
+	Fields::const_iterator i = fields.find(fieldId);
+	if(i == fields.end())
+		THROW("No such field");
+	return i->second.name;
+}
+
+void EntityScheme::AddField(const String& fieldId, const String& type, const String& name)
+{
+	Field field;
+	field.type = EntityFieldType::FromName(type.c_str());
+	field.name = name;
+	fields[fieldId] = field;
 }
 
 END_INANITY_OIL

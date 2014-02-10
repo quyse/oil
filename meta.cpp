@@ -113,6 +113,7 @@ META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
 	META_METHOD(GetFieldsCount);
 	META_METHOD(GetFieldType);
 	META_METHOD(GetFieldName);
+	META_METHOD(AddField);
 META_CLASS_END();
 
 #include "EntitySchemeManager.hpp"

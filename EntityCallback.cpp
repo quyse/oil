@@ -37,18 +37,20 @@ void EntityCallback::FireTag(const EntityTagId& tagId, ptr<File> value)
 		scriptState->WrapObject(value));
 }
 
-void EntityCallback::FireField(int fieldIndex, ptr<File> value)
+void EntityCallback::FireField(const String& fieldId, ptr<File> value)
 {
 	const EntityScheme::Fields& fields = entity->GetScheme()->GetFields();
-	if(fieldIndex >= (int)fields.size())
+	EntityScheme::Fields::const_iterator i = fields.find(fieldId);
+	if(i == fields.end())
 		return;
 
-	ptr<Script::Any> scriptValue = fields[fieldIndex].type->TryConvertToScript(callback->GetState(), value);
+	ptr<Script::Any> scriptValue = i->second.type->
+		TryConvertToScript(entity->GetManager(), callback->GetState(), value);
 
 	ptr<Script::Np::State> scriptState = callback->GetState();
 	callback->Call(
 		scriptState->NewString("field"),
-		scriptState->NewNumber(fieldIndex),
+		scriptState->NewString(fieldId),
 		scriptValue);
 }
 
@@ -72,9 +74,9 @@ void EntityCallback::EnumerateFields()
 		Enumerator(EntityCallback* callback)
 		: callback(callback) {}
 
-		void OnField(int fieldIndex, ptr<File> value)
+		void OnField(const String& fieldId, ptr<File> value)
 		{
-			callback->FireField(fieldIndex, value);
+			callback->FireField(fieldId, value);
 		}
 	};
 

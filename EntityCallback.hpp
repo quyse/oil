@@ -40,7 +40,7 @@ public:
 
 	void FireScheme(ptr<EntityScheme> scheme);
 	void FireTag(const EntityTagId& tagId, ptr<File> value);
-	void FireField(int fieldIndex, ptr<File> value);
+	void FireField(const String& fieldId, ptr<File> value);
 	void FireData(ptr<File> key, ptr<File> value);
 
 	/// Fire callback for all fields.

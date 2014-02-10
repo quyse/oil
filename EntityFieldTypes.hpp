@@ -5,13 +5,11 @@
 
 BEGIN_INANITY_OIL
 
-class EntityManager;
-
 class FloatEntityFieldType : public EntityFieldType
 {
 public:
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 
@@ -19,7 +17,7 @@ class IntegerEntityFieldType : public EntityFieldType
 {
 public:
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 
@@ -27,7 +25,7 @@ class StringEntityFieldType : public EntityFieldType
 {
 public:
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 
@@ -35,7 +33,7 @@ class Vec3EntityFieldType : public EntityFieldType
 {
 public:
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 
@@ -43,7 +41,7 @@ class Vec4EntityFieldType : public EntityFieldType
 {
 public:
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 
@@ -61,14 +59,9 @@ public:
 
 class ReferenceEntityFieldType : public EntityFieldType
 {
-private:
-	ptr<EntityManager> entityManager;
-
 public:
-	ReferenceEntityFieldType(ptr<EntityManager> entityManager);
-
 	const char* GetName() const;
-	ptr<Script::Any> TryConvertToScript(ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
 

@@ -28,7 +28,7 @@ public:
 	class FieldEnumerator
 	{
 	public:
-		virtual void OnField(int fieldIndex, ptr<File> value) = 0;
+		virtual void OnField(const String& fieldId, ptr<File> value) = 0;
 	};
 
 	class DataEnumerator
@@ -47,11 +47,8 @@ private:
 	std::vector<EntityCallback*> callbacks;
 
 	ptr<File> GetFullTagKey(const EntityTagId& tagId) const;
-	ptr<File> GetFullFieldKey(int fieldIndex) const;
+	ptr<File> GetFullFieldKey(const String& fieldId) const;
 	ptr<File> GetFullDataKey(const void* nameData, size_t nameSize) const;
-	/// Tries to parse field key.
-	/** Returns -1 if wrong format. */
-	static int TryParseFieldKey(const void* data, size_t size);
 
 public:
 	Entity(ptr<EntityManager> manager, const EntityId& id);
@@ -71,11 +68,11 @@ public:
 	ptr<File> ReadTag(const EntityTagId& tagId) const;
 	void WriteTag(ptr<Action> action, const EntityTagId& tagId, ptr<File> tagData);
 
-	ptr<File> RawReadField(int fieldIndex) const;
-	void RawWriteField(ptr<Action> action, int fieldIndex, ptr<File> value);
+	ptr<File> RawReadField(const String& fieldId) const;
+	void RawWriteField(ptr<Action> action, const String& fieldId, ptr<File> value);
 	void EnumerateFields(FieldEnumerator* enumerator);
-	ptr<Script::Any> ReadField(int fieldIndex) const;
-	void WriteField(ptr<Action> action, int fieldIndex, ptr<Script::Any> value);
+	ptr<Script::Any> ReadField(const String& fieldId) const;
+	void WriteField(ptr<Action> action, const String& fieldId, ptr<Script::Any> value);
 
 	ptr<File> ReadData(const void* nameData, size_t nameSize) const;
 	void WriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value);
