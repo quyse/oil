@@ -101,6 +101,8 @@ private:
 	ptr<File> GetKeyItemValue(long long itemId);
 	/// Get value length of key item.
 	size_t GetKeyItemValueLength(long long itemId);
+	/// Get value of key.
+	ptr<File> GetKeyValue(ptr<File> key);
 	/// Add new key item (replacing old one if exists).
 	void AddKeyItem(ptr<File> key, ptr<File> value, int status);
 	/// Remove key item.

@@ -360,6 +360,24 @@ size_t ClientRepo::GetKeyItemValueLength(long long itemId)
 	return (size_t)stmtGetKeyItemValue->ColumnInt64(0);
 }
 
+ptr<File> ClientRepo::GetKeyValue(ptr<File> key)
+{
+	KeyItems keyItems = GetKeyItems(key);
+
+	int order[] = {
+		ItemStatuses::postponed,
+		ItemStatuses::transient,
+		ItemStatuses::client,
+		ItemStatuses::server
+	};
+
+	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
+		if(keyItems.ids[order[i]])
+			return GetKeyItemValue(keyItems.ids[order[i]]);
+
+	return nullptr;
+}
+
 void ClientRepo::AddKeyItem(ptr<File> key, ptr<File> value, int status)
 {
 	Data::SqliteQuery query(stmtAddKeyItem);
@@ -556,20 +574,7 @@ ptr<File> ClientRepo::GetValue(ptr<File> key)
 
 	Data::SqliteTransaction transaction(db);
 
-	KeyItems keyItems = GetKeyItems(key);
-
-	int order[] = {
-		ItemStatuses::postponed,
-		ItemStatuses::transient,
-		ItemStatuses::client,
-		ItemStatuses::server
-	};
-
-	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
-		if(keyItems.ids[order[i]])
-			return GetKeyItemValue(keyItems.ids[order[i]]);
-
-	return nullptr;
+	return GetKeyValue(key);
 
 	END_TRY("Can't get repo value");
 }
@@ -654,6 +659,8 @@ void ClientRepo::EnumerateKeyValues(ptr<File> prefix, KeyValueEnumerator* enumer
 {
 	BEGIN_TRY();
 
+	Data::SqliteTransaction transaction(db);
+
 	class Enumerator : public KeyEnumerator
 	{
 	private:
@@ -666,7 +673,7 @@ void ClientRepo::EnumerateKeyValues(ptr<File> prefix, KeyValueEnumerator* enumer
 
 		bool OnKey(ptr<File> key)
 		{
-			return enumerator->OnKeyValue(key, repo->GetValue(key));
+			return enumerator->OnKeyValue(key, repo->GetKeyValue(key));
 		}
 	};
 
