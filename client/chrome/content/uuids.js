@@ -1,3 +1,5 @@
+'use strict';
+
 OIL.uuids = {
 	tags: {
 		name: "0cc78838-4bc7-4da6-bb4b-c4bfcf0363a1",

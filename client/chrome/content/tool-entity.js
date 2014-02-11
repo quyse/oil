@@ -1,3 +1,5 @@
+'use strict';
+
 Components.utils.import('chrome://oil/content/oil.js');
 
 var entityId = null;

@@ -1,3 +1,5 @@
+'use strict';
+
 Components.utils.import('resource://gre/modules/devtools/dbg-server.jsm');
 if (!DebuggerServer.initialized) {
   DebuggerServer.init();

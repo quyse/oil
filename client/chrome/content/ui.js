@@ -1,3 +1,5 @@
+'use strict';
+
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 OIL.XUL_NS = XUL_NS;
 
