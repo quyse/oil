@@ -74,9 +74,11 @@ public:
 	ptr<Script::Any> ReadField(const String& fieldId) const;
 	void WriteField(ptr<Action> action, const String& fieldId, ptr<Script::Any> value);
 
-	ptr<File> ReadData(const void* nameData, size_t nameSize) const;
-	void WriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value);
+	ptr<File> RawReadData(const void* nameData, size_t nameSize) const;
+	void RawWriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value);
 	void EnumerateData(DataEnumerator* enumerator);
+	ptr<File> ReadData(ptr<File> name) const;
+	void WriteData(ptr<Action> action, ptr<File> name, ptr<File> value);
 
 	ptr<EntityCallback> AddCallback(ptr<Script::Any> callback);
 };

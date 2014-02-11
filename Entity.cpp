@@ -241,7 +241,7 @@ void Entity::WriteField(ptr<Action> action, const String& fieldId, ptr<Script::A
 	RawWriteField(action, fieldId, fileValue);
 }
 
-ptr<File> Entity::ReadData(const void* nameData, size_t nameSize) const
+ptr<File> Entity::RawReadData(const void* nameData, size_t nameSize) const
 {
 	if(!scheme)
 		return nullptr;
@@ -249,7 +249,7 @@ ptr<File> Entity::ReadData(const void* nameData, size_t nameSize) const
 	return manager->GetRepo()->GetValue(GetFullDataKey(nameData, nameSize));
 }
 
-void Entity::WriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value)
+void Entity::RawWriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value)
 {
 	if(!scheme)
 		return;
@@ -284,6 +284,16 @@ void Entity::EnumerateData(DataEnumerator* enumerator)
 	prefixData[EntityId::size] = 'd';
 
 	manager->GetRepo()->EnumerateKeyValues(prefix, &Enumerator(enumerator));
+}
+
+ptr<File> Entity::ReadData(ptr<File> name) const
+{
+	return RawReadData(name->GetData(), name->GetSize());
+}
+
+void Entity::WriteData(ptr<Action> action, ptr<File> name, ptr<File> value)
+{
+	RawWriteData(action, name->GetData(), name->GetSize(), value);
 }
 
 ptr<EntityCallback> Entity::AddCallback(ptr<Script::Any> callback)

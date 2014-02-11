@@ -98,6 +98,8 @@ META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
 	META_METHOD(RawWriteField);
 	META_METHOD(ReadField);
 	META_METHOD(WriteField);
+	META_METHOD(ReadData);
+	META_METHOD(WriteData);
 	META_METHOD(AddCallback);
 META_CLASS_END();
 
