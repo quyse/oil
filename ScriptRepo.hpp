@@ -81,6 +81,8 @@ public:
 
 	void SetUndoRedoChangedCallback(ptr<Script::Any> callback);
 
+	long long GetPushLag() const;
+	long long GetPushedKeysCount() const;
 	long long GetPullLag() const;
 	long long GetPulledKeysCount() const;
 

@@ -56,6 +56,7 @@ private:
 		stmtChangeKeyItemStatus,
 		stmtChangeKeyItemValue,
 		stmtSelectKeysToPush,
+		stmtGetPushLag,
 		stmtMassChangeStatus,
 		stmtEnumerateKeysBegin,
 		stmtEnumerateKeysBeginEnd,
@@ -70,9 +71,16 @@ private:
 	bool pushInProgress;
 	/// Ids of transient keys.
 	std::vector<long long> transientIds;
+	/// Number of keys to push more.
+	/** Updates in Pull method. */
+	long long pushLag;
+	/// Number of pushed keys in last pull operation.
+	long long pushedKeysCount;
 	/// Number of keys to pull more (estimated).
+	/** Updates in Pull method. */
 	long long pullLag;
 	/// Number of pulled keys in last pull operation.
+	/** Updates in Pull method. */
 	long long pulledKeysCount;
 
 	/// Deferred events queue.
@@ -153,7 +161,11 @@ public:
 
 	/// Send deferred events to event handler.
 	void ProcessEvents(EventHandler* eventHandler);
-	/// Get latest pull lag.
+	/// Get push lag (before latest pull operation).
+	long long GetPushLag() const;
+	/// Get number of pushed keys in last push operation.
+	long long GetPushedKeysCount() const;
+	/// Get pull lag (before latest pull operation).
 	long long GetPullLag() const;
 	/// Get number of pulled keys in last pull operation.
 	long long GetPulledKeysCount() const;

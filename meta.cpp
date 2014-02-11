@@ -67,6 +67,8 @@ META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
 	META_METHOD(Undo);
 	META_METHOD(Redo);
 	META_METHOD(SetUndoRedoChangedCallback);
+	META_METHOD(GetPushLag);
+	META_METHOD(GetPushedKeysCount);
 	META_METHOD(GetPullLag);
 	META_METHOD(GetPulledKeysCount);
 META_CLASS_END();

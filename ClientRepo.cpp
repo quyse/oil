@@ -205,6 +205,15 @@ ClientRepo::ClientRepo(const char* fileName)
 			<< " ORDER BY a.id LIMIT ?1";
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
+	{
+		std::ostringstream ss;
+		ss <<
+			"SELECT COUNT(a.id)"
+			" FROM items AS a LEFT JOIN items AS b ON a.key = b.key"
+			" AND b.status = " << ItemStatuses::server
+			<< " WHERE a.status = " << ItemStatuses::client;
+		stmtGetPushLag = db->CreateStatement(ss.str().c_str());
+	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");
 	stmtEnumerateKeysBegin = db->CreateStatement("SELECT DISTINCT key FROM items WHERE key >= ?1 ORDER BY key");
 	stmtEnumerateKeysBeginEnd = db->CreateStatement("SELECT DISTINCT key FROM items WHERE key >= ?1 AND key < ?2 ORDER BY key");
@@ -826,8 +835,27 @@ bool ClientRepo::Pull(StreamReader* reader)
 	if(prePushRevision < postPushRevision)
 		AddChunk(prePushRevision, postPushRevision);
 
+	// set pushed count
+	pushedKeysCount = (long long)transientIds.size();
+
 	// clear transient ids
 	transientIds.clear();
+
+	// calculate push lag
+	{
+		Data::SqliteQuery query(stmtGetPushLag);
+
+		switch(stmtGetPushLag->Step())
+		{
+		case SQLITE_ROW:
+			pushLag = stmtGetPushLag->ColumnInt64(0);
+			break;
+		default:
+			THROW("Can't determine push lag");
+		}
+
+		pushLag += pushedKeysCount;
+	}
 
 	// pull keys
 	void* key = keyBufferFile->GetData();
@@ -1004,6 +1032,16 @@ void ClientRepo::ProcessEvents(EventHandler* eventHandler)
 			events[i].second = nullptr;
 		}
 	events.clear();
+}
+
+long long ClientRepo::GetPushLag() const
+{
+	return pushLag;
+}
+
+long long ClientRepo::GetPushedKeysCount() const
+{
+	return pushedKeysCount;
 }
 
 long long ClientRepo::GetPullLag() const

@@ -312,6 +312,16 @@ void ScriptRepo::SetUndoRedoChangedCallback(ptr<Script::Any> callback)
 	this->undoRedoChangedCallback = callback.FastCast<Script::Np::Any>();
 }
 
+long long ScriptRepo::GetPushLag() const
+{
+	return clientRepo->GetPushLag();
+}
+
+long long ScriptRepo::GetPushedKeysCount() const
+{
+	return clientRepo->GetPushedKeysCount();
+}
+
 long long ScriptRepo::GetPullLag() const
 {
 	return clientRepo->GetPullLag();
