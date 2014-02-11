@@ -72,6 +72,8 @@ private:
 	std::vector<long long> transientIds;
 	/// Number of keys to pull more (estimated).
 	long long pullLag;
+	/// Number of pulled keys in last pull operation.
+	long long pulledKeysCount;
 
 	/// Deferred events queue.
 	std::vector<std::pair<ptr<File>, ptr<File> > > events;
@@ -151,6 +153,10 @@ public:
 
 	/// Send deferred events to event handler.
 	void ProcessEvents(EventHandler* eventHandler);
+	/// Get latest pull lag.
+	long long GetPullLag() const;
+	/// Get number of pulled keys in last pull operation.
+	long long GetPulledKeysCount() const;
 };
 
 END_INANITY_OIL

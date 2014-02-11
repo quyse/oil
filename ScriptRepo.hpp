@@ -81,6 +81,9 @@ public:
 
 	void SetUndoRedoChangedCallback(ptr<Script::Any> callback);
 
+	long long GetPullLag() const;
+	long long GetPulledKeysCount() const;
+
 	META_DECLARE_CLASS(ScriptRepo);
 };
 

@@ -833,6 +833,8 @@ bool ClientRepo::Pull(StreamReader* reader)
 	void* key = keyBufferFile->GetData();
 	void* value = valueBufferFile->GetData();
 
+	pulledKeysCount = 0;
+
 	for(;;)
 		try
 		{
@@ -874,6 +876,8 @@ bool ClientRepo::Pull(StreamReader* reader)
 
 			// that key is ok
 			keyTransaction.Commit();
+
+			++pulledKeysCount;
 
 			changedSomething = true;
 		}
@@ -1000,6 +1004,16 @@ void ClientRepo::ProcessEvents(EventHandler* eventHandler)
 			events[i].second = nullptr;
 		}
 	events.clear();
+}
+
+long long ClientRepo::GetPullLag() const
+{
+	return pullLag;
+}
+
+long long ClientRepo::GetPulledKeysCount() const
+{
+	return pulledKeysCount;
 }
 
 END_INANITY_OIL
