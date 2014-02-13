@@ -5,6 +5,8 @@
 #include "../inanity/File.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/script/np/State.hpp"
+#include "../inanity/Log.hpp"
+#include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
 
@@ -21,46 +23,74 @@ EntityCallback::~EntityCallback()
 
 void EntityCallback::FireScheme(ptr<EntityScheme> scheme)
 {
-	ptr<Script::Np::State> scriptState = callback->GetState();
-	callback->Call(
-		scriptState->NewString("scheme"),
-		scriptState->WrapObject<RefCounted>(nullptr),
-		scriptState->WrapObject(scheme));
+	try
+	{
+		ptr<Script::Np::State> scriptState = callback->GetState();
+		callback->Call(
+			scriptState->NewString("scheme"),
+			scriptState->WrapObject<RefCounted>(nullptr),
+			scriptState->WrapObject(scheme));
+	}
+	catch(Exception* exception)
+	{
+		Log::Error(exception);
+	}
 }
 
 void EntityCallback::FireTag(const EntityTagId& tagId, ptr<File> value)
 {
-	ptr<Script::Np::State> scriptState = callback->GetState();
-	callback->Call(
-		scriptState->NewString("tag"),
-		scriptState->NewString(tagId.ToString()),
-		scriptState->WrapObject(value));
+	try
+	{
+		ptr<Script::Np::State> scriptState = callback->GetState();
+		callback->Call(
+			scriptState->NewString("tag"),
+			scriptState->NewString(tagId.ToString()),
+			scriptState->WrapObject(value));
+	}
+	catch(Exception* exception)
+	{
+		Log::Error(exception);
+	}
 }
 
 void EntityCallback::FireField(const String& fieldId, ptr<File> value)
 {
-	const EntityScheme::Fields& fields = entity->GetScheme()->GetFields();
-	EntityScheme::Fields::const_iterator i = fields.find(fieldId);
-	if(i == fields.end())
-		return;
+	try
+	{
+		const EntityScheme::Fields& fields = entity->GetScheme()->GetFields();
+		EntityScheme::Fields::const_iterator i = fields.find(fieldId);
+		if(i == fields.end())
+			return;
 
-	ptr<Script::Any> scriptValue = i->second.type->
-		TryConvertToScript(entity->GetManager(), callback->GetState(), value);
+		ptr<Script::Any> scriptValue = i->second.type->
+			TryConvertToScript(entity->GetManager(), callback->GetState(), value);
 
-	ptr<Script::Np::State> scriptState = callback->GetState();
-	callback->Call(
-		scriptState->NewString("field"),
-		scriptState->NewString(fieldId),
-		scriptValue);
+		ptr<Script::Np::State> scriptState = callback->GetState();
+		callback->Call(
+			scriptState->NewString("field"),
+			scriptState->NewString(fieldId),
+			scriptValue);
+	}
+	catch(Exception* exception)
+	{
+		Log::Error(exception);
+	}
 }
 
 void EntityCallback::FireData(ptr<File> key, ptr<File> value)
 {
-	ptr<Script::Np::State> scriptState = callback->GetState();
-	callback->Call(
-		scriptState->NewString("data"),
-		scriptState->WrapObject(key),
-		scriptState->WrapObject(value));
+	try
+	{
+		ptr<Script::Np::State> scriptState = callback->GetState();
+		callback->Call(
+			scriptState->NewString("data"),
+			scriptState->WrapObject(key),
+			scriptState->WrapObject(value));
+	}
+	catch(Exception* exception)
+	{
+		Log::Error(exception);
+	}
 }
 
 void EntityCallback::EnumerateFields()
