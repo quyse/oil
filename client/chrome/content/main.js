@@ -72,7 +72,7 @@ function createTool(title, page, param) {
 };
 OIL.createTool = createTool;
 
-window.onload = function() {
+window.addEventListener('load', function() {
 	OIL.init(document.getElementById('oil'));
 	onUndoRedoChanged(null, null);
 
@@ -96,4 +96,18 @@ window.onload = function() {
 			mainTabbox = tabbox;
 		}
 	}
-};
+
+	// register sync progress feedback
+	var progress = document.getElementById("progressSync");
+	OIL.syncProgress.onChanged.addTarget(function(pushDone, pushTotal, pullDone, pullTotal) {
+		var done = pushDone + pullDone;
+		var total = pushTotal + pullTotal;
+		if(done == 0 && total == 0) {
+			done = 1;
+			total = 1;
+		}
+		progress.max = total;
+		progress.value = done;
+		OIL.log('push ' + pushDone + '/' + pushTotal + ' pull ' + pullDone + '/' + pullTotal);
+	});
+});

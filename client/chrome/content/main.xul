@@ -67,4 +67,11 @@
 
 	<hbox id="toolspace" flex="1" />
 
+	<hbox id="statusbar">
+		<label id="labelStatus" flex="1" value="Status" />
+		<vbox>
+			<progressmeter id="progressSync" />
+		</vbox>
+	</hbox>
+
 </window>

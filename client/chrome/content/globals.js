@@ -36,6 +36,15 @@ function watchRepo() {
 }
 OIL.watchRepo = watchRepo;
 
+var syncProgress = {
+	pushDone: 0,
+	pushTotal: 0,
+	pullDone: 0,
+	pullTotal: 0,
+	onChanged: new Event()
+};
+OIL.syncProgress = syncProgress;
+
 var repoSyncing = false;
 var repoSyncTryings = maxRequestTryings;
 function syncRepo() {
@@ -49,12 +58,26 @@ function syncRepo() {
 			repoSyncing = false;
 
 			if(ok) {
+				// do stats
+				OIL.syncProgress.pushTotal = OIL.syncProgress.pushDone + OIL.repo.GetPushLag();
+				OIL.syncProgress.pushDone += OIL.repo.GetPushedKeysCount();
+				OIL.syncProgress.pullTotal = OIL.syncProgress.pullDone + OIL.repo.GetPullLag();
+				OIL.syncProgress.pullDone += OIL.repo.GetPulledKeysCount();
+				syncProgress.onChanged.fire(
+					OIL.syncProgress.pushDone, OIL.syncProgress.pushTotal,
+					OIL.syncProgress.pullDone, OIL.syncProgress.pullTotal);
+
 				OIL.repo.ProcessEvents();
 				repoSyncTryings = maxRequestTryings;
 				if(message)
 					syncRepo();
-				else
+				else {
+					OIL.syncProgress.pushDone = 0;
+					OIL.syncProgress.pushTotal = 0;
+					OIL.syncProgress.pullDone = 0;
+					OIL.syncProgress.pullTotal = 0;
 					watchRepo();
+				}
 			}
 			else {
 				if(--repoSyncTryings <= 0)
