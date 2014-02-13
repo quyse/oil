@@ -2,6 +2,47 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+//*** Event
+
+var Event = OIL.Event = function() {
+	this.targetNumber = 0;
+	this.targets = [];
+};
+Event.prototype.addTarget = function(target) {
+	this.targets[this.targetNumber] = target;
+	return this.targetNumber++;
+};
+Event.prototype.removeTarget = function(targetNumber) {
+	delete this.targets[targetNumber];
+};
+Event.prototype.fire = function() {
+	for(var i in this.targets)
+		this.targets[i].apply(undefined, arguments);
+};
+
+//*** weak callbacks
+
+var weakCallbackObjects = new WeakMap();
+/// Returns function which keeps a weak reference to an object argument.
+OIL.weakCallback = function(object, method) {
+	var key = {};
+	weakCallbackObjects.set(key, object);
+	return function() {
+		var object = weakCallbackObjects.get(key);
+		if(object === undefined)
+			return;
+		return object[method].apply(object, arguments);
+	};
+};
+
+//*** quit
+
+OIL.quit = function() {
+	Components.classes['@mozilla.org/toolkit/app-startup;1']
+		.getService(Components.interfaces.nsIAppStartup)
+		.quit(Components.interfaces.nsIAppStartup.eAttemptQuit);
+};
+
 //*** syncing
 
 var maxRequestTryings = 3;
