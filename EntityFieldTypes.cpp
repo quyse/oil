@@ -22,6 +22,8 @@ BEGIN_INANITY_OIL
 
 EntityFieldType* EntityFieldType::FromName(const char* name)
 {
+	static BlobEntityFieldType blobType;
+	static BoolEntityFieldType boolType;
 	static FloatEntityFieldType floatType;
 	static IntegerEntityFieldType integerType;
 	static StringEntityFieldType stringType;
@@ -32,6 +34,8 @@ EntityFieldType* EntityFieldType::FromName(const char* name)
 	static ReferenceEntityFieldType referenceType;
 	static EntityFieldType* types[] =
 	{
+		&blobType,
+		&boolType,
 		&floatType,
 		&integerType,
 		&stringType,
@@ -47,6 +51,52 @@ EntityFieldType* EntityFieldType::FromName(const char* name)
 			return types[i];
 
 	return nullptr;
+}
+
+//*** class BlobEntityFieldType
+
+const char* BlobEntityFieldType::GetName() const
+{
+	return "blob";
+}
+
+ptr<Script::Any> BlobEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
+{
+	return scriptState->WrapObject(value);
+}
+
+ptr<File> BlobEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
+{
+	return value->AsObject().DynamicCast<File>();
+}
+
+//*** class BoolEntityFieldType
+
+const char* BoolEntityFieldType::GetName() const
+{
+	return "bool";
+}
+
+ptr<Script::Any> BoolEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
+{
+	bool allZeroes = true;
+	const char* valueData = (const char*)value->GetData();
+	size_t valueSize = value->GetSize();
+	for(size_t i = 0; i < valueSize; ++i)
+		if(valueData[i])
+		{
+			allZeroes = false;
+			break;
+		}
+
+	return scriptState->NewBoolean(!allZeroes);
+}
+
+ptr<File> BoolEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
+{
+	ptr<MemoryFile> file = NEW(MemoryFile(1));
+	*(char*)file->GetData() = value->AsBool() ? 1 : 0;
+	return file;
 }
 
 //*** class FloatEntityFieldType

@@ -5,6 +5,22 @@
 
 BEGIN_INANITY_OIL
 
+class BlobEntityFieldType : public EntityFieldType
+{
+public:
+	const char* GetName() const;
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
+};
+
+class BoolEntityFieldType : public EntityFieldType
+{
+public:
+	const char* GetName() const;
+	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
+	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
+};
+
 class FloatEntityFieldType : public EntityFieldType
 {
 public:
