@@ -23,11 +23,13 @@ OIL.uuids = {
 	schemeDescs: {
 		folder: {
 			name: "folder",
-			fields: [],
+			fields: {},
 			icon: "chrome://global/skin/dirListing/folder.png"
 		}
 	},
-	rootFolder: "23f43821-92e3-4782-a460-d6944952e02b"
+	entities: {
+		root: "0046c95e-344a-4756-9a96-541a2b1f8e73"
+	}
 };
 
 OIL.registerEntitySchemes = function(schemeManager) {
@@ -37,7 +39,11 @@ OIL.registerEntitySchemes = function(schemeManager) {
 		var schemeDesc = schemeDescs[schemeName];
 		var scheme = new OIL.classes.Inanity.Oil.EntityScheme(OIL.uuids.schemes[schemeName], schemeDesc.name);
 
-		// TODO: add fields
+		var fields = schemeDesc.fields;
+		for(var fieldId in fields) {
+			var field = fields[fieldId];
+			scheme.AddField(fieldId, field.type, field.name);
+		}
 
 		// register scheme
 		schemeManager.Register(scheme);
