@@ -69,9 +69,7 @@
 
 	<hbox id="statusbar">
 		<label id="labelStatus" flex="1" value="Status" />
-		<vbox>
-			<progressmeter id="progressSync" />
-		</vbox>
+		<label id="labelSyncStatus" value="Not Synced" />
 	</hbox>
 
 </window>

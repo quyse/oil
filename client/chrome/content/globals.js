@@ -102,7 +102,9 @@ var syncProgress = {
 	pushTotal: 0,
 	pullDone: 0,
 	pullTotal: 0,
-	onChanged: new Event()
+	onChanged: new Event(),
+	onSynced: new Event(),
+	onUnsynced: new Event()
 };
 OIL.syncProgress = syncProgress;
 
@@ -113,6 +115,8 @@ function syncRepo() {
 		return;
 
 	repoSyncing = true;
+
+	OIL.syncProgress.onUnsynced.fire();
 
 	OIL.setTimeout(function() {
 		OIL.repo.Sync(function(ok, message) {
@@ -137,6 +141,7 @@ function syncRepo() {
 					OIL.syncProgress.pushTotal = 0;
 					OIL.syncProgress.pullDone = 0;
 					OIL.syncProgress.pullTotal = 0;
+					OIL.syncProgress.onSynced.fire();
 					watchRepo();
 				}
 			}

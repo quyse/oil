@@ -17,8 +17,10 @@ function onRepoConnect() {
 		OIL.entityManager = OIL.repo.GetEntityManager();
 		OIL.registerEntitySchemes(OIL.entityManager.GetSchemeManager());
 
-		OIL.watchRepo();
+		OIL.syncRepo();
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
+
+		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen');
 
 		// TEST
 		createTool("Project", "folder", OIL.uuids.rootFolder);
@@ -97,17 +99,12 @@ window.addEventListener('load', function() {
 		}
 	}
 
-	// register sync progress feedback
-	var progress = document.getElementById("progressSync");
-	OIL.syncProgress.onChanged.addTarget(function(pushDone, pushTotal, pullDone, pullTotal) {
-		var done = pushDone + pullDone;
-		var total = pushTotal + pullTotal;
-		if(done == 0 && total == 0) {
-			done = 1;
-			total = 1;
-		}
-		progress.max = total;
-		progress.value = done;
-		OIL.log('push ' + pushDone + '/' + pushTotal + ' pull ' + pullDone + '/' + pullTotal);
+	// register sync status feedback
+	var labelSyncStatus = document.getElementById("labelSyncStatus");
+	OIL.syncProgress.onSynced.addTarget(function() {
+		labelSyncStatus.value = "Synced";
+	});
+	OIL.syncProgress.onUnsynced.addTarget(function() {
+		labelSyncStatus.value = "Syncing...";
 	});
 });
