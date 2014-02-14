@@ -2,6 +2,26 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+//*** Timers
+
+// We use Mozilla timers because ordinary setTimeout gets blocked
+// by modal dialogs. https://bugzilla.mozilla.org/show_bug.cgi?id=52209
+var timerClass = Components.classes["@mozilla.org/timer;1"];
+// Keep references to pending timers in order to assure firing.
+var timers = [];
+var timerNumber = 0;
+OIL.setTimeout = function(callback, delay) {
+	var timer = timerClass.createInstance(Components.interfaces.nsITimer);
+	var timerId = timerNumber++;
+	timers[timerId] = timer;
+	timer.initWithCallback({
+		notify: function(timer) {
+			delete timers[timerId];
+			callback();
+		}
+	}, delay, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+};
+
 //*** Event
 
 var Event = OIL.Event = function() {
@@ -55,7 +75,7 @@ function watchRepo() {
 
 	repoWatching = true;
 
-	setTimeout(function() {
+	OIL.setTimeout(function() {
 		OIL.repo.Watch(function(ok, message) {
 			repoWatching = false;
 
@@ -94,7 +114,7 @@ function syncRepo() {
 
 	repoSyncing = true;
 
-	setTimeout(function() {
+	OIL.setTimeout(function() {
 		OIL.repo.Sync(function(ok, message) {
 			repoSyncing = false;
 
