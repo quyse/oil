@@ -16,12 +16,14 @@
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
 		<command id="commandUndo" oncommand="OIL.undo()" />
 		<command id="commandRedo" oncommand="OIL.redo()" />
+		<command id="commandShowRoot" oncommand="onShowRoot()" />
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
+		<command id="commandMaintenanceCreateRoot" oncommand="onMaintenanceRootCreate()" />
 	</commandset>
 
 	<keyset>
-		<key id="keyUndo" modifiers="control" key="z" />
-		<key id="keyRedo" modifiers="control shift" key="z" />
+		<key id="keyUndo" modifiers="control" key="z" command="commandUndo" />
+		<key id="keyRedo" modifiers="control shift" key="z" command="commandRedo" />
 	</keyset>
 
 	<popupset>
@@ -39,24 +41,27 @@
 			<menu label="Repo" accesskey="R">
 				<menupopup>
 					<menuitem label="Connect..." accesskey="C" command="commandRepoConnect" />
-					<menuitem label="Quit" accesskey="Q" />
 				</menupopup>
 			</menu>
 			<menu label="Edit" accesskey="E">
 				<menupopup>
 					<menuitem id="menuUndo" accesskey="U" key="keyUndo" command="commandUndo" />
 					<menuitem id="menuRedo" accesskey="R" key="keyRedo" command="commandRedo" />
-					<menuitem label="Make Test Change" oncommand="onMakeTestChange()" />
 				</menupopup>
 			</menu>
 			<menu label="View" accesskey="V">
 				<menupopup>
-					<menuitem label="Show Root Folder" accesskey="R" oncommand="createTool('Project','folder',OIL.uuids.rootFolder)" />
+					<menuitem label="Show Root Folder" accesskey="R" command="commandShowRoot" />
 				</menupopup>
 			</menu>
 			<menu label="Tools" accesskey="T">
 				<menupopup>
 					<menuitem id="menuConsole" label="Javascript Console..." accesskey="C" command="commandJavascriptConsole" />
+					<menu label="Maintenance">
+						<menupopup>
+							<menuitem id="menuMaintenanceCreateRoot" label="Create Root" command="commandMaintenanceCreateRoot" />
+						</menupopup>
+					</menu>
 					<menuitem label="Create Root Folder" oncommand="createRootFolder()" hidden="true" />
 				</menupopup>
 			</menu>

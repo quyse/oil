@@ -20,10 +20,10 @@ function onRepoConnect() {
 		OIL.syncRepo();
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
 
-		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen');
+		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no');
 
-		// TEST
-		createTool("Project", "folder", OIL.uuids.rootFolder);
+		// show root folder
+		createTool("Project", "folder", OIL.uuids.entities.root);
 	}
 }
 
@@ -44,15 +44,19 @@ function onUndoRedoChanged(undoAction, redoAction) {
 	update(redoAction, "menuRedo", "commandRedo", "Redo");
 }
 
-function createRootFolder() {
-	// check that there is no root folder
-	var entity = OIL.entityManager.GetEntity(OIL.uuids.rootFolder);
+function onShowRoot() {
+	createTool("Root", "folder", OIL.uuids.entities.root);
+}
+
+function onMaintenanceRootCreate() {
+	// check that there is no root
+	var entity = OIL.entityManager.GetEntity(OIL.uuids.entities.root);
 	if(entity.GetScheme())
 		return;
 
 	// create (hack way)
-	var action = OIL.createAction("create root folder");
-	action.AddChange(OIL.eid2f(OIL.uuids.rootFolder), OIL.eid2f(OIL.uuids.schemes.folder));
+	var action = OIL.createAction("create root");
+	action.AddChange(OIL.eid2f(OIL.uuids.entities.root), OIL.eid2f(OIL.uuids.schemes.folder));
 	OIL.finishAction(action);
 }
 
