@@ -296,6 +296,30 @@ void Entity::WriteData(ptr<Action> action, ptr<File> name, ptr<File> value)
 	RawWriteData(action, name->GetData(), name->GetSize(), value);
 }
 
+void Entity::Delete(ptr<Action> action)
+{
+	if(!scheme)
+		return;
+
+	class Enumerator : public ClientRepo::KeyEnumerator
+	{
+	private:
+		ptr<Action> action;
+
+	public:
+		Enumerator(ptr<Action> action)
+		: action(action) {}
+
+		bool OnKey(ptr<File> key)
+		{
+			action->AddChange(key, nullptr);
+			return true;
+		}
+	};
+
+	manager->GetRepo()->EnumerateKeys(id.ToFile(), &Enumerator(action));
+}
+
 ptr<EntityCallback> Entity::AddCallback(ptr<Script::Any> callback)
 {
 	return NEW(EntityCallback(this, callback.FastCast<Script::Np::Any>()));

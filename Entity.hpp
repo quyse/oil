@@ -80,6 +80,10 @@ public:
 	ptr<File> ReadData(ptr<File> name) const;
 	void WriteData(ptr<Action> action, ptr<File> name, ptr<File> value);
 
+	/// Deletes an entity.
+	/** All things (tags, fields, etc.) deleted. But only if entity exists. */
+	void Delete(ptr<Action> action);
+
 	ptr<EntityCallback> AddCallback(ptr<Script::Any> callback);
 };
 
