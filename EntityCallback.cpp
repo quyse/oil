@@ -98,19 +98,24 @@ void EntityCallback::EnumerateFields()
 	class Enumerator : public Entity::FieldEnumerator
 	{
 	private:
-		EntityCallback* callback;
+		std::vector<std::pair<String, ptr<File> > > fields;
 
 	public:
-		Enumerator(EntityCallback* callback)
-		: callback(callback) {}
-
 		void OnField(const String& fieldId, ptr<File> value)
 		{
-			callback->FireField(fieldId, value);
+			fields.push_back(std::make_pair(fieldId, value));
+		}
+
+		void Fire(EntityCallback* callback)
+		{
+			for(size_t i = 0; i < fields.size(); ++i)
+				callback->FireField(fields[i].first, fields[i].second);
 		}
 	};
 
-	entity->EnumerateFields(&Enumerator(this));
+	Enumerator enumerator;
+	entity->EnumerateFields(&enumerator);
+	enumerator.Fire(this);
 }
 
 void EntityCallback::EnumerateData()
@@ -118,19 +123,24 @@ void EntityCallback::EnumerateData()
 	class Enumerator : public Entity::DataEnumerator
 	{
 	private:
-		EntityCallback* callback;
+		std::vector<std::pair<ptr<File>, ptr<File> > > data;
 
 	public:
-		Enumerator(EntityCallback* callback)
-		: callback(callback) {}
-
 		void OnData(ptr<File> key, ptr<File> value)
 		{
-			callback->FireData(key, value);
+			data.push_back(std::make_pair(key, value));
+		}
+
+		void Fire(EntityCallback* callback)
+		{
+			for(size_t i = 0; i < data.size(); ++i)
+				callback->FireData(data[i].first, data[i].second);
 		}
 	};
 
-	entity->EnumerateData(&Enumerator(this));
+	Enumerator enumerator;
+	entity->EnumerateData(&enumerator);
+	enumerator.Fire(this);
 }
 
 END_INANITY_OIL
