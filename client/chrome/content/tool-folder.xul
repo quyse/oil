@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<page id="tool"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<script src="tool-folder.js" />
+
+	<commandset>
+		<command id="commandCreateFolder" oncommand="onCreateFolder()" />
+		<command id="commandDelete" oncommand="onDelete()" />
+		<command id="commandProperties" oncommand="onProperties()" />
+	</commandset>
+
+	<popupset>
+		<menupopup id="contextMenu"
+			onpopupshowing="onContextMenuShowing()">
+			<menuitem id="contextMenuCreateFolder" label="Create Folder" command="commandCreateFolder" />
+			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" />
+			<menuitem id="contextMenuProperties" label="Properties" default="true" command="commandProperties" />
+		</menupopup>
+	</popupset>
+
+	<tree id="tree" flex="1"
+		seltype="multiple" treelines="true" enableColumnDrag="true"
+		context="contextMenu">
+		<treecols>
+			<treecol id="treecolName" primary="true" label="Name" flex="1" />
+			<splitter class="tree-splitter" />
+			<treecol id="treecolType" label="Type" />
+		</treecols>
+		<treechildren />
+	</tree>
+
+	<label id="labelEmpty" value="No such folder." />
+
+</page>
