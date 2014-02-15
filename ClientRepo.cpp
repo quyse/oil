@@ -898,7 +898,7 @@ bool ClientRepo::Pull(StreamReader* reader)
 			// get acquainted with this key
 			KeyItems keyItems = GetKeyItems(keyFile);
 
-			QueueEvent(MemoryFile::CreateViaCopy(keyFile), MemoryFile::CreateViaCopy(valueFile));
+			QueueEvent(MemoryFile::CreateViaCopy(keyFile), valueFile->GetSize() ? MemoryFile::CreateViaCopy(valueFile) : nullptr);
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
