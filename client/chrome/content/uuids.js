@@ -32,7 +32,17 @@ OIL.uuids = {
 	}
 };
 
+function inverseMap(mapNameId) {
+	var names = [];
+	for(var name in mapNameId)
+		names.push(name);
+	for(var i = 0; i < names.length; ++i)
+		mapNameId[mapNameId[names[i]]] = names[i];
+}
+
 OIL.registerEntitySchemes = function(schemeManager) {
+	inverseMap(OIL.uuids.schemes);
+
 	var schemeDescs = OIL.uuids.schemeDescs;
 
 	for(var schemeName in schemeDescs) {
