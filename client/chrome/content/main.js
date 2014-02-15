@@ -56,8 +56,12 @@ function createRootFolder() {
 	OIL.finishAction(action);
 }
 
-/// Panel on which new tabs should be created.
-var mainTabbox;
+// get preferences service
+OIL.prefs = Components.classes["@mozilla.org/preferences-service;1"]
+	.getService(Components.interfaces.nsIPrefService)
+	.getBranch("oil.");
+
+var tabboxes = {};
 
 function getToolUrl(page, param) {
 	return "chrome://oil/content/tool-" + page + ".xul" + (param ? "#" + param : "");
@@ -65,7 +69,11 @@ function getToolUrl(page, param) {
 OIL.getToolUrl = getToolUrl;
 
 function createTool(title, page, param) {
-	var tabNumber = createToolTab(mainTabbox, title);
+	// get tabbox from prefs
+	var tabbox = tabboxes[OIL.prefs.getCharPref("tool-" + page + ".place")] || tabboxes.main;
+	// create tool tab
+	var tabNumber = createToolTab(tabbox, title);
+	// init iframe
 	var tabpanel = getToolTabpanel(tabNumber);
 	var iframe = document.createElementNS(XUL_NS, "iframe");
 	iframe.setAttribute("src", getToolUrl(page, param));
@@ -93,9 +101,15 @@ window.addEventListener('load', function() {
 
 		toolspace.appendChild(tabbox);
 
+		if(i == 0) {
+			tabboxes["left"] = tabbox;
+		}
 		if(i == 1) {
 			tabbox.flex = 1;
-			mainTabbox = tabbox;
+			tabboxes["main"] = tabbox;
+		}
+		if(i == 2) {
+			tabboxes["right"] = tabbox;
 		}
 	}
 
