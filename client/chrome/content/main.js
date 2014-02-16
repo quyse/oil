@@ -87,19 +87,18 @@ function createTool(title, page, param) {
 };
 OIL.createTool = createTool;
 
+var toolspace;
+
 window.addEventListener('load', function() {
 	OIL.init(document.getElementById('oil'));
 	onUndoRedoChanged(null, null);
 
-	// create panels
-	var toolspace = document.getElementById("toolspace");
-
 	// create toolspace
 	var layout = OIL.prefs.getCharPref("layout");
-	var space = OIL.ToolSpace.deserialize(JSON.parse(layout));
-	space.box.flex = 1;
+	toolspace = OIL.ToolSpace.deserialize(JSON.parse(layout));
+	toolspace.box.flex = 1;
 	var placeholder = document.getElementById("toolspace");
-	placeholder.parentNode.replaceChild(space.box, placeholder);
+	placeholder.parentNode.replaceChild(toolspace.box, placeholder);
 
 	// register sync status feedback
 	var labelSyncStatus = document.getElementById("labelSyncStatus");
@@ -109,4 +108,8 @@ window.addEventListener('load', function() {
 	OIL.syncProgress.onUnsynced.addTarget(function() {
 		labelSyncStatus.value = "Syncing...";
 	});
+});
+
+window.addEventListener('unload', function() {
+	OIL.prefs.setCharPref("layout", JSON.stringify(toolspace.serialize()));
 });

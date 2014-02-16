@@ -296,16 +296,21 @@ ToolSpace.prototype.serialize = function() {
 
 			// store size information if needed
 			if(control) {
-				o.flex = control.flex;
+				if(control.flex)
+					o.flex = control.flex;
 				switch(This.type) {
 				case "hbox":
-					o.width = control.width;
+					if(control.width)
+						o.width = control.width;
 					break;
 				case "vbox":
-					o.height = control.height;
+					if(control.height)
+						o.height = control.height;
 					break;
 				}
 			}
+
+			return o;
 		})
 	};
 };
