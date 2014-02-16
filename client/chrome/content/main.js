@@ -75,17 +75,41 @@ function createTool(title, page, param) {
 	var tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
 	if(!tabbox)
 		tabbox = OIL.ToolTabbox.get("main");
+
+	createToolWithUrl(tabbox, getToolUrl(page, param));
+};
+OIL.createTool = createTool;
+function createToolWithUrl(tabbox, url) {
 	// create tool tab
 	var toolTab = new OIL.ToolTab();
 	tabbox.appendTab(toolTab);
 	// init iframe
 	var tabpanel = toolTab.tabpanel;
 	var iframe = document.createElementNS(XUL_NS, "iframe");
-	iframe.setAttribute("src", getToolUrl(page, param));
+	iframe.setAttribute("src", url);
 	iframe.flex = 1;
 	tabpanel.appendChild(iframe);
+
+	// set duplicate command
+	toolTab.duplicateTool = function() {
+		createToolWithUrl(this.parent, iframe.getAttribute("src"));
+	};
 };
-OIL.createTool = createTool;
+
+var toolTabContextTarget = null;
+function onToolTabContextShowing(event) {
+	toolTabContextTarget = event.target.triggerNode;
+	document.getElementById("contextMenuToolTabDuplicate").hidden = toolTabContextTarget.toolTab.duplicateTool === undefined;
+}
+function onToolTabContextHiding(event) {
+	toolTabContextTarget = null;
+}
+function onToolTabContextDuplicate(event) {
+	toolTabContextTarget.toolTab.duplicateTool();
+}
+function onToolTabContextClose(event) {
+	toolTabContextTarget.toolTab.close();
+}
 
 var toolspace;
 

@@ -7,8 +7,6 @@
 
 	<script src="tool-entity.js" />
 
-	<button label="Duplicate" oncommand="duplicateTool()" />
-
 	<scrollbox id="boxMain" flex="1" style="overflow:auto">
 		<grid id="gridMain" flex="1">
 			<columns>

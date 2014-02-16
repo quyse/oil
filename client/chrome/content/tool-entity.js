@@ -172,10 +172,6 @@ function addFieldControl(scheme, fieldIndex) {
 	}
 }
 
-function duplicateTool() {
-	OIL.createTool("Duplicated", "entity", entityId);
-}
-
 window.addEventListener('load', function() {
 	entity = OIL.getEntityFromToolWindow(window);
 

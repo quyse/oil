@@ -28,11 +28,11 @@
 
 	<popupset>
 		<menupopup id="contextMenuToolTab"
-			onpopupshowing="window.toolTabContextTarget=event.target.triggerNode"
-			onpopuphiding="window.toolTabContextTarget=null">
-			<menuitem label="Undock" default="true" />
-			<menuitem label="Duplicate" />
-			<menuitem label="Close" oncommand="window.toolTabContextTarget.toolTab.close()" />
+			onpopupshowing="onToolTabContextShowing(event)"
+			onpopuphiding="onToolTabContextHiding(event)">
+			<menuitem label="Undock" default="true" disabled="true" />
+			<menuitem label="Duplicate" id="contextMenuToolTabDuplicate" oncommand="onToolTabContextDuplicate()" />
+			<menuitem label="Close" oncommand="onToolTabContextClose()" />
 		</menupopup>
 	</popupset>
 
