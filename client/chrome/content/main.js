@@ -23,7 +23,7 @@ function onRepoConnect() {
 		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no');
 
 		// show root folder
-		createTool("Project", "folder", OIL.uuids.entities.root);
+		createTool("folder", OIL.uuids.entities.root);
 	}
 }
 
@@ -45,7 +45,7 @@ function onUndoRedoChanged(undoAction, redoAction) {
 }
 
 function onShowRoot() {
-	createTool("Root", "folder", OIL.uuids.entities.root);
+	createTool("folder", OIL.uuids.entities.root);
 }
 
 function onMaintenanceRootCreate() {
@@ -70,7 +70,7 @@ function getToolUrl(page, param) {
 }
 OIL.getToolUrl = getToolUrl;
 
-function createTool(title, page, param) {
+function createTool(page, param) {
 	// get tabbox from prefs
 	var tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
 	if(!tabbox)

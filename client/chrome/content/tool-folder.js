@@ -391,7 +391,7 @@ function onProperties() {
 	selection.getRangeAt(0, start, end);
 	var selectedItem = view.getItem(start.value);
 
-	OIL.createTool("Properties", "entity", selectedItem.entityId);
+	OIL.createTool("entity", selectedItem.entityId);
 }
 
 function onContextMenuShowing() {
