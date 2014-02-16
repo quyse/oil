@@ -229,4 +229,121 @@ ToolTabbox.prototype.moveTab = function(sourceTabId, destTabId) {
 	}
 	else
 		return;
-}
+};
+ToolTabbox.prototype.serialize = function() {
+	return {
+		id: this.id
+	};
+};
+ToolTabbox.deserialize = function(o) {
+	return new ToolTabbox(o.id);
+};
+
+function ToolSplitter(collapse) {
+	this.splitter = document.createElementNS(XUL_NS, "splitter");
+	if(collapse == "before" || collapse == "after") {
+		this.splitter.appendChild(document.createElementNS(XUL_NS, "grippy"));
+		this.splitter.setAttribute("collapse", collapse);
+	}
+};
+OIL.ToolSplitter = ToolSplitter;
+ToolSplitter.prototype.serialize = function() {
+	return {
+		collapse: this.splitter.getAttribute("collapse")
+	};
+};
+ToolSplitter.deserialize = function(o) {
+	return new ToolSplitter(o.collapse);
+};
+
+/// ToolSpace class.
+/** Allowed types are "hbox" and "vbox". */
+function ToolSpace(type) {
+	this.box = document.createElementNS(XUL_NS, type);
+	this.type = type;
+	this.children = [];
+};
+OIL.ToolSpace = ToolSpace;
+ToolSpace.prototype.add = function(tool) {
+	this.children.push(tool);
+};
+ToolSpace.prototype.serialize = function() {
+	var This = this;
+	return {
+		type: this.type,
+		children: this.children.map(function(tool) {
+			// create object to store information
+			var o = {};
+
+			// figure out what tool it is
+			var control = null;
+			if(tool instanceof ToolSpace) {
+				o.type = tool.type;
+				control = tool.box;
+			}
+			else if(tool instanceof ToolTabbox) {
+				o.type = "tabbox";
+				control = tool.tabbox;
+			}
+			else if(tool instanceof ToolSplitter) {
+				o.type = "splitter";
+			}
+			else
+				throw new Error("Unknown subtool");
+
+			// store tool-specific information
+			o.tool = tool.serialize();
+
+			// store size information if needed
+			if(control) {
+				o.flex = control.flex;
+				switch(This.type) {
+				case "hbox":
+					o.width = control.width;
+					break;
+				case "vbox":
+					o.height = control.height;
+					break;
+				}
+			}
+		})
+	};
+};
+ToolSpace.deserialize = function(o) {
+	var space = new ToolSpace(o.type);
+
+	for(var i = 0; i < o.children.length; ++i) {
+		var child = o.children[i];
+
+		var tool, control;
+		switch(child.type) {
+		case "hbox":
+		case "vbox":
+			tool = ToolSpace.deserialize(child.tool);
+			control = tool.box;
+			break;
+		case "tabbox":
+			tool = ToolTabbox.deserialize(child.tool);
+			control = tool.tabbox;
+			break;
+		case "splitter":
+			tool = ToolSplitter.deserialize(child.tool);
+			control = tool.splitter;
+			break;
+		default:
+			throw new Error("Unknown type of tool");
+		}
+
+		if(child.flex !== undefined)
+			control.flex = child.flex;
+		if(child.width !== undefined)
+			control.width = child.width;
+		if(child.height !== undefined)
+			control.height = child.height;
+
+		space.box.appendChild(control);
+		space.children.push(tool);
+	}
+
+	return space;
+};

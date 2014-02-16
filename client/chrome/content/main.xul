@@ -70,7 +70,7 @@
 
 	<html:embed id="oil" type="application/x-inanityoil" oiltype="main" hidden="true" />
 
-	<hbox id="toolspace" flex="1" />
+	<box id="toolspace" />
 
 	<hbox id="statusbar">
 		<label id="labelStatus" flex="1" value="Status" />

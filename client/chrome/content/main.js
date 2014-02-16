@@ -94,24 +94,12 @@ window.addEventListener('load', function() {
 	// create panels
 	var toolspace = document.getElementById("toolspace");
 
-	var tabboxNames = ["left", "main", "right"];
-
-	for(var i = 0; i < 3; ++i) {
-		if(i == 1 || i == 2) {
-			var splitter = document.createElementNS(XUL_NS, "splitter");
-			splitter.setAttribute("collapse", i == 1 ? "before" : "after");
-			splitter.appendChild(document.createElementNS(XUL_NS, "grippy"));
-			toolspace.appendChild(splitter);
-		}
-
-		var tabbox = new OIL.ToolTabbox(tabboxNames[i]);
-
-		toolspace.appendChild(tabbox.tabbox);
-
-		if(i == 1) {
-			tabbox.tabbox.flex = 1;
-		}
-	}
+	// create toolspace
+	var layout = OIL.prefs.getCharPref("layout");
+	var space = OIL.ToolSpace.deserialize(JSON.parse(layout));
+	space.box.flex = 1;
+	var placeholder = document.getElementById("toolspace");
+	placeholder.parentNode.replaceChild(space.box, placeholder);
 
 	// register sync status feedback
 	var labelSyncStatus = document.getElementById("labelSyncStatus");
