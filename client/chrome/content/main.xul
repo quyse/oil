@@ -32,7 +32,7 @@
 			onpopuphiding="window.toolTabContextTarget=null">
 			<menuitem label="Undock" default="true" />
 			<menuitem label="Duplicate" />
-			<menuitem label="Close" oncommand="window.toolTabContextTarget.info.close()" />
+			<menuitem label="Close" oncommand="window.toolTabContextTarget.toolTab.close()" />
 		</menupopup>
 	</popupset>
 

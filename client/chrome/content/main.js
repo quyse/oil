@@ -65,8 +65,6 @@ OIL.prefs = Components.classes["@mozilla.org/preferences-service;1"]
 	.getService(Components.interfaces.nsIPrefService)
 	.getBranch("oil.");
 
-var tabboxes = {};
-
 function getToolUrl(page, param) {
 	return "chrome://oil/content/tool-" + page + ".xul" + (param ? "#" + param : "");
 }
@@ -74,11 +72,14 @@ OIL.getToolUrl = getToolUrl;
 
 function createTool(title, page, param) {
 	// get tabbox from prefs
-	var tabbox = tabboxes[OIL.prefs.getCharPref("tool-" + page + ".place")] || tabboxes.main;
+	var tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
+	if(!tabbox)
+		tabbox = OIL.ToolTabbox.get("main");
 	// create tool tab
-	var tabNumber = createToolTab(tabbox, title);
+	var toolTab = new OIL.ToolTab();
+	tabbox.appendTab(toolTab);
 	// init iframe
-	var tabpanel = getToolTabpanel(tabNumber);
+	var tabpanel = toolTab.tabpanel;
 	var iframe = document.createElementNS(XUL_NS, "iframe");
 	iframe.setAttribute("src", getToolUrl(page, param));
 	iframe.flex = 1;
@@ -93,6 +94,8 @@ window.addEventListener('load', function() {
 	// create panels
 	var toolspace = document.getElementById("toolspace");
 
+	var tabboxNames = ["left", "main", "right"];
+
 	for(var i = 0; i < 3; ++i) {
 		if(i == 1 || i == 2) {
 			var splitter = document.createElementNS(XUL_NS, "splitter");
@@ -101,19 +104,12 @@ window.addEventListener('load', function() {
 			toolspace.appendChild(splitter);
 		}
 
-		var tabbox = createToolTabbox();
+		var tabbox = new OIL.ToolTabbox(tabboxNames[i]);
 
-		toolspace.appendChild(tabbox);
+		toolspace.appendChild(tabbox.tabbox);
 
-		if(i == 0) {
-			tabboxes["left"] = tabbox;
-		}
 		if(i == 1) {
-			tabbox.flex = 1;
-			tabboxes["main"] = tabbox;
-		}
-		if(i == 2) {
-			tabboxes["right"] = tabbox;
+			tabbox.tabbox.flex = 1;
 		}
 	}
 
