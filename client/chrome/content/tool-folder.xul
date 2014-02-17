@@ -24,7 +24,9 @@
 
 	<tree id="tree" flex="1"
 		seltype="multiple" treelines="true" enableColumnDrag="true"
-		context="contextMenu">
+		context="contextMenu"
+		ondragstart="onTreeDragStart(event)"
+		>
 		<treecols>
 			<treecol id="treecolName" primary="true" label="Name" flex="1" />
 			<splitter class="tree-splitter" />

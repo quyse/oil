@@ -2,6 +2,8 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+const MIME_DRAG_FOLDER_ENTRIES = "application/x-inanityoil-folder-entry";
+
 function getTree() {
 	return document.getElementById("tree");
 }
@@ -319,6 +321,52 @@ View.prototype.toggleOpenState = function(row) {
 	item.open(!item.opened);
 	this.treebox.invalidateRow(row);
 };
+View.prototype.canDrop = function(row, orientation, dataTransfer) {
+	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
+		return false;
+
+	if(orientation != 0)
+		return false;
+
+	return true;
+};
+View.prototype.drop = function(row, orientation, dataTransfer) {
+	var entries = JSON.parse(dataTransfer.getData(MIME_DRAG_FOLDER_ENTRIES));
+	if(entries.length <= 0)
+		return;
+
+	var actionDescription;
+	var removeSource;
+	switch(dataTransfer.dropEffect) {
+	case "move":
+		actionDescription = "move ";
+		removeSource = true;
+		break;
+	case "copy":
+		actionDescription = "copy ";
+		removeSource = false;
+		break;
+	default:
+		return;
+	}
+	if(entries.length == 1)
+		actionDescription += JSON.stringify(OIL.f2s(OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name)));
+	else
+		actionDescription += entries.length + " items";
+
+	var destItem = this.getItem(row);
+	var destEntity = destItem.entity;
+	actionDescription += " to " + JSON.stringify(destItem.getVisibleName());
+
+	var action = OIL.createAction(actionDescription);
+	for(var i = 0; i < entries.length; ++i) {
+		var entryIdFile = OIL.eid2f(entries[i].itemId);
+		if(removeSource)
+			OIL.entityManager.GetEntity(entries[i].folderId).WriteData(action, entryIdFile, null);
+		destEntity.WriteData(action, entryIdFile, OIL.fileTrue());
+	}
+	OIL.finishAction(action);
+};
 
 var view;
 
@@ -400,6 +448,19 @@ function onContextMenuShowing() {
 	var selection = view.selection;
 	document.getElementById("contextMenuDelete").hidden = selection.count == 0;
 	document.getElementById("contextMenuProperties").hidden = selection.count != 1;
+}
+
+function onTreeDragStart(event) {
+	var selectedItems = getSelectedItems();
+	if(selectedItems.length <= 0)
+		return;
+	event.dataTransfer.setData(MIME_DRAG_FOLDER_ENTRIES, JSON.stringify(selectedItems.map(function(item) {
+		return {
+			itemId: item.entityId,
+			folderId: item.parent.entityId
+		};
+	})));
+	event.dataTransfer.effectAllowed = "copyMove";
 }
 
 var rootItem;
