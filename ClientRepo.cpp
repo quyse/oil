@@ -352,12 +352,12 @@ size_t ClientRepo::GetKeyItemValueLength(long long itemId)
 
 	Data::SqliteQuery query(stmtGetKeyItemValueLength);
 
-	stmtGetKeyItemValue->Bind(1, itemId);
+	stmtGetKeyItemValueLength->Bind(1, itemId);
 
-	if(stmtGetKeyItemValue->Step() != SQLITE_ROW)
+	if(stmtGetKeyItemValueLength->Step() != SQLITE_ROW)
 		THROW_SECONDARY("Error getting key item value length", db->Error());
 
-	return (size_t)stmtGetKeyItemValue->ColumnInt64(0);
+	return (size_t)stmtGetKeyItemValueLength->ColumnInt64(0);
 }
 
 ptr<File> ClientRepo::GetKeyValue(ptr<File> key)
