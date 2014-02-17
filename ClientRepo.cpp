@@ -113,7 +113,10 @@ Response:
 	* new data becomes 'server', old 'server' (if presents) disappears
 
 Note that new 'server' values from successful change and from server change
-don't intersect - otherwise it would be conflict.
+don't intersect, because successful change is always written after server changes.
+
+'server' value can't be zero length - it removed in that case.
+Other values can be zero length which means that value should be removed.
 
 In case of some non-conflict failure (i.e. network problem),
 database should be cleaned up:
@@ -830,7 +833,14 @@ bool ClientRepo::Pull(StreamReader* reader)
 		KeyItems keyItems = GetKeyItemsByOneItemId(transientId);
 
 		// 'transient' becomes 'server'
-		ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::server);
+		if(GetKeyItemValueLength(keyItems.ids[ItemStatuses::transient]))
+			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::transient], ItemStatuses::server);
+		else
+		{
+			RemoveKeyItem(keyItems.ids[ItemStatuses::transient]);
+			if(keyItems.ids[ItemStatuses::server])
+				RemoveKeyItem(keyItems.ids[ItemStatuses::server]);
+		}
 		// 'postponed' (if presents) becomes 'client'
 		if(keyItems.ids[ItemStatuses::postponed])
 			ChangeKeyItemStatus(keyItems.ids[ItemStatuses::postponed], ItemStatuses::client);
@@ -902,8 +912,13 @@ bool ClientRepo::Pull(StreamReader* reader)
 
 			// new value always becomes 'server'
 			if(keyItems.ids[ItemStatuses::server])
-				ChangeKeyItemValue(keyItems.ids[ItemStatuses::server], valueFile);
-			else
+			{
+				if(valueSize)
+					ChangeKeyItemValue(keyItems.ids[ItemStatuses::server], valueFile);
+				else
+					RemoveKeyItem(keyItems.ids[ItemStatuses::server]);
+			}
+			else if(valueSize)
 				AddKeyItem(keyFile, valueFile, ItemStatuses::server);
 
 			// set new global revision
