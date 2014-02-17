@@ -106,7 +106,9 @@ Item.prototype.onChange = function(type, key, value) {
 				}
 			}
 			// invalidate parent row in any case
-			this.view.treebox.invalidateRow(this.getRow());
+			var row = this.getRow();
+			if(row >= 0)
+				this.view.treebox.invalidateRow(row);
 		}
 		break;
 	}
