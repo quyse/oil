@@ -22,17 +22,13 @@
 		</menupopup>
 	</popupset>
 
-	<tree id="tree" flex="1"
-		seltype="multiple" treelines="true" enableColumnDrag="true"
-		context="contextMenu"
-		ondragstart="onTreeDragStart(event)"
-		>
+	<tree id="tree" flex="1" seltype="multiple" treelines="true" enableColumnDrag="true">
 		<treecols>
 			<treecol id="treecolName" primary="true" label="Name" flex="1" />
 			<splitter class="tree-splitter" />
 			<treecol id="treecolType" label="Type" />
 		</treecols>
-		<treechildren />
+		<treechildren context="contextMenu" ondragstart="onTreeDragStart(event)" />
 	</tree>
 
 	<label id="labelEmpty" value="No such folder." />
