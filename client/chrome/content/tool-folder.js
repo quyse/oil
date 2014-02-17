@@ -31,7 +31,7 @@ Item.prototype.destroy = function() {
 	this.view = null;
 
 	if(Array.isArray(this.children)) {
-		for(var i = 0; i < this.children; ++i)
+		for(var i = 0; i < this.children.length; ++i)
 			this.children[i].destroy();
 		this.children = undefined;
 	}
@@ -39,6 +39,8 @@ Item.prototype.destroy = function() {
 /// Enable update of UI.
 Item.addRowsEnabled = true;
 Item.prototype.onChange = function(type, key, value) {
+	if(this.destroyed)
+		return;
 	switch(type) {
 	case 'scheme':
 		// reinitialize
