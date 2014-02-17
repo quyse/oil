@@ -386,7 +386,24 @@ function getSelectedItems() {
 	return selectedItems;
 }
 
-function onCreateFolder() {
+function onCommandOpen() {
+	var selectedItems = getSelectedItems();
+	for(var i = 0; i < selectedItems.length; ++i) {
+		var item = selectedItems[i];
+		// TODO: open with corresponding tool
+	}
+}
+
+function onCommandOpenFolder() {
+	var selectedItems = getSelectedItems();
+	for(var i = 0; i < selectedItems.length; ++i) {
+		var item = selectedItems[i];
+		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
+			OIL.createTool("folder", item.entityId);
+	}
+}
+
+function onCommandCreateFolder() {
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
@@ -397,16 +414,7 @@ function onCreateFolder() {
 	OIL.finishAction(action);
 }
 
-function onOpenFolder() {
-	var selectedItems = getSelectedItems();
-	for(var i = 0; i < selectedItems.length; ++i) {
-		var item = selectedItems[i];
-		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
-			OIL.createTool("folder", item.entityId);
-	}
-}
-
-function onDelete() {
+function onCommandDelete() {
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
 		return;
@@ -437,15 +445,11 @@ function onDelete() {
 	OIL.finishAction(action);
 }
 
-function onProperties() {
-	var selection = view.selection;
-	if(selection.count != 1)
-		return;
-	var start = {}, end = {};
-	selection.getRangeAt(0, start, end);
-	var selectedItem = view.getItem(start.value);
+function onCommandProperties() {
+	var selectedItems = getSelectedItems();
 
-	OIL.createTool("entity", selectedItem.entityId);
+	for(var i = 0; i < selectedItems.length; ++i)
+		OIL.createTool("entity", selectedItems[i].entityId);
 }
 
 function onContextMenuShowing() {
@@ -456,9 +460,11 @@ function onContextMenuShowing() {
 		if(selectedItems[i].entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
 			hasFolder = true;
 
+	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuOpenFolder").hidden = !hasFolder;
-	document.getElementById("contextMenuDelete").hidden = selectedItems.length == 0;
-	document.getElementById("contextMenuProperties").hidden = selectedItems.length != 1;
+	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
+	document.getElementById("contextMenuCreate").hidden = !hasFolder && selectedItems.length > 0;
+	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
 }
 
 function onTreeDragStart(event) {
