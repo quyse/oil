@@ -55,7 +55,7 @@ Item.prototype.onChange = function(type, key, value) {
 		break;
 	case 'tag':
 		if(key == OIL.uuids.tags.name) {
-			this.name = value ? OIL.f2s(value) : "<unnamed>";
+			this.name = value ? OIL.f2s(value) : null;
 			var row = this.getRow();
 			if(row >= 0)
 				this.view.treebox.invalidateRow(row);
@@ -200,8 +200,8 @@ Item.prototype.getFullCount = function() {
 			fullCount += 1 + this.children[i].getFullCount();
 	return fullCount;
 };
-Item.prototype.getName = function() {
-	return this.name;
+Item.prototype.getVisibleName = function() {
+	return this.name || "<unnamed>";
 };
 Item.prototype.getScheme = function() {
 	return this.scheme;
@@ -250,7 +250,7 @@ View.prototype.getCellText = function(row, column) {
 	var item = this.getItem(row);
 	switch(column.id) {
 	case "treecolName":
-		return item.getName();
+		return item.getVisibleName();
 	case "treecolType":
 		return item.getScheme().GetName();
 	default:
@@ -362,7 +362,7 @@ function onDelete() {
 	// construct action description
 	var actionDescription;
 	if(selectedItems.length == 1)
-		actionDescription = "delete " + JSON.stringify(selectedItems[0].getName());
+		actionDescription = "delete " + JSON.stringify(selectedItems[0].getVisibleName());
 	else
 		actionDescription = "delete " + selectedItems.length + " items";
 	// if all items from the same folder, add it to description
@@ -371,7 +371,7 @@ function onDelete() {
 		if(selectedItems[i].parent != parentItem)
 			break;
 	if(i >= selectedItems.length)
-		actionDescription += " from folder " + JSON.stringify(parentItem.getName());
+		actionDescription += " from folder " + JSON.stringify(parentItem.getVisibleName());
 
 	var action = OIL.createAction(actionDescription);
 
