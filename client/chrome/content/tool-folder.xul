@@ -9,6 +9,7 @@
 
 	<commandset>
 		<command id="commandCreateFolder" oncommand="onCreateFolder()" />
+		<command id="commandOpenFolder" oncommand="onOpenFolder()" />
 		<command id="commandDelete" oncommand="onDelete()" />
 		<command id="commandProperties" oncommand="onProperties()" />
 	</commandset>
@@ -17,6 +18,7 @@
 		<menupopup id="contextMenu"
 			onpopupshowing="onContextMenuShowing()">
 			<menuitem id="contextMenuCreateFolder" label="Create Folder" command="commandCreateFolder" />
+			<menuitem id="contextMenuOpenFolder" label="Open Folder" command="commandOpenFolder" />
 			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" />
 			<menuitem id="contextMenuProperties" label="Properties" default="true" command="commandProperties" />
 		</menupopup>

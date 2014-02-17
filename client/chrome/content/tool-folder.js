@@ -387,21 +387,23 @@ function getSelectedItems() {
 }
 
 function onCreateFolder() {
-	var selection = view.selection;
-	var selectedItem;
-	if(selection.count == 1) {
-		var start = {}, end = {};
-		selection.getRangeAt(0, start, end);
-		selectedItem = view.getItem(start.value);
-	}
-	else
-		selectedItem = view.rootItem;
+	var selectedItems = getSelectedItems();
+	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
 	var action = OIL.createAction("create folder");
 	var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.folder);
 	entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f("New Folder"));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
+}
+
+function onOpenFolder() {
+	var selectedItems = getSelectedItems();
+	for(var i = 0; i < selectedItems.length; ++i) {
+		var item = selectedItems[i];
+		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
+			OIL.createTool("folder", item.entityId);
+	}
 }
 
 function onDelete() {
@@ -447,9 +449,16 @@ function onProperties() {
 }
 
 function onContextMenuShowing() {
-	var selection = view.selection;
-	document.getElementById("contextMenuDelete").hidden = selection.count == 0;
-	document.getElementById("contextMenuProperties").hidden = selection.count != 1;
+	var selectedItems = getSelectedItems();
+
+	var hasFolder = false;
+	for(var i = 0; i < selectedItems.length; ++i)
+		if(selectedItems[i].entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
+			hasFolder = true;
+
+	document.getElementById("contextMenuOpenFolder").hidden = !hasFolder;
+	document.getElementById("contextMenuDelete").hidden = selectedItems.length == 0;
+	document.getElementById("contextMenuProperties").hidden = selectedItems.length != 1;
 }
 
 function onTreeDragStart(event) {
