@@ -131,7 +131,12 @@ Item.prototype.getRow = function() {
 	for(var item = this; item.parent; item = item.parent) {
 		if(!item.parent.isOpen())
 			return -1;
-		row += 1 + item.getIndexInParent();
+		// make account of all children in parent before this item
+		var indexInParent = item.getIndexInParent();
+		for(var i = 0; i < indexInParent; ++i)
+			row += 1 + item.parent.children[i].getFullCount();
+		// plus the parent itself
+		++row;
 	}
 	return row;
 };
