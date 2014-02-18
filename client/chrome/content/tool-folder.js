@@ -341,6 +341,19 @@ View.prototype.toggleOpenState = function(row) {
 	item.open(!item.opened);
 	this.treebox.invalidateRow(row);
 };
+View.prototype.isEditable = function(row, col) {
+	return col.id == "treecolName";
+};
+View.prototype.setCellText = function(row, col, value) {
+	if(col.id != "treecolName")
+		return;
+
+	var item = this.getItem(row);
+
+	var action = OIL.createAction("rename " + item.getStringifiedName() + " to " + JSON.stringify(value));
+	item.entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(value));
+	OIL.finishAction(action);
+};
 View.prototype.canDrop = function(row, orientation, dataTransfer) {
 	return checkDrop(row, orientation, dataTransfer);
 };
@@ -490,6 +503,14 @@ function onCommandOpenFolder() {
 		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
 			OIL.createTool("folder", item.entityId);
 	}
+}
+
+function onCommandRename() {
+	var selectedItems = getSelectedItems();
+	if(selectedItems.length != 1)
+		return;
+	var tree = getTree();
+	tree.startEditing(selectedItems[0].getRow(), tree.columns.getNamedColumn("treecolName"));
 }
 
 function onCommandCreateFolder() {
@@ -683,6 +704,7 @@ function onContextMenuShowing() {
 
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuOpenFolder").hidden = !hasFolder;
+	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuCreate").hidden = !oneFolder;
 	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;

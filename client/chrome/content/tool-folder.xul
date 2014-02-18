@@ -10,6 +10,7 @@
 	<commandset>
 		<command id="commandOpen" oncommand="onCommandOpen()" />
 		<command id="commandOpenFolder" oncommand="onCommandOpenFolder()" />
+		<command id="commandRename" oncommand="onCommandRename()" />
 		<command id="commandDelete" oncommand="onCommandDelete()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
@@ -19,16 +20,20 @@
 	</commandset>
 
 	<keyset>
-		<key keycode="VK_ENTER" command="commandOpen" />
-		<key keycode="VK_DELETE" command="commandDelete" />
+		<key id="keyOpen" keycode="VK_ENTER" command="commandOpen" />
+		<key id="keyRename" keycode="VK_F2" command="commandRename" />
+		<key id="keyDelete" keycode="VK_DELETE" command="commandDelete" />
+		<key id="keyProperties" keycode="VK_F4" command="commandProperties" />
+		<key id="keyShowRealPlace" keycode="VK_F12" command="commandShowRealPlace" />
 	</keyset>
 
 	<popupset>
 		<menupopup id="contextMenu"
 			onpopupshowing="onContextMenuShowing()">
-			<menuitem id="contextMenuOpen" label="Open" default="true" command="commandOpen" />
+			<menuitem id="contextMenuOpen" label="Open" default="true" command="commandOpen" key="keyOpen" />
 			<menuitem id="contextMenuOpenFolder" label="Open Folder" command="commandOpenFolder" />
-			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" />
+			<menuitem id="contextMenuRename" label="Rename" command="commandRename" key="keyRename" />
+			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" key="keyDelete" />
 			<menu id="contextMenuCreate" label="Create">
 				<menupopup>
 					<menuitem label="Folder" command="commandCreateFolder" />
@@ -36,14 +41,14 @@
 			</menu>
 			<menuitem id="contextMenuUploadFile" label="Upload File(s)..." command="commandUploadFile" />
 			<menuitem id="contextMenuPlace" label="Place" command="commandPlace" />
-			<menuitem id="contextMenuShowRealPlace" label="Show Real Place" command="commandShowRealPlace" />
-			<menuitem id="contextMenuProperties" label="Properties" command="commandProperties" />
+			<menuitem id="contextMenuShowRealPlace" label="Show Real Place" command="commandShowRealPlace" key="keyShowRealPlace" />
+			<menuitem id="contextMenuProperties" label="Properties" command="commandProperties" key="keyProperties" />
 		</menupopup>
 	</popupset>
 
-	<tree id="tree" flex="1" seltype="multiple" treelines="true" enableColumnDrag="true">
+	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true">
 		<treecols>
-			<treecol id="treecolName" primary="true" label="Name" flex="1" />
+			<treecol id="treecolName" primary="true" editable="true" label="Name" flex="1" />
 			<splitter class="tree-splitter" />
 			<treecol id="treecolType" label="Type" />
 		</treecols>
