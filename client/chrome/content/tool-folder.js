@@ -499,6 +499,59 @@ function onCommandCreateFolder() {
 	OIL.finishAction(action);
 }
 
+function onCommandUploadFile() {
+	var selectedItems = getSelectedItems();
+	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
+
+	var folderId = selectedItem.entityId;
+
+	var nsIFilePicker = Components.interfaces.nsIFilePicker;
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, "Select File to Upload", nsIFilePicker.modeOpenMultiple);
+	fp.open({
+		done: function(result) {
+			try {
+				if(result != nsIFilePicker.returnOK)
+					return;
+
+				var files = fp.files;
+				var paths = [];
+				while(files.hasMoreElements()) {
+					var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+					paths.push({
+						path: file.path,
+						name: file.leafName
+					});
+				}
+
+				if(paths.length <= 0)
+					return;
+
+				var actionDescription;
+				if(paths.length == 1)
+					actionDescription = "upload file " + JSON.stringify(paths[0].name);
+				else
+					actionDescription = "upload " + paths.length + " files";
+
+				var action = OIL.createAction(actionDescription);
+				var folderEntity = OIL.entityManager.GetEntity(folderId);
+				for(var i = 0; i < paths.length; ++i) {
+					var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.file);
+					entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(paths[i].name));
+					entity.WriteField(action, "ofn", paths[i].name);
+					entity.WriteData(action, null, OIL.core.GetNativeFileSystem().LoadFile(paths[i].path));
+					folderEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+					entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(folderId));
+				}
+				OIL.finishAction(action);
+			}
+			catch(e) {
+				alert(e);
+			}
+		}
+	});
+}
+
 function onCommandDelete() {
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
@@ -621,10 +674,13 @@ function onContextMenuShowing() {
 			hasLink = true;
 	}
 
+	var oneFolder = hasFolder && selectedItems.length == 1 || selectedItems.length == 0;
+
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuOpenFolder").hidden = !hasFolder;
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
-	document.getElementById("contextMenuCreate").hidden = !hasFolder && selectedItems.length > 0;
+	document.getElementById("contextMenuCreate").hidden = !oneFolder;
+	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
 	document.getElementById("contextMenuShowRealPlace").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
