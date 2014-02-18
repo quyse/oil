@@ -3,6 +3,8 @@
 Components.utils.import('chrome://oil/content/oil.js');
 
 const MIME_DRAG_FOLDER_ENTRIES = "application/x-inanityoil-folder-entry";
+// maximum length of hierarchy to process
+const MAX_HIERARCHY_LENGTH = 64;
 
 function getTree() {
 	return document.getElementById("tree");
@@ -213,7 +215,7 @@ Item.prototype.getFullCount = function() {
 	return fullCount;
 };
 Item.prototype.getVisibleName = function() {
-	return (this.parentId == this.parent.entityId ? "" : "→ ") + (this.name || "<unnamed>");
+	return (!this.parent || this.parentId == this.parent.entityId ? "" : "→ ") + (this.name || "<unnamed>");
 };
 Item.prototype.getScheme = function() {
 	return this.scheme;
@@ -497,6 +499,57 @@ function onCommandPlace() {
 	OIL.finishAction(action);
 }
 
+function onCommandShowRealPlace() {
+	var selectedItems = getSelectedItems();
+	if(selectedItems.length != 1)
+		return;
+
+	var pathIds = [];
+	var targetId = selectedItems[0].entityId;
+	var id = targetId;
+	var i = 0;
+	for(;;) {
+		if(i++ >= MAX_HIERARCHY_LENGTH) {
+			alert("Can't find real place of selected entity.");
+			return;
+		}
+		if(id == rootItem.entityId)
+			break;
+		pathIds.push(id);
+
+		var entity = OIL.entityManager.GetEntity(id);
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		if(!parentId) {
+			alert("Selected entity doesn't have real place.");
+			return;
+		}
+
+		id = parentId;
+	}
+
+	var item = rootItem;
+	for(i = pathIds.length - 1; i >= 0; --i) {
+		if(!item.isContainer())
+			throw new Error("Not a folder in path");
+		item.open(true);
+		var itemChildren = item.children;
+		for(var j = 0; j < itemChildren.length; ++j)
+			if(itemChildren[j].entityId == pathIds[i]) {
+				item = itemChildren[j];
+				break;
+			}
+		if(j >= itemChildren.length)
+			throw new Error("Can't follow path");
+	}
+
+	var row = item.getRow();
+	if(row < 0)
+		throw new Error("Can't show target item");
+
+	item.view.treebox.ensureRowIsVisible(row);
+	item.view.selection.select(row);
+}
+
 function onContextMenuShowing() {
 	var selectedItems = getSelectedItems();
 
@@ -515,6 +568,7 @@ function onContextMenuShowing() {
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuCreate").hidden = !hasFolder && selectedItems.length > 0;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
+	document.getElementById("contextMenuShowRealPlace").hidden = !hasLink || selectedItems.length != 1;
 	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
 }
 

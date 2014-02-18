@@ -14,6 +14,7 @@
 		<command id="commandProperties" oncommand="onCommandProperties()" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
 		<command id="commandPlace" oncommand="onCommandPlace()" />
+		<command id="commandShowRealPlace" oncommand="onCommandShowRealPlace()" />
 	</commandset>
 
 	<keyset>
@@ -33,6 +34,7 @@
 				</menupopup>
 			</menu>
 			<menuitem id="contextMenuPlace" label="Place" command="commandPlace" />
+			<menuitem id="contextMenuShowRealPlace" label="Show Real Place" command="commandShowRealPlace" />
 			<menuitem id="contextMenuProperties" label="Properties" command="commandProperties" />
 		</menupopup>
 	</popupset>
