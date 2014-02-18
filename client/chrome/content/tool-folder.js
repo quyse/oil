@@ -523,6 +523,19 @@ function onCommandCreateFolder() {
 	entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
+
+	selectedItem.open(true);
+	var entityId = entity.GetId();
+	for(var i = 0; i < selectedItem.children.length; ++i) {
+		var item = selectedItem.children[i];
+		if(item.entityId == entityId) {
+			var row = item.getRow();
+			view.selection.select(row);
+			view.treebox.ensureRowIsVisible(row);
+			onCommandRename();
+			break;
+		}
+	}
 }
 
 function onCommandUploadFile() {
