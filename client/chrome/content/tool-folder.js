@@ -334,18 +334,16 @@ View.prototype.toggleOpenState = function(row) {
 	this.treebox.invalidateRow(row);
 };
 View.prototype.canDrop = function(row, orientation, dataTransfer) {
-	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
-		return false;
-
-	if(orientation != 0)
-		return false;
-
-	return true;
+	return checkDrop(row, orientation, dataTransfer);
 };
 View.prototype.drop = function(row, orientation, dataTransfer) {
-	var entries = JSON.parse(dataTransfer.getData(MIME_DRAG_FOLDER_ENTRIES));
-	if(entries.length <= 0)
+	var checkOutput = {};
+	if(!checkDrop(row, orientation, dataTransfer, checkOutput)) {
+		if(checkOutput.message)
+			alert(checkOutput.message);
 		return;
+	}
+	var entries = checkOutput.entries;
 
 	var actionDescription;
 	var operation = dataTransfer.dropEffect;
@@ -356,9 +354,8 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	case "link":
 		actionDescription = "link ";
 		break;
-	default:
-		return;
 	}
+
 	if(entries.length == 1) {
 		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name);
 		actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
@@ -396,6 +393,43 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	OIL.finishAction(action);
 };
 
+function checkDrop(row, orientation, dataTransfer, output) {
+	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
+		return false;
+
+	var operation = dataTransfer.dropEffect;
+	switch(operation) {
+	case "move":
+	case "link":
+		break;
+	default:
+		return false;
+	}
+
+	var entries = JSON.parse(dataTransfer.getData(MIME_DRAG_FOLDER_ENTRIES));
+	if(entries.length <= 0)
+		return false;
+
+	var targetItem = view.getItem(row);
+	if(orientation != 0)
+		targetItem = targetItem.parent;
+
+	// if operation is move, check for cycles
+	if(operation == "move") {
+		for(var i = 0; i < entries.length; ++i)
+			if(isItemInto(targetItem.entityId, entries[i].itemId)) {
+				if(output)
+					output.message = "Operation would create a cycle of real paths which is forbidden.";
+				return false;
+			}
+	}
+
+	if(output)
+		output.entries = entries;
+
+	return true;
+}
+
 var view;
 
 function getSelectedItems() {
@@ -410,6 +444,27 @@ function getSelectedItems() {
 	}
 
 	return selectedItems;
+}
+
+/// Checks if item is into another item (recursively) by real places.
+/** Could return true, false or undefined. */
+function isItemInto(targetId, containerId) {
+	var i = 0;
+	var id = targetId;
+	for(;;) {
+		if(i++ >= MAX_HIERARCHY_LENGTH)
+			return undefined;
+
+		if(id == containerId)
+			return true;
+
+		var entity = OIL.entityManager.GetEntity(id);
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		if(!parentId)
+			return false;
+
+		id = parentId;
+	}
 }
 
 function onCommandOpen() {
@@ -568,7 +623,7 @@ function onContextMenuShowing() {
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuCreate").hidden = !hasFolder && selectedItems.length > 0;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
-	document.getElementById("contextMenuShowRealPlace").hidden = !hasLink || selectedItems.length != 1;
+	document.getElementById("contextMenuShowRealPlace").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
 }
 
