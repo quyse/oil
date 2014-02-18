@@ -542,6 +542,9 @@ void ClientRepo::Change(ptr<File> key, ptr<File> value)
 	if(key->GetSize() <= 0)
 		THROW("Key length should be positive");
 
+	// replace zero-length value with null
+	if(value && !value->GetSize())
+		value = nullptr;
 	// replace value with zero file
 	ptr<File> valueToWrite = value ? value : emptyFile;
 
