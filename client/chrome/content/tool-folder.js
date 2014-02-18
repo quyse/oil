@@ -399,6 +399,8 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 function checkDrop(row, orientation, dataTransfer, output) {
 	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
 		return false;
+	if(orientation != 0)
+		return false;
 
 	var operation = dataTransfer.dropEffect;
 	switch(operation) {
@@ -414,8 +416,6 @@ function checkDrop(row, orientation, dataTransfer, output) {
 		return false;
 
 	var targetItem = view.getItem(row);
-	if(orientation != 0)
-		targetItem = targetItem.parent;
 
 	// if operation is move, check for cycles
 	if(operation == "move") {
