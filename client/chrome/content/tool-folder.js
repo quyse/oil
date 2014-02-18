@@ -357,8 +357,10 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	default:
 		return;
 	}
-	if(entries.length == 1)
-		actionDescription += JSON.stringify(OIL.f2s(OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name)));
+	if(entries.length == 1) {
+		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name);
+		actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
+	}
 	else
 		actionDescription += entries.length + " items";
 
