@@ -4,7 +4,8 @@ OIL.uuids = {
 	tags: {
 		name: "0cc78838-4bc7-4da6-bb4b-c4bfcf0363a1",
 		description: "c6f9edf5-ae60-4a38-8408-5f8af4ec7ef3",
-		tags: "dc25f310-0e15-4913-a546-d6eee3eb87d0"
+		tags: "dc25f310-0e15-4913-a546-d6eee3eb87d0",
+		parent: "e822706f-3478-4003-a2cb-92d444726540"
 	},
 	tagDescs: {
 		name: {
@@ -15,6 +16,9 @@ OIL.uuids = {
 		},
 		tags: {
 			name: "tags"
+		},
+		parent: {
+			name: "parent"
 		}
 	},
 	schemes: {

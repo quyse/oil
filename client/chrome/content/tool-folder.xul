@@ -13,6 +13,7 @@
 		<command id="commandDelete" oncommand="onCommandDelete()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
+		<command id="commandPlace" oncommand="onCommandPlace()" />
 	</commandset>
 
 	<keyset>
@@ -31,6 +32,7 @@
 					<menuitem label="Folder" command="commandCreateFolder" />
 				</menupopup>
 			</menu>
+			<menuitem id="contextMenuPlace" label="Place" command="commandPlace" />
 			<menuitem id="contextMenuProperties" label="Properties" command="commandProperties" />
 		</menupopup>
 	</popupset>
