@@ -80,14 +80,17 @@ const char* BoolEntityFieldType::GetName() const
 ptr<Script::Any> BoolEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
 	bool allZeroes = true;
-	const char* valueData = (const char*)value->GetData();
-	size_t valueSize = value->GetSize();
-	for(size_t i = 0; i < valueSize; ++i)
-		if(valueData[i])
-		{
-			allZeroes = false;
-			break;
-		}
+	if(value)
+	{
+		const char* valueData = (const char*)value->GetData();
+		size_t valueSize = value->GetSize();
+		for(size_t i = 0; i < valueSize; ++i)
+			if(valueData[i])
+			{
+				allZeroes = false;
+				break;
+			}
+	}
 
 	return scriptState->NewBoolean(!allZeroes);
 }
@@ -108,9 +111,7 @@ const char* FloatEntityFieldType::GetName() const
 
 ptr<Script::Any> FloatEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	if(value->GetSize() != sizeof(float))
-		return nullptr;
-	return scriptState->NewNumber(*(const float*)value->GetData());
+	return scriptState->NewNumber(value && value->GetSize() == sizeof(float) ? *(const float*)value->GetData() : 0.0f);
 }
 
 ptr<File> FloatEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -128,9 +129,7 @@ const char* IntegerEntityFieldType::GetName() const
 
 ptr<Script::Any> IntegerEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	if(value->GetSize() != sizeof(int32_t))
-		return nullptr;
-	return scriptState->NewNumber(*(const int32_t*)value->GetData());
+	return scriptState->NewNumber(value && value->GetSize() == sizeof(int32_t) ? *(const int32_t*)value->GetData() : 0);
 }
 
 ptr<File> IntegerEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -148,7 +147,7 @@ const char* StringEntityFieldType::GetName() const
 
 ptr<Script::Any> StringEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	return scriptState->NewString(Strings::File2String(value));
+	return scriptState->NewString(value ? Strings::File2String(value) : String());
 }
 
 ptr<File> StringEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -166,9 +165,7 @@ const char* Vec3EntityFieldType::GetName() const
 
 ptr<Script::Any> Vec3EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	if(value->GetSize() != sizeof(Math::vec3))
-		return nullptr;
-	return Script::ConvertToScript(scriptState, *(const Math::vec3*)value->GetData());
+	return Script::ConvertToScript(scriptState, value && value->GetSize() == sizeof(Math::vec3) ? *(const Math::vec3*)value->GetData() : Math::vec3(0, 0, 0));
 }
 
 ptr<File> Vec3EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -195,9 +192,7 @@ const char* Vec4EntityFieldType::GetName() const
 
 ptr<Script::Any> Vec4EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	if(value->GetSize() != sizeof(Math::vec4))
-		return nullptr;
-	return Script::ConvertToScript(scriptState, *(const Math::vec4*)value->GetData());
+	return Script::ConvertToScript(scriptState, value && value->GetSize() == sizeof(Math::vec4) ? *(const Math::vec4*)value->GetData() : Math::vec4(0, 0, 0, 0));
 }
 
 ptr<File> Vec4EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -240,13 +235,15 @@ ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(EntityManager* ent
 {
 	try
 	{
-		EntityId entityId = EntityId::FromString(Strings::File2String(value).c_str());
-		return scriptState->WrapObject(entityManager->GetEntity(entityId));
+		return scriptState->WrapObject(value
+			? entityManager->GetEntity(EntityId::FromString(Strings::File2String(value).c_str()))
+			: nullptr
+			);
 	}
 	catch(Exception* exception)
 	{
 		MakePointer(exception);
-		return nullptr;
+		return scriptState->WrapObject<File>(nullptr);
 	}
 }
 
