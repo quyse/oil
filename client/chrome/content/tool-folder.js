@@ -217,6 +217,9 @@ Item.prototype.getFullCount = function() {
 Item.prototype.getVisibleName = function() {
 	return (!this.parent || this.parentId == this.parent.entityId ? "" : "→ ") + (this.name || "<unnamed>");
 };
+Item.prototype.getStringifiedName = function() {
+	return this.name ? JSON.stringify(this.name) : "<unnamed>";
+};
 Item.prototype.getScheme = function() {
 	return this.scheme;
 };
@@ -367,7 +370,7 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	var destEntity = destItem.entity;
 	var destIdFile = OIL.eid2f(destEntity.GetId());
 
-	actionDescription += " to " + JSON.stringify(destItem.getVisibleName());
+	actionDescription += " to " + destItem.getStringifiedName();
 
 	var action = OIL.createAction(actionDescription);
 	for(var i = 0; i < entries.length; ++i) {
@@ -504,7 +507,7 @@ function onCommandDelete() {
 	// construct action description
 	var actionDescription;
 	if(selectedItems.length == 1)
-		actionDescription = "delete " + JSON.stringify(selectedItems[0].getVisibleName());
+		actionDescription = "delete " + selectedItems[0].getStringifiedName();
 	else
 		actionDescription = "delete " + selectedItems.length + " items";
 	// if all items from the same folder, add it to description
@@ -513,7 +516,7 @@ function onCommandDelete() {
 		if(selectedItems[i].parent != parentItem)
 			break;
 	if(i >= selectedItems.length)
-		actionDescription += " from folder " + JSON.stringify(parentItem.getVisibleName());
+		actionDescription += " from folder " + parentItem.getStringifiedName();
 
 	var action = OIL.createAction(actionDescription);
 
