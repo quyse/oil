@@ -288,12 +288,12 @@ void Entity::EnumerateData(DataEnumerator* enumerator)
 
 ptr<File> Entity::ReadData(ptr<File> name) const
 {
-	return RawReadData(name->GetData(), name->GetSize());
+	return RawReadData(name ? name->GetData() : nullptr, name ? name->GetSize() : 0);
 }
 
 void Entity::WriteData(ptr<Action> action, ptr<File> name, ptr<File> value)
 {
-	RawWriteData(action, name->GetData(), name->GetSize(), value);
+	RawWriteData(action, name ? name->GetData() : nullptr, name ? name->GetSize() : 0, value);
 }
 
 void Entity::Delete(ptr<Action> action)
