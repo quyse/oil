@@ -210,7 +210,14 @@ OIL.s2f = function(string) {
 };
 
 OIL.f2eid = function(file) {
-	return OIL.classes.Inanity.Oil.EntityId.FromFile(file);
+	if(!file)
+		return null;
+	try {
+		return OIL.classes.Inanity.Oil.EntityId.FromFile(file);
+	}
+	catch(e) {
+		return null;
+	}
 };
 OIL.eid2f = function(eid) {
 	return OIL.classes.Inanity.Oil.EntityId.StaticToFile(eid);
