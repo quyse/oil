@@ -25,6 +25,7 @@ OIL.uuids = {
 		folder: "fa327807-86bb-4d8e-9ea4-fef2e943bd47",
 		file: "5fac27cd-e6bf-461f-85c1-7d6183926991"
 	},
+	schemeId2Name: {},
 	schemeDescs: {
 		folder: {
 			name: "folder",
@@ -35,10 +36,6 @@ OIL.uuids = {
 		file: {
 			name: "file",
 			fields: {
-				data: {
-					name: "data",
-					type: "blob"
-				},
 				ofn: {
 					name: "original filename",
 					type: "string"
@@ -51,21 +48,17 @@ OIL.uuids = {
 	}
 };
 
-function inverseMap(mapNameId) {
-	var names = [];
-	for(var name in mapNameId)
-		names.push(name);
-	for(var i = 0; i < names.length; ++i)
-		mapNameId[mapNameId[names[i]]] = names[i];
-}
+OIL.getSchemeDescById = function(schemeId) {
+	var schemeName = OIL.uuids.schemeId2Name[schemeId];
+	return schemeName ? OIL.uuids.schemeDescs[schemeName] : null;
+};
 
 OIL.registerEntitySchemes = function(schemeManager) {
-	inverseMap(OIL.uuids.schemes);
+	for(var schemeName in OIL.uuids.schemes)
+		OIL.uuids.schemeId2Name[OIL.uuids.schemes[schemeName]] = schemeName;
 
-	var schemeDescs = OIL.uuids.schemeDescs;
-
-	for(var schemeName in schemeDescs) {
-		var schemeDesc = schemeDescs[schemeName];
+	for(var schemeName in OIL.uuids.schemeDescs) {
+		var schemeDesc = OIL.uuids.schemeDescs[schemeName];
 		var scheme = new OIL.classes.Inanity.Oil.EntityScheme(OIL.uuids.schemes[schemeName], schemeDesc.name);
 
 		var fields = schemeDesc.fields;

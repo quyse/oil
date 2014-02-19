@@ -294,8 +294,7 @@ View.prototype.getImageSrc = function(row, col) {
 		return null;
 
 	var item = this.getItem(row);
-	var schemeName = OIL.uuids.schemes[item.getScheme().GetId()];
-	return OIL.uuids.schemeDescs[schemeName].icon;
+	return OIL.getSchemeDescById(item.getScheme().GetId()).icon;
 };
 View.prototype.getRowProperties = function(row, props) {
 };
@@ -495,7 +494,7 @@ function onCommandOpen() {
 		var scheme = item.entity.GetScheme();
 		if(!scheme)
 			continue;
-		var tool = OIL.uuids.schemeDescs[OIL.uuids.schemes[scheme.GetId()]].tool;
+		var tool = OIL.getSchemeDescById(scheme.GetId()).tool;
 		if(!tool)
 			continue;
 		OIL.createTool(tool, item.entityId);

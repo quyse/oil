@@ -244,6 +244,7 @@ function init() {
 	addTag("description");
 
 	// add fields from scheme
+	var schemeDesc = OIL.getSchemeDescById(scheme.GetId());
 	var fieldsCount = scheme.GetFieldsCount();
 	for(var i = 0; i < fieldsCount; ++i)
 		addFieldControl(scheme, i);
