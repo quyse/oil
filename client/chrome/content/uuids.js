@@ -22,13 +22,28 @@ OIL.uuids = {
 		}
 	},
 	schemes: {
-		folder: "fa327807-86bb-4d8e-9ea4-fef2e943bd47"
+		folder: "fa327807-86bb-4d8e-9ea4-fef2e943bd47",
+		file: "5fac27cd-e6bf-461f-85c1-7d6183926991"
 	},
 	schemeDescs: {
 		folder: {
 			name: "folder",
 			fields: {},
-			icon: "chrome://global/skin/dirListing/folder.png"
+			icon: "chrome://global/skin/dirListing/folder.png",
+			tool: "folder"
+		},
+		file: {
+			name: "file",
+			fields: {
+				data: {
+					name: "data",
+					type: "blob"
+				},
+				ofn: {
+					name: "original filename",
+					type: "string"
+				}
+			}
 		}
 	},
 	entities: {

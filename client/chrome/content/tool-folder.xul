@@ -9,7 +9,6 @@
 
 	<commandset>
 		<command id="commandOpen" oncommand="onCommandOpen()" />
-		<command id="commandOpenFolder" oncommand="onCommandOpenFolder()" />
 		<command id="commandRename" oncommand="onCommandRename()" />
 		<command id="commandDelete" oncommand="onCommandDelete()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
@@ -30,8 +29,7 @@
 	<popupset>
 		<menupopup id="contextMenu"
 			onpopupshowing="onContextMenuShowing()">
-			<menuitem id="contextMenuOpen" label="Open" default="true" command="commandOpen" key="keyOpen" />
-			<menuitem id="contextMenuOpenFolder" label="Open Folder" command="commandOpenFolder" />
+			<menuitem id="contextMenuOpen" label="Open" command="commandOpen" key="keyOpen" />
 			<menuitem id="contextMenuRename" label="Rename" command="commandRename" key="keyRename" />
 			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" key="keyDelete" />
 			<menu id="contextMenuCreate" label="Create">
@@ -48,11 +46,11 @@
 
 	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true">
 		<treecols>
-			<treecol id="treecolName" primary="true" editable="true" label="Name" flex="1" />
+			<treecol id="treecolName" primary="true" label="Name" flex="1" />
 			<splitter class="tree-splitter" />
 			<treecol id="treecolType" label="Type" />
 		</treecols>
-		<treechildren context="contextMenu" ondragstart="onTreeDragStart(event)" ondblclick="onCommandOpen()" />
+		<treechildren context="contextMenu" ondragstart="onTreeDragStart(event)" />
 	</tree>
 
 	<label id="labelEmpty" value="No such folder." />

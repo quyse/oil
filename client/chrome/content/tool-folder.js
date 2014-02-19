@@ -492,16 +492,13 @@ function onCommandOpen() {
 	var selectedItems = getSelectedItems();
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
-		// TODO: open with corresponding tool
-	}
-}
-
-function onCommandOpenFolder() {
-	var selectedItems = getSelectedItems();
-	for(var i = 0; i < selectedItems.length; ++i) {
-		var item = selectedItems[i];
-		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
-			OIL.createTool("folder", item.entityId);
+		var scheme = item.entity.GetScheme();
+		if(!scheme)
+			continue;
+		var tool = OIL.uuids.schemeDescs[OIL.uuids.schemes[scheme.GetId()]].tool;
+		if(!tool)
+			continue;
+		OIL.createTool(tool, item.entityId);
 	}
 }
 
@@ -716,7 +713,6 @@ function onContextMenuShowing() {
 	var oneFolder = hasFolder && selectedItems.length == 1 || selectedItems.length == 0;
 
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
-	document.getElementById("contextMenuOpenFolder").hidden = !hasFolder;
 	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuCreate").hidden = !oneFolder;
