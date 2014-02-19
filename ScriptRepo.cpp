@@ -153,7 +153,7 @@ void ScriptRepo::Sync(ptr<Script::Any> callback)
 	{
 		ptr<MemoryStream> stream = NEW(MemoryStream());
 		StreamWriter writer(stream);
-		writer.Write('\n');
+		remoteRepo->WriteHeader(&writer);
 		clientRepo->Push(&writer);
 		remoteRepo->Sync(stream->ToFile(), NEW(PullHandler(this, callback.FastCast<Script::Np::Any>())));
 	}
@@ -181,7 +181,7 @@ void ScriptRepo::Watch(ptr<Script::Any> callback)
 {
 	ptr<MemoryStream> stream = NEW(MemoryStream());
 	StreamWriter writer(stream);
-	writer.Write('\n');
+	remoteRepo->WriteHeader(&writer);
 	clientRepo->WriteWatchRequest(&writer);
 	remoteRepo->Watch(stream->ToFile(), NEW(WatchHandler(this, callback.FastCast<Script::Np::Any>())));
 }

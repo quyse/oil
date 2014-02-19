@@ -29,6 +29,7 @@ public:
 	void GetManifest(ptr<DataHandler<ptr<File> > > manifestHandler);
 	void Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pullHandler);
 	void Watch(ptr<File> requestData, ptr<DataHandler<ptr<File> > > watchHandler);
+	void WriteHeader(StreamWriter* writer);
 
 	META_DECLARE_CLASS(UrlRemoteRepo);
 };
