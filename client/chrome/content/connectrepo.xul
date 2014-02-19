@@ -33,9 +33,11 @@
 				<menulist id="menulistRemoteType" command="commandOnChangeRemoteType">
 					<menupopup>
 						<menuitem label="Remote URL" value="url" />
+<!--
 						<menuitem label="Local File" value="file" />
 						<menuitem label="Temporary File" value="temp" />
 						<menuitem label="Memory" value="memory" />
+-->
 					</menupopup>
 				</menulist>
 			</row>
