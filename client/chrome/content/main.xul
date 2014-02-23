@@ -30,39 +30,39 @@
 		<menupopup id="contextMenuToolTab"
 			onpopupshowing="onToolTabContextShowing(event)"
 			onpopuphiding="onToolTabContextHiding(event)">
-			<menuitem label="Undock" default="true" disabled="true" />
-			<menuitem label="Duplicate" id="contextMenuToolTabDuplicate" oncommand="onToolTabContextDuplicate()" />
-			<menuitem label="Close" oncommand="onToolTabContextClose()" />
+			<menuitem label="undock" default="true" disabled="true" />
+			<menuitem label="duplicate" id="contextMenuToolTabDuplicate" oncommand="onToolTabContextDuplicate()" />
+			<menuitem label="close" oncommand="onToolTabContextClose()" />
 		</menupopup>
 	</popupset>
 
 	<toolbox>
 		<menubar>
-			<menu label="Repo" accesskey="R">
+			<menu label="repo" accesskey="r">
 				<menupopup>
-					<menuitem label="Connect..." accesskey="C" command="commandRepoConnect" />
+					<menuitem label="connect..." accesskey="c" command="commandRepoConnect" />
 				</menupopup>
 			</menu>
-			<menu label="Edit" accesskey="E">
+			<menu label="edit" accesskey="e">
 				<menupopup>
-					<menuitem id="menuUndo" accesskey="U" key="keyUndo" command="commandUndo" />
-					<menuitem id="menuRedo" accesskey="R" key="keyRedo" command="commandRedo" />
+					<menuitem id="menuUndo" accesskey="u" key="keyUndo" command="commandUndo" />
+					<menuitem id="menuRedo" accesskey="r" key="keyRedo" command="commandRedo" />
 				</menupopup>
 			</menu>
-			<menu label="View" accesskey="V">
+			<menu label="view" accesskey="v">
 				<menupopup>
-					<menuitem label="Show Root Folder" accesskey="R" command="commandShowRoot" />
+					<menuitem label="show root folder" accesskey="r" command="commandShowRoot" />
 				</menupopup>
 			</menu>
-			<menu label="Tools" accesskey="T">
+			<menu label="tools" accesskey="t">
 				<menupopup>
-					<menuitem id="menuConsole" label="Javascript Console..." accesskey="C" command="commandJavascriptConsole" />
-					<menu label="Maintenance">
+					<menuitem id="menuConsole" label="javascript console..." accesskey="c" command="commandJavascriptConsole" />
+					<menu label="maintenance">
 						<menupopup>
-							<menuitem id="menuMaintenanceCreateRoot" label="Create Root" command="commandMaintenanceCreateRoot" />
+							<menuitem id="menuMaintenanceCreateRoot" label="create root" command="commandMaintenanceCreateRoot" />
 						</menupopup>
 					</menu>
-					<menuitem label="Create Root Folder" oncommand="createRootFolder()" hidden="true" />
+					<menuitem label="create root folder" oncommand="createRootFolder()" hidden="true" />
 				</menupopup>
 			</menu>
 		</menubar>
@@ -73,8 +73,8 @@
 	<box id="toolspace" />
 
 	<hbox id="statusbar">
-		<label id="labelStatus" flex="1" value="Status" />
-		<label id="labelSyncStatus" value="Not Synced" />
+		<label id="labelStatus" flex="1" value="status" />
+		<label id="labelSyncStatus" value="not synced" />
 	</hbox>
 
 </window>

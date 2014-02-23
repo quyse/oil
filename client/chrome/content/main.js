@@ -42,8 +42,8 @@ function onUndoRedoChanged(undoAction, redoAction) {
 		}
 	};
 
-	update(undoAction, "menuUndo", "commandUndo", "Undo");
-	update(redoAction, "menuRedo", "commandRedo", "Redo");
+	update(undoAction, "menuUndo", "commandUndo", "undo");
+	update(redoAction, "menuRedo", "commandRedo", "redo");
 }
 
 function onShowRoot() {
@@ -133,10 +133,10 @@ window.addEventListener('load', function() {
 	// register sync status feedback
 	var labelSyncStatus = document.getElementById("labelSyncStatus");
 	OIL.syncProgress.onSynced.addTarget(function() {
-		labelSyncStatus.value = "Synced";
+		labelSyncStatus.value = "synced";
 	});
 	OIL.syncProgress.onUnsynced.addTarget(function() {
-		labelSyncStatus.value = "Syncing...";
+		labelSyncStatus.value = "syncing...";
 	});
 });
 

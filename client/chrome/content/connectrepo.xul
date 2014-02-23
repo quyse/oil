@@ -2,11 +2,11 @@
 
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 
-<dialog id="connectrepo" title="Connect to Repo"
+<dialog id="connectrepo" title="connect to repo"
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons="accept,cancel"
-	buttonlabelaccept="Connect"
-	buttonlabelcancel="Cancel"
+	buttonlabelaccept="connect"
+	buttonlabelcancel="cancel"
 	ondialogaccept="return onConnect()"
 	>
 
@@ -27,37 +27,37 @@
 			<column />
 		</columns>
 		<rows>
-			<dialogheader title="Remote Repo" />
+			<dialogheader title="remote repo" />
 			<row align="baseline">
-				<label control="menulistRemoteType" value="Type:" />
+				<label control="menulistRemoteType" value="type:" />
 				<menulist id="menulistRemoteType" command="commandOnChangeRemoteType">
 					<menupopup>
-						<menuitem label="Remote URL" value="url" />
+						<menuitem label="remote URL" value="url" />
 <!--
-						<menuitem label="Local File" value="file" />
-						<menuitem label="Temporary File" value="temp" />
-						<menuitem label="Memory" value="memory" />
+						<menuitem label="local file" value="file" />
+						<menuitem label="temporary file" value="temp" />
+						<menuitem label="memory" value="memory" />
 -->
 					</menupopup>
 				</menulist>
 			</row>
 			<row id="rowRemoteUrl" align="baseline">
-				<label control="textboxRemoteUrl" value="Remote URL:" />
+				<label control="textboxRemoteUrl" value="remote URL:" />
 				<textbox id="textboxRemoteUrl" placeholder="URL of server repo" oninput="onChangeRemoteUrl()" />
-				<button id="buttonCheckRemoteUrl" label="Check" command="commandCheckRemoteUrl" />
+				<button id="buttonCheckRemoteUrl" label="check..." command="commandCheckRemoteUrl" />
 			</row>
 			<row id="rowLogin" align="baseline">
-				<label control="textboxLogin" value="Username:" />
-				<textbox id="textboxLogin" placeholder="Login if required" />
+				<label control="textboxLogin" value="username:" />
+				<textbox id="textboxLogin" placeholder="login if required" />
 			</row>
 			<row id="rowPassword" align="baseline">
-				<label control="textboxPassword" value="Password:" />
-				<textbox id="textboxPassword" type="password" placeholder="Password if required" />
+				<label control="textboxPassword" value="password:" />
+				<textbox id="textboxPassword" type="password" placeholder="password if required" />
 			</row>
 			<row id="rowRemoteFile" align="baseline">
-				<label control="textboxRemoteFile" value="Local File:" />
-				<textbox id="textboxRemoteFile" placeholder="Path to create or open server repo's file" oninput="onChangeRemoteFile()" />
-				<button label="Browse..." command="commandOnBrowseRemoteFile" />
+				<label control="textboxRemoteFile" value="local file:" />
+				<textbox id="textboxRemoteFile" placeholder="path to create or open server repo's file" oninput="onChangeRemoteFile()" />
+				<button label="browse..." command="commandOnBrowseRemoteFile" />
 			</row>
 			<row id="rowRemoteTemp" align="baseline">
 				<box />
@@ -72,21 +72,21 @@
 				</label>
 			</row>
 			<separator />
-			<dialogheader title="Local Cache" />
+			<dialogheader title="local cache" />
 			<row align="baseline">
-				<label control="menulistCacheType" value="Cache Type:" command="commandCacheType" />
+				<label control="menulistCacheType" value="cache type:" command="commandCacheType" />
 				<menulist id="menulistCacheType" command="commandOnChangeCacheType">
 					<menupopup>
-						<menuitem label="File" value="file" />
-						<menuitem label="Temp File" value="temp" />
-						<menuitem label="Memory" value="memory" />
+						<menuitem label="file" value="file" />
+						<menuitem label="temp file" value="temp" />
+						<menuitem label="memory" value="memory" />
 					</menupopup>
 				</menulist>
 			</row>
 			<row id="rowCacheFile" align="baseline">
-				<label control="textboxCacheFile" value="Cache File:" />
-				<textbox id="textboxCacheFile" placeholder="Path for local cache" />
-				<button label="Browse..." command="commandOnBrowseCacheFile" />
+				<label control="textboxCacheFile" value="cache file:" />
+				<textbox id="textboxCacheFile" placeholder="path for local cache" />
+				<button label="browse..." command="commandOnBrowseCacheFile" />
 			</row>
 			<row id="rowCacheTemp" align="baseline">
 				<box />

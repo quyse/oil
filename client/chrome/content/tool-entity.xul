@@ -15,17 +15,17 @@
 			</columns>
 			<rows>
 				<row align="baseline">
-					<label control="textboxEntityId" value="Entity ID" />
+					<label control="textboxEntityId" value="entity ID" />
 					<textbox id="textboxEntityId" readonly="true" />
 				</row>
 				<row align="baseline">
-					<label control="textboxScheme" value="Scheme" />
+					<label control="textboxScheme" value="scheme" />
 					<textbox id="textboxScheme" readonly="true" />
 				</row>
 			</rows>
 		</grid>
 	</scrollbox>
 
-	<label id="labelEmpty" value="No such entity" />
+	<label id="labelEmpty" value="no such entity" />
 
 </page>

@@ -29,30 +29,30 @@
 	<popupset>
 		<menupopup id="contextMenu"
 			onpopupshowing="onContextMenuShowing()">
-			<menuitem id="contextMenuOpen" label="Open" command="commandOpen" key="keyOpen" />
-			<menuitem id="contextMenuRename" label="Rename" command="commandRename" key="keyRename" />
-			<menuitem id="contextMenuDelete" label="Delete" command="commandDelete" key="keyDelete" />
-			<menu id="contextMenuCreate" label="Create">
+			<menuitem id="contextMenuOpen" label="open" command="commandOpen" key="keyOpen" />
+			<menuitem id="contextMenuRename" label="rename" command="commandRename" key="keyRename" />
+			<menuitem id="contextMenuDelete" label="delete" command="commandDelete" key="keyDelete" />
+			<menu id="contextMenuCreate" label="create">
 				<menupopup>
-					<menuitem label="Folder" command="commandCreateFolder" />
+					<menuitem label="folder" command="commandCreateFolder" />
 				</menupopup>
 			</menu>
-			<menuitem id="contextMenuUploadFile" label="Upload File(s)..." command="commandUploadFile" />
-			<menuitem id="contextMenuPlace" label="Place" command="commandPlace" />
-			<menuitem id="contextMenuShowRealPlace" label="Show Real Place" command="commandShowRealPlace" key="keyShowRealPlace" />
-			<menuitem id="contextMenuProperties" label="Properties" command="commandProperties" key="keyProperties" />
+			<menuitem id="contextMenuUploadFile" label="upload file(s)..." command="commandUploadFile" />
+			<menuitem id="contextMenuPlace" label="place" command="commandPlace" />
+			<menuitem id="contextMenuShowRealPlace" label="show real place" command="commandShowRealPlace" key="keyShowRealPlace" />
+			<menuitem id="contextMenuProperties" label="properties" command="commandProperties" key="keyProperties" />
 		</menupopup>
 	</popupset>
 
 	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true">
 		<treecols>
-			<treecol id="treecolName" primary="true" label="Name" flex="1" />
+			<treecol id="treecolName" primary="true" label="name" flex="1" />
 			<splitter class="tree-splitter" />
-			<treecol id="treecolType" label="Type" />
+			<treecol id="treecolType" label="type" />
 		</treecols>
 		<treechildren context="contextMenu" ondragstart="onTreeDragStart(event)" />
 	</tree>
 
-	<label id="labelEmpty" value="No such folder." />
+	<label id="labelEmpty" value="no such folder" />
 
 </page>
