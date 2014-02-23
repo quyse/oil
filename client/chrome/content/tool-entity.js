@@ -173,10 +173,14 @@ function addFieldControl(scheme, fieldIndex) {
 }
 
 window.addEventListener('load', function() {
-	entity = OIL.getEntityFromToolWindow(window);
-
+	var params = OIL.getParamsFromToolWindow(window);
+	if(!params || !params.entity)
+		return;
+	entity = OIL.entityManager.GetEntity(params.entity);
 	if(!entity)
 		return;
+
+	window.toolTab.setTitle("entity");
 
 	init();
 });

@@ -15,7 +15,7 @@ function ToolTab() {
 	this.tab = document.createElementNS(XUL_NS, "tab");
 	this.tab.toolTab = this;
 	this.tab.id = "toolTab" + this.id;
-	this.tab.setAttribute("label", "Tab");
+	this.tab.setAttribute("label", "tooltab");
 	this.tab.setAttribute("context", "contextMenuToolTab");
 
 	// create tabpanel
@@ -49,6 +49,9 @@ ToolTab.get = function(id) {
 };
 ToolTab.prototype.close = function() {
 	this.parent.removeTab(this);
+};
+ToolTab.prototype.setTitle = function(title) {
+	this.tab.setAttribute("label", title);
 };
 
 /// Tool tabbox class.
@@ -351,4 +354,37 @@ ToolSpace.deserialize = function(o) {
 	}
 
 	return space;
+};
+
+OIL.wrongToolWindow = function(window) {
+	window.location = "tool-wrong.xul";
+};
+
+OIL.getParamsFromToolWindow = function(window) {
+	if(window.location.hash.length <= 0) {
+		OIL.wrongToolWindow(window);
+		return null;
+	}
+
+	var params = window.location.hash.substr(1).split("&");
+	var res = {};
+	for(var i = 0; i < params.length; ++i) {
+		var param = params[i].split("=");
+		if(param.length != 2)
+			continue;
+		res[param[0]] = param[1];
+	}
+
+	// 'tab' parameter is required
+	if(res.tab) {
+		window.toolTab = OIL.ToolTab.get(res.tab);
+		delete res.tab;
+		window.toolTab.params = res;
+	}
+	else {
+		OIL.wrongToolWindow(window);
+		return null;
+	}
+
+	return res;
 };

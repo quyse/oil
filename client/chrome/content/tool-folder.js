@@ -497,7 +497,9 @@ function onCommandOpen() {
 		var tool = OIL.getSchemeDescById(scheme.GetId()).tool;
 		if(!tool)
 			continue;
-		OIL.createTool(tool, item.entityId);
+		OIL.createTool(tool, {
+			entity: item.entityId
+		});
 	}
 }
 
@@ -623,7 +625,9 @@ function onCommandProperties() {
 	var selectedItems = getSelectedItems();
 
 	for(var i = 0; i < selectedItems.length; ++i)
-		OIL.createTool("entity", selectedItems[i].entityId);
+		OIL.createTool("entity", {
+			entity: selectedItems[i].entityId
+		});
 }
 
 function onCommandPlace() {
@@ -737,11 +741,13 @@ function onTreeDragStart(event) {
 var rootItem;
 
 window.addEventListener('load', function() {
-	var rootEntity = OIL.getEntityFromToolWindow(window);
-	if(!rootEntity)
+	var params = OIL.getParamsFromToolWindow(window);
+	if(!params || !params.entity)
 		return;
 
-	rootItem = new Item(rootEntity);
+	window.toolTab.setTitle("folder");
+
+	rootItem = new Item(OIL.entityManager.GetEntity(params.entity));
 
 	document.getElementById("labelEmpty").remove();
 

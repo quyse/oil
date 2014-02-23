@@ -226,12 +226,3 @@ OIL.eid2f = function(eid) {
 OIL.fileTrue = function() {
 	return OIL.s2f("\x01");
 };
-
-OIL.getEntityFromToolWindow = function(window) {
-	var a = /^\#(.+)$/.exec(window.location.hash);
-	if(!a) {
-		window.location = "tool-wrong.xul";
-		return null;
-	}
-	return OIL.entityManager.GetEntity(a[1]);
-};

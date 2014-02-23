@@ -23,7 +23,9 @@ function onRepoConnect() {
 		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no');
 
 		// show root folder
-		createTool("folder", OIL.uuids.entities.root);
+		createTool("folder", {
+			entity: OIL.uuids.entities.root
+		});
 	}
 }
 
@@ -45,7 +47,9 @@ function onUndoRedoChanged(undoAction, redoAction) {
 }
 
 function onShowRoot() {
-	createTool("folder", OIL.uuids.entities.root);
+	createTool("folder", {
+		entity: OIL.uuids.entities.root
+	});
 }
 
 function onMaintenanceRootCreate() {
@@ -65,24 +69,26 @@ OIL.prefs = Components.classes["@mozilla.org/preferences-service;1"]
 	.getService(Components.interfaces.nsIPrefService)
 	.getBranch("oil.");
 
-function getToolUrl(page, param) {
-	return "chrome://oil/content/tool-" + page + ".xul" + (param ? "#" + param : "");
-}
-OIL.getToolUrl = getToolUrl;
-
-function createTool(page, param) {
+function createTool(page, params) {
 	// get tabbox from prefs
 	var tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
 	if(!tabbox)
 		tabbox = OIL.ToolTabbox.get("main");
 
-	createToolWithUrl(tabbox, getToolUrl(page, param));
-};
+	createToolInTabbox(tabbox, page, params);
+}
 OIL.createTool = createTool;
-function createToolWithUrl(tabbox, url) {
+
+function createToolInTabbox(tabbox, page, params) {
 	// create tool tab
 	var toolTab = new OIL.ToolTab();
 	tabbox.appendTab(toolTab);
+
+	// compose url
+	var url = "chrome://oil/content/tool-" + page + ".xul#tab=" + toolTab.id;
+	for(var i in params)
+		url += "&" + i + "=" + params[i];
+
 	// init iframe
 	var tabpanel = toolTab.tabpanel;
 	var iframe = document.createElementNS(XUL_NS, "iframe");
@@ -92,7 +98,7 @@ function createToolWithUrl(tabbox, url) {
 
 	// set duplicate command
 	toolTab.duplicateTool = function() {
-		createToolWithUrl(this.parent, iframe.getAttribute("src"));
+		createToolInTabbox(this.parent, page, toolTab.params);
 	};
 };
 
