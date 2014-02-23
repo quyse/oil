@@ -26,7 +26,7 @@ public:
 	/// Protocol magic value.
 	static const char protocolMagic[14];
 	/// Protocol version.
-	static const int protocolVersion;
+	static const size_t protocolVersion;
 
 	/// Server repo application version.
 	/** Stored in SQLite db with pragma application_id. */

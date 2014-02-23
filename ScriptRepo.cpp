@@ -30,7 +30,8 @@ public:
 	{
 		try
 		{
-			scriptRepo->clientRepo->ReadServerManifest(&StreamReader(NEW(FileInputStream(data))));
+			StreamReader reader(NEW(FileInputStream(data)));
+			scriptRepo->clientRepo->ReadServerManifest(&reader);
 			ptr<Script::Np::State> scriptState = callback->GetState();
 			callback->Call(
 				scriptState->NewBoolean(true),
@@ -69,7 +70,8 @@ public:
 	{
 		try
 		{
-			bool changedSomething = scriptRepo->clientRepo->Pull(&StreamReader(NEW(FileInputStream(data))));
+			StreamReader reader(NEW(FileInputStream(data)));
+			bool changedSomething = scriptRepo->clientRepo->Pull(&reader);
 			ptr<Script::Np::State> scriptState = callback->GetState();
 			callback->Call(
 				scriptState->NewBoolean(true),
@@ -202,7 +204,8 @@ void ScriptRepo::ProcessEvents()
 		}
 	};
 
-	clientRepo->ProcessEvents(&EventHandler(this));
+	EventHandler handler(this);
+	clientRepo->ProcessEvents(&handler);
 }
 
 void ScriptRepo::ApplyAction(ptr<Action> action)

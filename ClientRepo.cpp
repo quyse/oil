@@ -6,6 +6,7 @@
 #include "../inanity/PartFile.hpp"
 #include "../inanity/Exception.hpp"
 #include <sstream>
+#include <cstring>
 
 BEGIN_INANITY_OIL
 
@@ -374,7 +375,8 @@ ptr<File> ClientRepo::GetKeyValue(ptr<File> key)
 		ItemStatuses::server
 	};
 
-	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
+	const int orderSize = sizeof(order) / sizeof(order[0]);
+	for(int i = 0; i < orderSize; ++i)
 		if(keyItems.ids[order[i]])
 			return GetKeyItemValue(keyItems.ids[order[i]]);
 
@@ -600,7 +602,8 @@ bool ClientRepo::HasValue(ptr<File> key)
 		ItemStatuses::server
 	};
 
-	for(int i = 0; i < sizeof(order) / sizeof(order[0]); ++i)
+	const int orderSize = sizeof(order) / sizeof(order[0]);
+	for(int i = 0; i < orderSize; ++i)
 		if(keyItems.ids[order[i]] && GetKeyItemValueLength(keyItems.ids[order[i]]))
 			return true;
 
@@ -683,7 +686,8 @@ void ClientRepo::EnumerateKeyValues(ptr<File> prefix, KeyValueEnumerator* enumer
 		}
 	};
 
-	EnumerateKeys(prefix, &Enumerator(this, enumerator));
+	Enumerator e(this, enumerator);
+	EnumerateKeys(prefix, &e);
 
 	END_TRY("Can't enumerate repo key values");
 }

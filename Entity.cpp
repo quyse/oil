@@ -10,6 +10,7 @@
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/MemoryFile.hpp"
 #include "../inanity/Exception.hpp"
+#include <cstring>
 
 BEGIN_INANITY_OIL
 
@@ -205,7 +206,8 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 	memcpy(prefixData, id.data, EntityId::size);
 	prefixData[EntityId::size] = 'f';
 
-	manager->GetRepo()->EnumerateKeyValues(prefix, &Enumerator(enumerator));
+	Enumerator e(enumerator);
+	manager->GetRepo()->EnumerateKeyValues(prefix, &e);
 }
 
 ptr<Script::Any> Entity::ReadField(const String& fieldId) const
@@ -283,7 +285,8 @@ void Entity::EnumerateData(DataEnumerator* enumerator)
 	memcpy(prefixData, id.data, EntityId::size);
 	prefixData[EntityId::size] = 'd';
 
-	manager->GetRepo()->EnumerateKeyValues(prefix, &Enumerator(enumerator));
+	Enumerator e(enumerator);
+	manager->GetRepo()->EnumerateKeyValues(prefix, &e);
 }
 
 ptr<File> Entity::ReadData(ptr<File> name) const
@@ -317,7 +320,8 @@ void Entity::Delete(ptr<Action> action)
 		}
 	};
 
-	manager->GetRepo()->EnumerateKeys(id.ToFile(), &Enumerator(action));
+	Enumerator e(action);
+	manager->GetRepo()->EnumerateKeys(id.ToFile(), &e);
 }
 
 ptr<EntityCallback> Entity::AddCallback(ptr<Script::Any> callback)
