@@ -32,6 +32,7 @@ var executables = {
 			'Engine',
 			'Painter',
 			'ScriptObject',
+			'ViewScriptObject',
 			'ScriptRepo',
 			'Repo',
 			'ClientRepo',
