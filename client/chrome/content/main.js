@@ -76,7 +76,10 @@ OIL.prefs = Components.classes["@mozilla.org/preferences-service;1"]
 
 function createTool(page, params) {
 	// get tabbox from prefs
-	var tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
+	var tabbox = null;
+	try {
+		tabbox = OIL.ToolTabbox.get(OIL.prefs.getCharPref("tool-" + page + ".place"));
+	} catch(e) {}
 	if(!tabbox)
 		tabbox = OIL.ToolTabbox.get("main");
 
