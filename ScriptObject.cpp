@@ -7,9 +7,11 @@
 #include "EntityManager.hpp"
 #include "EntityScheme.hpp"
 #include "EntitySchemeManager.hpp"
+#include "Engine.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
+#include "../inanity/data/SQLiteFileSystem.hpp"
 #include "../inanity/MemoryFile.hpp"
 
 // classes only for registration in script state
@@ -41,6 +43,22 @@ ptr<Script::Any> ScriptObject::GetRootNamespace() const
 ptr<FileSystem> ScriptObject::GetNativeFileSystem() const
 {
 	return nativeFileSystem;
+}
+
+ptr<FileSystem> ScriptObject::GetProfileFileSystem() const
+{
+	return profileFileSystem;
+}
+
+void ScriptObject::SetProfilePath(const String& profilePath)
+{
+	this->profilePath = profilePath;
+	profileFileSystem = NEW(Platform::FileSystem(profilePath));
+}
+
+void ScriptObject::Init()
+{
+	engine = NEW(Engine(NEW(Platform::FileSystem("assets")), NEW(Data::SQLiteFileSystem(profilePath + "/shaders"))));
 }
 
 ptr<ClientRepo> ScriptObject::CreateLocalClientRepo(const String& fileName)

@@ -38,6 +38,9 @@ END_INANITY_SCRIPT
 META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(GetRootNamespace);
 	META_METHOD(GetNativeFileSystem);
+	META_METHOD(GetProfileFileSystem);
+	META_METHOD(SetProfilePath);
+	META_METHOD(Init);
 	META_METHOD(CreateLocalClientRepo);
 	META_METHOD(CreateTempClientRepo);
 	META_METHOD(CreateMemoryClientRepo);

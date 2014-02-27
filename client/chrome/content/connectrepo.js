@@ -64,10 +64,6 @@ function onChangeCacheType() {
 	onChangeSomething(types, cacheType);
 }
 
-var defaultDocumentsPath =
-	Components.classes["@mozilla.org/file/directory_service;1"]
-	.getService(Components.interfaces.nsIProperties)
-	.get("ProfD", Components.interfaces.nsIFile);
 var lastCacheFileName = "";
 
 function suggestCacheFile(cacheFileName) {
@@ -81,7 +77,7 @@ function suggestCacheFile(cacheFileName) {
 
 function onChangeRemoteUrl() {
 	var url = document.getElementById("textboxRemoteUrl").value;
-	var file = defaultDocumentsPath.clone();
+	var file = OIL.profilePath.clone();
 	file.append(encodeURIComponent(url));
 	suggestCacheFile(file.path);
 }

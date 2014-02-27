@@ -9,6 +9,11 @@ DebuggerServer.openListener(6000);
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+// set profile path
+OIL.profilePath = Components.classes["@mozilla.org/file/directory_service;1"]
+	.getService(Components.interfaces.nsIProperties)
+	.get("ProfD", Components.interfaces.nsIFile);
+
 function onRepoConnect() {
 	var params = {};
 	window.openDialog('connectrepo.xul', '', 'chrome,modal,centerscreen,resizable', params);
@@ -121,6 +126,8 @@ var toolspace;
 
 window.addEventListener('load', function() {
 	OIL.init(document.getElementById('oil'));
+	OIL.core.SetProfilePath(OIL.profilePath.path);
+	OIL.core.Init();
 	onUndoRedoChanged(null, null);
 
 	// create toolspace

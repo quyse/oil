@@ -15,6 +15,9 @@ exports.configureCompiler = function(objectFile, compiler) {
 		// .cpp
 		source = source.replace(/\./g, '/') + '.cpp';
 	compiler.setSourceFile(source);
+	compiler.addIncludeDir('../inanity/deps/bullet/repo/src');
+	compiler.addIncludeDir('../inanity/deps/freetype/repo/include');
+	compiler.addIncludeDir('../inanity/deps/harfbuzz/generated');
 };
 
 var libraries = {
@@ -26,6 +29,8 @@ var executables = {
 			'npoil',
 			'MainPluginInstance',
 			'ViewPluginInstance',
+			'Engine',
+			'Painter',
 			'ScriptObject',
 			'ScriptRepo',
 			'Repo',
@@ -44,13 +49,20 @@ var executables = {
 			'../inanity//libinanity-dx11',
 			'../inanity//libinanity-gl',
 			'../inanity//libinanity-shaders',
+			'../inanity//libinanity-data',
+			'../inanity//libinanity-gui',
+			'../inanity//libinanity-crypto',
 			'../inanity//libinanity-platform',
 			'../inanity//libinanity-npapi',
 			'../inanity//libinanity-np',
 			'../inanity//libinanity-input',
 			'../inanity//libinanity-sqlite',
+			'../inanity//libinanity-sqlitefs',
+			'../inanity/deps/zlib//libz',
 			'../inanity/deps/glew//libglew',
-			'../inanity/deps/sqlite//libsqlite'
+			'../inanity/deps/sqlite//libsqlite',
+			'../inanity/deps/freetype//libfreetype',
+			'../inanity/deps/harfbuzz//libharfbuzz'
 		],
 		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
