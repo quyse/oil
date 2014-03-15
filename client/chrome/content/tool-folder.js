@@ -314,11 +314,8 @@ View.prototype.hasNextSibling = function(row, afterIndex) {
 	parent.ensureChildren();
 	var itemFullCount = item.getFullCount();
 	var itemParentIndex = item.getIndexInParent();
-	return
-		// there is next sibling
-		itemParentIndex + 1 < parent.children.length &&
-		// and its position after
-		row + 1 + itemFullCount > afterIndex;
+	// return if there is next sibling and its position after
+	return itemParentIndex + 1 < parent.children.length && row + 1 + itemFullCount > afterIndex;
 };
 View.prototype.getParentIndex = function(row) {
 	var parent = this.getItem(row).parent;
