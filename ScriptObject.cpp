@@ -32,6 +32,10 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<Strings>();
 	scriptState->Register<Action>();
 	scriptState->Register<EntityId>();
+	scriptState->Register<EntitySchemeId>();
+	scriptState->Register<EntityInterfaceId>();
+	scriptState->Register<EntityTagId>();
+	scriptState->Register<EntityFieldId>();
 	scriptState->Register<EntityScheme>();
 }
 

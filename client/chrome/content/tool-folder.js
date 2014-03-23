@@ -56,16 +56,16 @@ Item.prototype.onChange = function(type, key, value) {
 		//   an array (initialized list of folder's children)
 		//   null (non-initialized list of folder's children)
 		//   undefined (this is not folder)
-		this.children = (this.scheme && this.scheme.GetId() == OIL.uuids.schemes.folder) ? null : undefined;
-		this.onChange('tag', OIL.uuids.tags.name, this.entity.ReadTag(OIL.uuids.tags.name));
-		this.onChange('tag', OIL.uuids.tags.parent, this.entity.ReadTag(OIL.uuids.tags.parent));
+		this.children = (this.scheme && this.scheme.GetId() == OIL.ids.schemes.folder) ? null : undefined;
+		this.onChange('tag', OIL.ids.tags.name, this.entity.ReadTag(OIL.ids.tags.name));
+		this.onChange('tag', OIL.ids.tags.parent, this.entity.ReadTag(OIL.ids.tags.parent));
 		break;
 	case 'tag':
 		switch(key) {
-		case OIL.uuids.tags.name:
+		case OIL.ids.tags.name:
 			this.name = value ? OIL.f2s(value) : null;
 			break;
-		case OIL.uuids.tags.parent:
+		case OIL.ids.tags.parent:
 			this.parentId = OIL.f2eid(value);
 			break;
 		}
@@ -294,7 +294,7 @@ View.prototype.getImageSrc = function(row, col) {
 		return null;
 
 	var item = this.getItem(row);
-	return OIL.getSchemeDescById(item.getScheme().GetId()).icon;
+	return OIL.ids.schemeDescs[item.getScheme().GetId()].icon;
 };
 View.prototype.getRowProperties = function(row, props) {
 };
@@ -347,7 +347,7 @@ View.prototype.setCellText = function(row, col, value) {
 	var item = this.getItem(row);
 
 	var action = OIL.createAction("rename " + item.getStringifiedName() + " to " + JSON.stringify(value));
-	item.entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(value));
+	item.entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(value));
 	OIL.finishAction(action);
 };
 View.prototype.canDrop = function(row, orientation, dataTransfer) {
@@ -374,7 +374,7 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	}
 
 	if(entries.length == 1) {
-		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name);
+		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.ids.tags.name);
 		actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
 	}
 	else
@@ -397,8 +397,8 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 		// if we moving
 		if(operation == "move") {
 			// if we moving solid link, change the tag
-			if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.uuids.tags.parent)) == sourceFolderId)
-				sourceFileEntity.WriteTag(action, OIL.uuids.tags.parent, destIdFile);
+			if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.ids.tags.parent)) == sourceFolderId)
+				sourceFileEntity.WriteTag(action, OIL.ids.tags.parent, destIdFile);
 
 			// remove entry from source folder
 			sourceFolderEntity.WriteData(action, entryIdFile, null);
@@ -476,7 +476,7 @@ function isItemInto(targetId, containerId) {
 			return true;
 
 		var entity = OIL.entityManager.GetEntity(id);
-		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.ids.tags.parent));
 		if(!parentId)
 			return false;
 
@@ -491,7 +491,7 @@ function onCommandOpen() {
 		var scheme = item.entity.GetScheme();
 		if(!scheme)
 			continue;
-		var tool = OIL.getSchemeDescById(scheme.GetId()).tool;
+		var tool = OIL.ids.schemeDescs[scheme.GetId()].tool;
 		if(!tool)
 			continue;
 		OIL.createTool(tool, {
@@ -513,9 +513,9 @@ function onCommandCreateFolder() {
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
 	var action = OIL.createAction("create folder");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.folder);
-	entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f("New Folder"));
-	entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(selectedItem.entityId));
+	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("New Folder"));
+	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
@@ -570,12 +570,13 @@ function onCommandUploadFile() {
 				var action = OIL.createAction(actionDescription);
 				var folderEntity = OIL.entityManager.GetEntity(folderId);
 				for(var i = 0; i < paths.length; ++i) {
-					var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.file);
-					entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(paths[i].name));
-					entity.WriteField(action, "ofn", paths[i].name);
+					var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
+					var schemeDesc = OIL.ids.schemeDescs.file;
+					entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[i].name));
+					entity.WriteField(action, schemeDesc.fields.originalFileName, paths[i].name);
 					entity.WriteData(action, null, OIL.core.GetNativeFileSystem().LoadFile(paths[i].path));
 					folderEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-					entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(folderId));
+					entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderId));
 				}
 				OIL.finishAction(action);
 			}
@@ -611,7 +612,7 @@ function onCommandDelete() {
 		var item = selectedItems[i];
 		var itemParent = item.parent;
 		if(item.parentId == itemParent.entityId)
-			item.entity.WriteTag(action, OIL.uuids.tags.parent, null);
+			item.entity.WriteTag(action, OIL.ids.tags.parent, null);
 		itemParent.entity.WriteData(action, OIL.eid2f(item.entityId), null);
 	}
 
@@ -640,7 +641,7 @@ function onCommandPlace() {
 			continue;
 
 		// do place
-		item.entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(item.parent.entityId));
+		item.entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(item.parent.entityId));
 	}
 
 	OIL.finishAction(action);
@@ -665,7 +666,7 @@ function onCommandShowRealPlace() {
 		pathIds.push(id);
 
 		var entity = OIL.entityManager.GetEntity(id);
-		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.ids.tags.parent));
 		if(!parentId) {
 			alert("Selected entity doesn't have real place.");
 			return;
@@ -704,7 +705,7 @@ function onContextMenuShowing() {
 	var hasLink = false;
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
-		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
+		if(item.entity.GetScheme().GetId() == OIL.ids.schemes.folder)
 			hasFolder = true;
 		if(item.parentId != item.parent.entityId)
 			hasLink = true;

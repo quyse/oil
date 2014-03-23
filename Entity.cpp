@@ -71,13 +71,13 @@ ptr<File> Entity::GetFullTagKey(const EntityTagId& tagId) const
 	return key;
 }
 
-ptr<File> Entity::GetFullFieldKey(const String& fieldId) const
+ptr<File> Entity::GetFullFieldKey(const EntityFieldId& fieldId) const
 {
-	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + fieldId.length()));
+	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + EntityFieldId::size));
 	char* keyData = (char*)key->GetData();
 	memcpy(keyData, id.data, EntityId::size);
 	keyData[EntityId::size] = 'f';
-	memcpy(keyData + EntityId::size + 1, fieldId.c_str(), fieldId.length());
+	memcpy(keyData + EntityId::size + 1, fieldId.data, EntityFieldId::size);
 
 	return key;
 }
@@ -134,7 +134,9 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 		break;
 	case 'f':
 		{
-			String fieldId((const char*)keyData + 1, keySize - 1);
+			if(keySize != EntityFieldId::size + 1)
+				break;
+			EntityFieldId fieldId = EntityFieldId::FromData((const char*)keyData + 1);
 			for(size_t i = 0; i < callbacks.size(); ++i)
 				callbacks[i]->FireField(fieldId, value);
 		}
@@ -165,12 +167,12 @@ void Entity::WriteTag(ptr<Action> action, const EntityTagId& tagId, ptr<File> ta
 	action->AddChange(GetFullTagKey(tagId), tagData);
 }
 
-ptr<File> Entity::RawReadField(const String& fieldId) const
+ptr<File> Entity::RawReadField(const EntityFieldId& fieldId) const
 {
 	return manager->GetRepo()->GetValue(GetFullFieldKey(fieldId));
 }
 
-void Entity::RawWriteField(ptr<Action> action, const String& fieldId, ptr<File> value)
+void Entity::RawWriteField(ptr<Action> action, const EntityFieldId& fieldId, ptr<File> value)
 {
 	action->AddChange(GetFullFieldKey(fieldId), value);
 }
@@ -191,10 +193,12 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 
 		bool OnKeyValue(ptr<File> key, ptr<File> value)
 		{
+			// skip keys with wrong length
+			if(key->GetSize() != EntityId::size + 1 + EntityFieldId::size)
+				return true;
+
 			enumerator->OnField(
-				String(
-					(const char*)key->GetData() + EntityId::size + 1,
-					key->GetSize() - EntityId::size - 1),
+				EntityFieldId::FromData((const char*)key->GetData() + EntityId::size + 1),
 				value);
 			return true;
 		}
@@ -208,7 +212,7 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 	manager->GetRepo()->EnumerateKeyValues(prefix, &Enumerator(enumerator));
 }
 
-ptr<Script::Any> Entity::ReadField(const String& fieldId) const
+ptr<Script::Any> Entity::ReadField(const EntityFieldId& fieldId) const
 {
 	if(!scheme)
 		return nullptr;
@@ -224,7 +228,7 @@ ptr<Script::Any> Entity::ReadField(const String& fieldId) const
 		RawReadField(fieldId));
 }
 
-void Entity::WriteField(ptr<Action> action, const String& fieldId, ptr<Script::Any> value)
+void Entity::WriteField(ptr<Action> action, const EntityFieldId& fieldId, ptr<Script::Any> value)
 {
 	if(!scheme)
 		return;

@@ -7,27 +7,35 @@
 
 //*** Convertors for valuetypes.
 
-#include "EntityId.hpp"
+#include "Id.hpp"
 
 BEGIN_INANITY_SCRIPT
 
-template <>
-struct ConverterFromScript<Oil::EntityId>
-{
-	static Oil::EntityId Convert(ptr<Any> value)
-	{
-		return Oil::EntityId::FromString(value->AsString().c_str());
+#define ID_CONVERTER(T) \
+	template <> \
+	struct ConverterFromScript<T> \
+	{ \
+		static T Convert(ptr<Any> value) \
+		{ \
+			return T::FromString(value->AsString()); \
+		} \
+	}; \
+	template <> \
+	struct ConverterToScript<T> \
+	{ \
+		static ptr<Any> Convert(ptr<State> state, const T& value) \
+		{ \
+			return state->NewString(value.ToString()); \
+		} \
 	}
-};
 
-template <>
-struct ConverterToScript<Oil::EntityId>
-{
-	static ptr<Any> Convert(ptr<State> state, const Oil::EntityId& value)
-	{
-		return state->NewString(value.ToString());
-	}
-};
+ID_CONVERTER(Inanity::Oil::EntityId);
+ID_CONVERTER(Inanity::Oil::EntitySchemeId);
+ID_CONVERTER(Inanity::Oil::EntityInterfaceId);
+ID_CONVERTER(Inanity::Oil::EntityTagId);
+ID_CONVERTER(Inanity::Oil::EntityFieldId);
+
+#undef ID_CONVERTER
 
 END_INANITY_SCRIPT
 
@@ -88,12 +96,39 @@ META_CLASS(Inanity::Oil::Action, Inanity.Oil.Action);
 	META_METHOD(AddChange);
 META_CLASS_END();
 
-#include "EntityId.hpp"
+//******* ids
+
 META_CLASS(Inanity::Oil::EntityId, Inanity.Oil.EntityId);
 	META_STATIC_METHOD(StaticToFile);
 	META_STATIC_METHOD(FromFile);
 	META_STATIC_METHOD(New);
 META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntitySchemeId, Inanity.Oil.EntitySchemeId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityInterfaceId, Inanity.Oil.EntityInterfaceId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityTagId, Inanity.Oil.EntityTagId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityFieldId, Inanity.Oil.EntityFieldId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+//*******
 
 #include "Entity.hpp"
 META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
@@ -126,6 +161,7 @@ META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
 	META_METHOD(GetId);
 	META_METHOD(GetName);
 	META_METHOD(GetFieldsCount);
+	META_METHOD(GetFieldId);
 	META_METHOD(GetFieldType);
 	META_METHOD(GetFieldName);
 	META_METHOD(AddField);

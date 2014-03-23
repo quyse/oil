@@ -1,7 +1,7 @@
 #ifndef ___INANITY_OIL_ENTITY_CALLBACK_HPP___
 #define ___INANITY_OIL_ENTITY_CALLBACK_HPP___
 
-#include "EntityId.hpp"
+#include "Id.hpp"
 #include "../inanity/script/np/np.hpp"
 
 BEGIN_INANITY
@@ -40,7 +40,7 @@ public:
 
 	void FireScheme(ptr<EntityScheme> scheme);
 	void FireTag(const EntityTagId& tagId, ptr<File> value);
-	void FireField(const String& fieldId, ptr<File> value);
+	void FireField(const EntityFieldId& fieldId, ptr<File> value);
 	void FireData(ptr<File> key, ptr<File> value);
 
 	/// Fire callback for all fields.

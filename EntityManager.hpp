@@ -1,7 +1,7 @@
 #ifndef ___INANITY_OIL_ENTITY_MANAGER_HPP___
 #define ___INANITY_OIL_ENTITY_MANAGER_HPP___
 
-#include "EntityId.hpp"
+#include "Id.hpp"
 #include <map>
 
 BEGIN_INANITY_OIL

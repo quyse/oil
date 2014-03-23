@@ -223,6 +223,20 @@ OIL.eid2f = function(eid) {
 	return OIL.classes.Inanity.Oil.EntityId.StaticToFile(eid);
 };
 
+OIL.f2esid = function(file) {
+	if(!file)
+		return null;
+	try {
+		return OIL.classes.Inanity.Oil.EntitySchemeId.FromFile(file);
+	}
+	catch(e) {
+		return null;
+	}
+};
+OIL.esid2f = function(eid) {
+	return OIL.classes.Inanity.Oil.EntitySchemeId.StaticToFile(eid);
+};
+
 OIL.fileTrue = function() {
 	return OIL.s2f("\x01");
 };

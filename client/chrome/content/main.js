@@ -20,7 +20,7 @@ function onRepoConnect() {
 	if(params.repo) {
 		OIL.repo = params.repo;
 		OIL.entityManager = OIL.repo.GetEntityManager();
-		OIL.registerEntitySchemes(OIL.entityManager.GetSchemeManager());
+		OIL.initIds(OIL.entityManager.GetSchemeManager());
 
 		OIL.syncRepo();
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
@@ -29,7 +29,7 @@ function onRepoConnect() {
 
 		// show root folder
 		createTool("folder", {
-			entity: OIL.uuids.entities.root
+			entity: OIL.ids.entities.root
 		});
 	}
 }
@@ -53,19 +53,19 @@ function onUndoRedoChanged(undoAction, redoAction) {
 
 function onShowRoot() {
 	createTool("folder", {
-		entity: OIL.uuids.entities.root
+		entity: OIL.ids.entities.root
 	});
 }
 
 function onMaintenanceRootCreate() {
 	// check that there is no root
-	var entity = OIL.entityManager.GetEntity(OIL.uuids.entities.root);
+	var entity = OIL.entityManager.GetEntity(OIL.ids.entities.root);
 	if(entity.GetScheme())
 		return;
 
 	// create (hack way)
 	var action = OIL.createAction("create root");
-	action.AddChange(OIL.eid2f(OIL.uuids.entities.root), OIL.eid2f(OIL.uuids.schemes.folder));
+	action.AddChange(OIL.eid2f(OIL.ids.entities.root), OIL.esid2f(OIL.ids.schemes.folder));
 	OIL.finishAction(action);
 }
 

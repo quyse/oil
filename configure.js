@@ -40,7 +40,7 @@ var executables = {
 			'UrlRemoteRepo',
 			'LocalRemoteRepo',
 			'Action',
-			'EntityId', 'Entity', 'EntityManager', 'EntityScheme', 'EntitySchemeManager',
+			'Id', 'Entity', 'EntityManager', 'EntityScheme', 'EntitySchemeManager',
 			'EntityCallback', 'EntityFieldTypes',
 			'meta'
 		],

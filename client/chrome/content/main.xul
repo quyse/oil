@@ -10,7 +10,7 @@
 	<script src="globals.js" />
 	<script src="ui.js" />
 	<script src="main.js" />
-	<script src="uuids.js" />
+	<script src="ids.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />

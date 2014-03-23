@@ -1,8 +1,9 @@
 #ifndef ___INANITY_OIL_ENTITY_SCHEME_HPP___
 #define ___INANITY_OIL_ENTITY_SCHEME_HPP___
 
-#include "EntityId.hpp"
-#include <unordered_map>
+#include "Id.hpp"
+#include <map>
+#include <vector>
 
 BEGIN_INANITY_OIL
 
@@ -18,7 +19,7 @@ public:
 		EntityFieldType* type;
 		String name;
 	};
-	typedef std::unordered_map<String, Field> Fields;
+	typedef std::map<EntityFieldId, Field> Fields;
 
 private:
 	EntitySchemeId id;
@@ -26,6 +27,8 @@ private:
 
 	/// Fields of scheme.
 	Fields fields;
+	/// Fields of scheme by index.
+	std::vector<EntityFieldId> fieldIds;
 
 public:
 	EntityScheme(const EntitySchemeId& id, const String& name);
@@ -37,9 +40,10 @@ public:
 
 	//** for scripts
 	int GetFieldsCount() const;
-	const char* GetFieldType(const String& fieldId) const;
-	String GetFieldName(const String& fieldId) const;
-	void AddField(const String& fieldId, const String& type, const String& name);
+	EntityFieldId GetFieldId(int index) const;
+	const char* GetFieldType(const EntityFieldId& fieldId) const;
+	String GetFieldName(const EntityFieldId& fieldId) const;
+	void AddField(const EntityFieldId& fieldId, const String& type, const String& name);
 };
 
 END_INANITY_OIL
