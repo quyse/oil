@@ -102,7 +102,7 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 		// if it not, think like there is no scheme
 		ptr<EntityScheme> newScheme;
 		if(value && value->GetSize() == EntitySchemeId::size)
-			newScheme = manager->GetSchemeManager()->TryGet(EntitySchemeId::FromData(value->GetData()));
+			newScheme = manager->GetSchemeManager()->TryGetScheme(EntitySchemeId::FromData(value->GetData()));
 
 		// if scheme doesn't match
 		if(scheme != newScheme)

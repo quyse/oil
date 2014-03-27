@@ -3,12 +3,14 @@
 
 #include "Id.hpp"
 #include <map>
+#include <set>
 #include <vector>
 
 BEGIN_INANITY_OIL
 
 class Entity;
 class EntityFieldType;
+class EntityInterface;
 
 /// Scheme of fields in entity.
 class EntityScheme : public Object
@@ -16,10 +18,11 @@ class EntityScheme : public Object
 public:
 	struct Field
 	{
-		EntityFieldType* type;
+		ptr<EntityFieldType> type;
 		String name;
 	};
 	typedef std::map<EntityFieldId, Field> Fields;
+	typedef std::set<ptr<EntityInterface> > Interfaces;
 
 private:
 	EntitySchemeId id;
@@ -30,6 +33,9 @@ private:
 	/// Fields of scheme by index.
 	std::vector<EntityFieldId> fieldIds;
 
+	/// Interfaces supported by scheme.
+	Interfaces interfaces;
+
 public:
 	EntityScheme(const EntitySchemeId& id, const String& name);
 
@@ -37,13 +43,15 @@ public:
 	String GetName() const;
 
 	const Fields& GetFields() const;
+	const Interfaces& GetInterfaces() const;
 
 	//** for scripts
 	int GetFieldsCount() const;
 	EntityFieldId GetFieldId(int index) const;
-	const char* GetFieldType(const EntityFieldId& fieldId) const;
+	ptr<EntityFieldType> GetFieldType(const EntityFieldId& fieldId) const;
 	String GetFieldName(const EntityFieldId& fieldId) const;
-	void AddField(const EntityFieldId& fieldId, const String& type, const String& name);
+	void AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> type, const String& name);
+	void AddInterface(ptr<EntityInterface> entityInterface);
 };
 
 END_INANITY_OIL

@@ -1,5 +1,7 @@
 #include "EntityFieldTypes.hpp"
 #include "Entity.hpp"
+#include "EntityScheme.hpp"
+#include "EntityInterface.hpp"
 #include "EntityManager.hpp"
 #include "../inanity/MemoryFile.hpp"
 #include "../inanity/script/convert.hpp"
@@ -8,6 +10,7 @@
 #include "../inanity/Strings.hpp"
 #include "../inanity/inanity-math.hpp"
 #include "../inanity/Exception.hpp"
+#include <sstream>
 
 BEGIN_INANITY_SCRIPT
 
@@ -20,42 +23,9 @@ END_INANITY_SCRIPT
 
 BEGIN_INANITY_OIL
 
-EntityFieldType* EntityFieldType::FromName(const char* name)
-{
-	static BlobEntityFieldType blobType;
-	static BoolEntityFieldType boolType;
-	static FloatEntityFieldType floatType;
-	static IntegerEntityFieldType integerType;
-	static StringEntityFieldType stringType;
-	static Vec3EntityFieldType vec3Type;
-	static Vec4EntityFieldType vec4Type;
-	static Color3EntityFieldType color3Type;
-	static Color4EntityFieldType color4Type;
-	static ReferenceEntityFieldType referenceType;
-	static EntityFieldType* types[] =
-	{
-		&blobType,
-		&boolType,
-		&floatType,
-		&integerType,
-		&stringType,
-		&vec3Type,
-		&vec4Type,
-		&color3Type,
-		&color4Type,
-		&referenceType
-	};
-
-	for(size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i)
-		if(strcmp(types[i]->GetName(), name) == 0)
-			return types[i];
-
-	return nullptr;
-}
-
 //*** class BlobEntityFieldType
 
-const char* BlobEntityFieldType::GetName() const
+String BlobEntityFieldType::GetName() const
 {
 	return "blob";
 }
@@ -72,7 +42,7 @@ ptr<File> BlobEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 
 //*** class BoolEntityFieldType
 
-const char* BoolEntityFieldType::GetName() const
+String BoolEntityFieldType::GetName() const
 {
 	return "bool";
 }
@@ -104,7 +74,7 @@ ptr<File> BoolEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 
 //*** class FloatEntityFieldType
 
-const char* FloatEntityFieldType::GetName() const
+String FloatEntityFieldType::GetName() const
 {
 	return "float";
 }
@@ -122,7 +92,7 @@ ptr<File> FloatEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 
 //*** class IntegerEntityFieldType
 
-const char* IntegerEntityFieldType::GetName() const
+String IntegerEntityFieldType::GetName() const
 {
 	return "integer";
 }
@@ -140,7 +110,7 @@ ptr<File> IntegerEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> valu
 
 //*** class StringEntityFieldType
 
-const char* StringEntityFieldType::GetName() const
+String StringEntityFieldType::GetName() const
 {
 	return "string";
 }
@@ -158,7 +128,7 @@ ptr<File> StringEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value
 
 //*** class Vec3EntityFieldType
 
-const char* Vec3EntityFieldType::GetName() const
+String Vec3EntityFieldType::GetName() const
 {
 	return "vec3";
 }
@@ -185,7 +155,7 @@ ptr<File> Vec3EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 
 //*** class Vec4EntityFieldType
 
-const char* Vec4EntityFieldType::GetName() const
+String Vec4EntityFieldType::GetName() const
 {
 	return "vec4";
 }
@@ -212,23 +182,60 @@ ptr<File> Vec4EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 
 //*** class Color3EntityFieldType
 
-const char* Color3EntityFieldType::GetName() const
+String Color3EntityFieldType::GetName() const
 {
 	return "color3";
 }
 
 //*** class Color4EntityFieldType
 
-const char* Color4EntityFieldType::GetName() const
+String Color4EntityFieldType::GetName() const
 {
 	return "color4";
 }
 
 //*** class ReferenceEntityFieldType
 
-const char* ReferenceEntityFieldType::GetName() const
+ReferenceEntityFieldType::Interfaces& ReferenceEntityFieldType::GetInterfaces()
 {
-	return "reference";
+	return interfaces;
+}
+
+bool ReferenceEntityFieldType::CheckEntity(ptr<Entity> entity) const
+{
+	// get entity scheme
+	ptr<EntityScheme> scheme = entity->GetScheme();
+	if(!scheme)
+		return false;
+
+	// get scheme's interfaces
+	const EntityScheme::Interfaces& schemeInterfaces = scheme->GetInterfaces();
+
+	// check that all needed interfaces here
+	for(Interfaces::const_iterator i = interfaces.begin(); i != interfaces.end(); ++i)
+		if(schemeInterfaces.find(*i) == schemeInterfaces.end())
+			return false;
+
+	return true;
+}
+
+String ReferenceEntityFieldType::GetName() const
+{
+	std::ostringstream ss;
+	ss << "reference";
+
+	if(!interfaces.empty())
+	{
+		ss << " to ";
+		for(Interfaces::const_iterator i = interfaces.begin(); i != interfaces.end(); ++i)
+		{
+			if(i != interfaces.begin())
+				ss << ", ";
+			ss << (*i)->GetName();
+		}
+	}
+
+	return ss.str();
 }
 
 ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
@@ -254,6 +261,11 @@ ptr<File> ReferenceEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> va
 		return nullptr;
 	String string = entity->GetId().ToString();
 	return MemoryFile::CreateViaCopy(string.c_str(), string.length());
+}
+
+void ReferenceEntityFieldType::AddInterface(ptr<EntityInterface> interf)
+{
+	interfaces.insert(interf);
 }
 
 END_INANITY_OIL

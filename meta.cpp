@@ -165,17 +165,43 @@ META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
 	META_METHOD(GetFieldType);
 	META_METHOD(GetFieldName);
 	META_METHOD(AddField);
+	META_METHOD(AddInterface);
+META_CLASS_END();
+
+#include "EntityInterface.hpp"
+META_CLASS(Inanity::Oil::EntityInterface, Inanity.Oil.EntityInterface);
+	META_CONSTRUCTOR(const Oil::EntityInterfaceId&, const String&);
+	META_METHOD(GetId);
+	META_METHOD(GetName);
 META_CLASS_END();
 
 #include "EntitySchemeManager.hpp"
 META_CLASS(Inanity::Oil::EntitySchemeManager, Inanity.Oil.EntitySchemeManager);
-	META_METHOD(TryGet);
-	META_METHOD(Get);
-	META_METHOD(Register);
+	META_METHOD(TryGetScheme);
+	META_METHOD(GetScheme);
+	META_METHOD(RegisterScheme);
+	META_METHOD(TryGetInterface);
+	META_METHOD(GetInterface);
+	META_METHOD(RegisterInterface);
+	META_METHOD(GetStandardFieldType);
 META_CLASS_END();
 
 #include "EntityCallback.hpp"
 META_CLASS(Inanity::Oil::EntityCallback, Inanity.Oil.EntityCallback);
 	META_METHOD(EnumerateFields);
 	META_METHOD(EnumerateData);
+META_CLASS_END();
+
+#include "EntityFieldType.hpp"
+META_CLASS(Inanity::Oil::EntityFieldType, Inanity.Oil.EntityFieldType);
+	META_METHOD(GetName);
+META_CLASS_END();
+
+#include "EntityFieldTypes.hpp"
+
+META_CLASS(Inanity::Oil::ReferenceEntityFieldType, Inanity.Oil.ReferenceEntityFieldType);
+	META_CLASS_PARENT(Inanity::Oil::EntityFieldType);
+	META_CONSTRUCTOR();
+	META_METHOD(CheckEntity);
+	META_METHOD(AddInterface);
 META_CLASS_END();

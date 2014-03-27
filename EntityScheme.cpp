@@ -1,5 +1,6 @@
 #include "EntityScheme.hpp"
 #include "EntityFieldType.hpp"
+#include "EntityInterface.hpp"
 #include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
@@ -22,6 +23,11 @@ const EntityScheme::Fields& EntityScheme::GetFields() const
 	return fields;
 }
 
+const EntityScheme::Interfaces& EntityScheme::GetInterfaces() const
+{
+	return interfaces;
+}
+
 int EntityScheme::GetFieldsCount() const
 {
 	return (int)fields.size();
@@ -32,12 +38,12 @@ EntityFieldId EntityScheme::GetFieldId(int index) const
 	return fieldIds[index];
 }
 
-const char* EntityScheme::GetFieldType(const EntityFieldId& fieldId) const
+ptr<EntityFieldType> EntityScheme::GetFieldType(const EntityFieldId& fieldId) const
 {
 	Fields::const_iterator i = fields.find(fieldId);
 	if(i == fields.end())
 		THROW("No such field");
-	return i->second.type->GetName();
+	return i->second.type;
 }
 
 String EntityScheme::GetFieldName(const EntityFieldId& fieldId) const
@@ -48,14 +54,19 @@ String EntityScheme::GetFieldName(const EntityFieldId& fieldId) const
 	return i->second.name;
 }
 
-void EntityScheme::AddField(const EntityFieldId& fieldId, const String& type, const String& name)
+void EntityScheme::AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> type, const String& name)
 {
 	Field field;
-	field.type = EntityFieldType::FromName(type.c_str());
+	field.type = type;
 	field.name = name;
 	fields[fieldId] = field;
 
 	fieldIds.push_back(fieldId);
+}
+
+void EntityScheme::AddInterface(ptr<EntityInterface> entityInterface)
+{
+	interfaces.insert(entityInterface);
 }
 
 END_INANITY_OIL
