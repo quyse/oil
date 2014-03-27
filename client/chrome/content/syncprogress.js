@@ -16,6 +16,10 @@ window.addEventListener('load', function() {
 	onSyncedTarget = OIL.syncProgress.onSynced.addTarget(function() {
 		dialog.acceptDialog();
 	});
+
+	var callback = window.arguments[0];
+	if(callback)
+		callback();
 });
 
 window.addEventListener('unload', function() {

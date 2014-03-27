@@ -22,10 +22,11 @@ function onRepoConnect() {
 		OIL.entityManager = OIL.repo.GetEntityManager();
 		OIL.initIds(OIL.entityManager.GetSchemeManager());
 
-		OIL.syncRepo();
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
 
-		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no');
+		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no', function() {
+			OIL.syncRepo();
+		});
 
 		// show root folder
 		createTool("folder", {
