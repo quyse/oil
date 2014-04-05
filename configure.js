@@ -54,6 +54,7 @@ var executables = {
 			'../inanity//libinanity-gui',
 			'../inanity//libinanity-crypto',
 			'../inanity//libinanity-platform',
+			'../inanity//libinanity-platform-filesystem',
 			'../inanity//libinanity-npapi',
 			'../inanity//libinanity-np',
 			'../inanity//libinanity-input',
@@ -73,7 +74,7 @@ var executables = {
 		objects: ['oilserver', 'Repo', 'ServerRepo'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
-			'../inanity//libinanity-platform',
+			'../inanity//libinanity-platform-filesystem',
 			'../inanity//libinanity-sqlite',
 			'../inanity/deps/sqlite//libsqlite',
 			'../inanity//libinanity-fcgi',
