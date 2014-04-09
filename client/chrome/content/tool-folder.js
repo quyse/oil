@@ -297,10 +297,13 @@ View.prototype.getImageSrc = function(row, col) {
 	return OIL.ids.schemeDescs[item.getScheme().GetId()].icon;
 };
 View.prototype.getRowProperties = function(row, props) {
+	return '';
 };
 View.prototype.getCellProperties = function(row, col, props) {
+	return '';
 };
 View.prototype.getColumnProperties = function(colid, col, props) {
+	return '';
 };
 View.prototype.getLevel = function(row) {
 	var item = this.getItem(row);
@@ -698,20 +701,56 @@ function onCommandShowRealPlace() {
 	item.view.selection.select(row);
 }
 
+function onCommandDownloadFile() {
+	var selectedItems = getSelectedItems();
+	if(selectedItems.length != 1)
+		return;
+
+	var nsIFilePicker = Components.interfaces.nsIFilePicker;
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, "Select Destination", nsIFilePicker.modeSave);
+	fp.appendFilters(nsIFilePicker.filterAll);
+	fp.defaultString = selectedItems[0].entity.ReadField(OIL.ids.schemeDescs.file.fields.originalFileName) || "";
+	fp.open({
+		done: function(result) {
+			try {
+				if(result != nsIFilePicker.returnOK)
+					return;
+
+				var entity = selectedItems[0].entity;
+				var scheme = entity.GetScheme();
+				if(!scheme)
+					return;
+				if(scheme.GetId() != OIL.ids.schemes.file)
+					return;
+
+				OIL.core.GetNativeFileSystem().SaveFile(entity.ReadData(null), fp.file.path);
+			}
+			catch(e) {
+				alert(e);
+			}
+		}
+	});
+}
+
 function onContextMenuShowing() {
 	var selectedItems = getSelectedItems();
 
 	var hasFolder = false;
+	var hasFile = false;
 	var hasLink = false;
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
 		if(item.entity.GetScheme().GetId() == OIL.ids.schemes.folder)
 			hasFolder = true;
+		if(item.entity.GetScheme().GetId() == OIL.ids.schemes.file)
+			hasFile = true;
 		if(item.parentId != item.parent.entityId)
 			hasLink = true;
 	}
 
 	var oneFolder = hasFolder && selectedItems.length == 1 || selectedItems.length == 0;
+	var oneFile = hasFile && selectedItems.length == 1;
 
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
@@ -720,6 +759,7 @@ function onContextMenuShowing() {
 	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
 	document.getElementById("contextMenuShowRealPlace").hidden = selectedItems.length != 1;
+	document.getElementById("contextMenuDownloadFile").hidden = !oneFile;
 	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
 }
 

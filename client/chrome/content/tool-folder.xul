@@ -16,6 +16,7 @@
 		<command id="commandUploadFile" oncommand="onCommandUploadFile()" />
 		<command id="commandPlace" oncommand="onCommandPlace()" />
 		<command id="commandShowRealPlace" oncommand="onCommandShowRealPlace()" />
+		<command id="commandDownloadFile" oncommand="onCommandDownloadFile()" />
 	</commandset>
 
 	<keyset>
@@ -40,6 +41,7 @@
 			<menuitem id="contextMenuUploadFile" label="upload file(s)..." command="commandUploadFile" />
 			<menuitem id="contextMenuPlace" label="place" command="commandPlace" />
 			<menuitem id="contextMenuShowRealPlace" label="show real place" command="commandShowRealPlace" key="keyShowRealPlace" />
+			<menuitem id="contextMenuDownloadFile" label="save on disk..." command="commandDownloadFile" />
 			<menuitem id="contextMenuProperties" label="properties" command="commandProperties" key="keyProperties" />
 		</menupopup>
 	</popupset>
