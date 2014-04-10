@@ -207,6 +207,9 @@ function loadRecentRepos() {
 
 		listbox.appendChild(listItem);
 	}
+
+	if(listbox.itemCount > 0)
+		listbox.selectedIndex = 0;
 }
 
 function saveRecentRepos() {
@@ -237,13 +240,13 @@ function addRecentRepo(repo) {
 	recentRepos.splice(0, 0, repo);
 }
 
-function onEditRecentRepo() {
-	var selectedItem = document.getElementById("listboxRecentRepos").selectedItem;
-	if(!selectedItem)
+function editRecentRepo() {
+	var selectedIndex = document.getElementById("listboxRecentRepos").selectedIndex;
+	if(selectedIndex < 0)
 		return false;
 
 	// fill details from repo
-	var repo = recentRepos[selectedItem.value];
+	var repo = recentRepos[selectedIndex];
 	switch(repo.type) {
 	case "url":
 		document.getElementById("textboxRemoteUrl").value = repo.remoteUrl;
@@ -265,10 +268,23 @@ function onEditRecentRepo() {
 	document.getElementById("menulistCacheType").value = "file";
 	onChangeCacheType();
 
-	// switch tab
-	switchToNewRepoTab();
-
 	return true;
+}
+
+function onEditRecentRepo() {
+	if(editRecentRepo())
+		switchToNewRepoTab();
+}
+
+function onRemoveRecentRepo() {
+	var listbox = document.getElementById("listboxRecentRepos");
+	var selectedIndex = listbox.selectedIndex;
+	if(selectedIndex < 0)
+		return;
+
+	listbox.removeItemAt(selectedIndex);
+	recentRepos.splice(selectedIndex, 1);
+	saveRecentRepos();
 }
 
 function switchToNewRepoTab() {
@@ -295,7 +311,7 @@ function onConnect() {
 
 		// if current tab is recent repos, get info from that
 		if(document.getElementById("tabbox").selectedIndex == 1)
-			if(!onEditRecentRepo()) {
+			if(!editRecentRepo()) {
 				alert("no recent repo selected");
 				return false;
 			}
@@ -372,17 +388,17 @@ function onConnect() {
 				alreadyConnected = true;
 				var dialog = document.getElementById("connectrepo");
 				dialog.acceptDialog();
+
+				// add recent repo
+				if(recentRepoToAdd) {
+					addRecentRepo(recentRepoToAdd);
+					saveRecentRepos();
+				}
 			} else {
 				alert(message);
 				enableConnectButton(true);
 			}
 		});
-
-		// add recent repo
-		if(recentRepoToAdd) {
-			addRecentRepo(recentRepoToAdd);
-			saveRecentRepos();
-		}
 
 		return false;
 
