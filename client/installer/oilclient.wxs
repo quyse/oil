@@ -108,6 +108,7 @@
 
 		<!-- UI -->
 
+		<WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
 		<Property Id="ApplicationFolderName" Value="Inanity Oil" />
 		<Property Id="WixAppFolder" Value="WixPerMachineFolder" />
 		<UIRef Id="WixUI_Advanced" />
