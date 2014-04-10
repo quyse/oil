@@ -7,7 +7,7 @@
 		UpgradeCode="3F27FE5D-9707-4C35-90B9-019E50D8924C"
 		Name="Inanity Oil"
 		Manufacturer="quyse.net"
-		Version="1.0"
+		Version="$(var.version)"
 		Language="1033"
 		Codepage="1252"
 		>
@@ -48,7 +48,7 @@
 				<File Id="InanityOil.exe" Name="InanityOil.exe" Source="tools\xulrunner\xulrunner-stub.exe" KeyPath="yes" Checksum="yes" />
 			</Component>
 			<Component Id="application.ini" Guid="*">
-				<File Id="application.ini" Source="..\application.ini" KeyPath="yes" />
+				<File Id="application.ini" Source="out\application.ini" KeyPath="yes" />
 			</Component>
 			<Component Id="chrome.manifest" Guid="*">
 				<File Id="chrome.manifest" Source="chrome.manifest" KeyPath="yes" />
@@ -94,6 +94,8 @@
 		<Property Id="ApplicationFolderName" Value="Inanity Oil" />
 		<Property Id="WixAppFolder" Value="WixPerMachineFolder" />
 		<UIRef Id="WixUI_Advanced" />
+
+		<MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
 
 	</Product>
 
