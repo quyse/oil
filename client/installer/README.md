@@ -5,6 +5,7 @@
 * Create directories `tools` and `out`
 * Download latest xulrunner into `tools/xulrunner` from [http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/latest/runtimes]
 * Copy `setenv.bat.tmpl` as `tools/setenv.bat`, and fill with right paths to WiX and 7zip.
+* Add `oil.ico` into `tools/xulrunner/xulrunner-stub.exe` with ResourceHacker.
 
 ## Making new version
 
