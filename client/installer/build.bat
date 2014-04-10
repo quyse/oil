@@ -35,6 +35,7 @@ candle -nologo out\%2.wxs -out out\%2.wixobj -d%2_source=%1
 goto :eof
 
 :appini
+echo [App]
 echo Vendor=quyse.net
 echo Name=oil
 echo Version=%version%
