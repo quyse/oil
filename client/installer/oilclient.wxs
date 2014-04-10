@@ -38,14 +38,25 @@
 					<Directory Id="plugins" Name="plugins" />
 				</Directory>
 			</Directory>
+			<Directory Id="ProgramMenuFolder" />
 		</Directory>
-
 
 		<!-- components -->
 
 		<DirectoryRef Id="APPLICATIONFOLDER">
 			<Component Id="InanityOil.exe" Guid="*">
-				<File Id="InanityOil.exe" Name="InanityOil.exe" Source="tools\xulrunner\xulrunner-stub.exe" KeyPath="yes" Checksum="yes" />
+				<File Id="InanityOil.exe" Name="InanityOil.exe" Source="tools\xulrunner\xulrunner-stub.exe" KeyPath="yes" Checksum="yes">
+					<Shortcut
+						Id="InanityOilShortcut"
+						Name="Inanity Oil"
+						Description="Inanity Oil Client"
+						Directory="ProgramMenuFolder"
+						WorkingDirectory="APPLICATIONFOLDER"
+						Icon="oil.ico"
+						IconIndex="0"
+						Advertise="yes"
+						/>
+				</File>
 			</Component>
 			<Component Id="application.ini" Guid="*">
 				<File Id="application.ini" Source="out\application.ini" KeyPath="yes" />
@@ -60,6 +71,7 @@
 				<File Id="D3Dcompiler_47.dll" Source="D3Dcompiler_47.dll" KeyPath="yes" Checksum="yes" />
 			</Component>
 		</DirectoryRef>
+
 
 		<DirectoryRef Id="preferences">
 			<Component Id="prefs.js" Guid="*">
@@ -87,6 +99,11 @@
 			<ComponentGroupRef Id="assets" />
 			<ComponentGroupRef Id="xulrunner" />
 		</Feature>
+
+
+		<!-- icon -->
+		<Icon Id="oil.ico" SourceFile="oil.ico" />
+		<Property Id="ARPPRODUCTICON" Value="oil.ico" />
 
 
 		<!-- UI -->
