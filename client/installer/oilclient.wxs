@@ -35,6 +35,11 @@
 					<Directory Id="defaults" Name="defaults">
 						<Directory Id="preferences" Name="preferences" />
 					</Directory>
+					<Directory Id="chrome" Name="chrome">
+						<Directory Id="icons" Name="icons">
+							<Directory Id="icons_default" Name="default" />
+						</Directory>
+					</Directory>
 					<Directory Id="plugins" Name="plugins" />
 				</Directory>
 			</Directory>
@@ -52,7 +57,7 @@
 						Description="Inanity Oil Client"
 						Directory="ProgramMenuFolder"
 						WorkingDirectory="APPLICATIONFOLDER"
-						Icon="oil.ico"
+						Icon="main.ico"
 						IconIndex="0"
 						Advertise="yes"
 						/>
@@ -72,10 +77,15 @@
 			</Component>
 		</DirectoryRef>
 
-
 		<DirectoryRef Id="preferences">
 			<Component Id="prefs.js" Guid="*">
 				<File Id="prefs.js" Source="prefs.js" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<DirectoryRef Id="icons_default">
+			<Component Id="main.ico" Guid="*">
+				<File Id="main.ico" Source="../chrome/icons/default/main.ico" KeyPath="yes" />
 			</Component>
 		</DirectoryRef>
 
@@ -96,14 +106,15 @@
 			<ComponentRef Id="D3Dcompiler_47.dll" />
 			<ComponentRef Id="prefs.js" />
 			<ComponentRef Id="npoil.dll" />
+			<ComponentRef Id="main.ico" />
 			<ComponentGroupRef Id="assets" />
 			<ComponentGroupRef Id="xulrunner" />
 		</Feature>
 
 
 		<!-- icon -->
-		<Icon Id="oil.ico" SourceFile="oil.ico" />
-		<Property Id="ARPPRODUCTICON" Value="oil.ico" />
+		<Icon Id="main.ico" SourceFile="../chrome/icons/default/main.ico" />
+		<Property Id="ARPPRODUCTICON" Value="main.ico" />
 
 
 		<!-- UI -->
