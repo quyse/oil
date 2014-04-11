@@ -65,14 +65,6 @@
 							<textbox id="textboxRemoteUrl" placeholder="URL of server repo" oninput="onChangeRemoteUrl()" />
 							<button id="buttonCheckRemoteUrl" label="check..." command="commandCheckRemoteUrl" />
 						</row>
-						<row id="rowLogin" align="baseline">
-							<label control="textboxLogin" value="username:" />
-							<textbox id="textboxLogin" placeholder="login if required" />
-						</row>
-						<row id="rowPassword" align="baseline">
-							<label control="textboxPassword" value="password:" />
-							<textbox id="textboxPassword" type="password" placeholder="password if required" />
-						</row>
 						<row id="rowRemoteFile" align="baseline">
 							<label control="textboxRemoteFile" value="local file:" />
 							<textbox id="textboxRemoteFile" placeholder="path to create or open server repo's file" oninput="onChangeRemoteFile()" />
@@ -128,12 +120,10 @@
 					<listbox id="listboxRecentRepos" context="contextMenuRecentRepo">
 						<listcols>
 							<listcol />
-							<listcol />
 							<listcol flex="1" />
 						</listcols>
 						<listhead>
 							<listheader label="remote" />
-							<listheader label="username" />
 							<listheader label="local cache" />
 						</listhead>
 					</listbox>

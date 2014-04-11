@@ -29,7 +29,7 @@ function onChangeRemoteType() {
 
 	var types = {
 		url: {
-			controls: ['rowRemoteUrl', 'rowLogin', 'rowPassword'],
+			controls: ['rowRemoteUrl'],
 			update: onChangeRemoteUrl,
 			focus: 'textboxRemoteUrl'
 		},
@@ -155,10 +155,8 @@ function onBrowseCacheFile() {
 /* List of recent repos.
 Format: {
 	type: "url" or "file"
-	remoteUrl: "url",
-	remoteFile: "path",
-	login: "login",
-	localCache: "local cache path"
+	remote: "url" or "path"
+	local: "local cache path"
 }
 */
 var recentRepos = null;
@@ -176,34 +174,28 @@ function loadRecentRepos() {
 	for(var i = 0; i < recentRepos.length; ++i) {
 		var repo = recentRepos[i];
 		var repoType = repo.type;
-		var repoRemote, repoLogin, repoLocalCache;
+		var repoRemote, repoLocal;
 		switch(repoType) {
 		case "url":
-			repoRemote = repo.remoteUrl;
-			repoLogin = repo.login;
-			break;
 		case "path":
-			repoRemote = repo.remoteFile;
+			repoRemote = repo.remote;
 			break;
 		default:
 			continue;
 		}
-		repoLocalCache = repo.localCache;
-		if(!repoLocalCache)
+		repoLocal = repo.local;
+		if(!repoLocal)
 			continue;
 
 		var listItem = document.createElement("listitem");
 		listItem.value = i;
 		var listCellRemote = document.createElement("listcell");
 		listCellRemote.setAttribute("label", repoRemote);
-		var listCellLogin = document.createElement("listcell");
-		listCellLogin.setAttribute("label", repoLogin || "");
-		var listCellLocalCache = document.createElement("listcell");
-		listCellLocalCache.setAttribute("label", repoLocalCache);
+		var listCellLocal = document.createElement("listcell");
+		listCellLocal.setAttribute("label", repoLocal);
 
 		listItem.appendChild(listCellRemote);
-		listItem.appendChild(listCellLogin);
-		listItem.appendChild(listCellLocalCache);
+		listItem.appendChild(listCellLocal);
 
 		listbox.appendChild(listItem);
 	}
@@ -224,10 +216,8 @@ function addRecentRepo(repo) {
 			var keep = false;
 			switch(repo.type) {
 			case "url":
-				keep = repo.remoteUrl != recentRepos[i].remoteUrl;
-				break;
 			case "file":
-				keep = repo.remoteFile != recentRepos[i].remoteFile;
+				keep = repo.remote != recentRepos[i].remote;
 				break;
 			}
 			if(keep)
@@ -249,11 +239,10 @@ function editRecentRepo() {
 	var repo = recentRepos[selectedIndex];
 	switch(repo.type) {
 	case "url":
-		document.getElementById("textboxRemoteUrl").value = repo.remoteUrl;
-		document.getElementById("textboxLogin").value = repo.login;
+		document.getElementById("textboxRemoteUrl").value = repo.remote;
 		break;
 	case "file":
-		document.getElementById("textboxRemoteFile").value = repo.remoteFile;
+		document.getElementById("textboxRemoteFile").value = repo.remote;
 		break;
 	default:
 		return false;
@@ -264,7 +253,7 @@ function editRecentRepo() {
 	onChangeRemoteType();
 
 	// set local cache
-	document.getElementById("textboxCacheFile").value = repo.localCache;
+	document.getElementById("textboxCacheFile").value = repo.local;
 	document.getElementById("menulistCacheType").value = "file";
 	onChangeCacheType();
 
@@ -326,13 +315,10 @@ function onConnect() {
 		case "url":
 			{
 				let remoteUrl = document.getElementById("textboxRemoteUrl").value;
-				let login = document.getElementById("textboxLogin").value;
-				let password = document.getElementById("textboxPassword").value;
 				remoteRepo = OIL.core.CreateUrlRemoteRepo(remoteUrl);
 				recentRepoToAdd = {
 					type: "url",
-					remoteUrl: remoteUrl,
-					login: login
+					remote: remoteUrl
 				};
 			}
 			break;
@@ -342,7 +328,7 @@ function onConnect() {
 				remoteRepo = OIL.core.CreateLocalRemoteRepo(remoteFile);
 				recentRepoToAdd = {
 					type: "file",
-					remoteFile: remoteFile
+					remote: remoteFile
 				};
 			}
 			break;
@@ -363,7 +349,7 @@ function onConnect() {
 			{
 				let localCache = document.getElementById("textboxCacheFile").value;
 				clientRepo = OIL.core.CreateLocalClientRepo(localCache);
-				recentRepoToAdd.localCache = localCache;
+				recentRepoToAdd.local = localCache;
 			}
 			break;
 		case "temp":
