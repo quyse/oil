@@ -61,7 +61,10 @@ private:
 				ptr<File> watchResponse;
 				{
 					CriticalCode cc(csRepo);
-					repo->Sync(&reader, &writer);
+					// TODO: add actual user verification
+					// task postponed
+					static const String userName = "anonimous";
+					repo->Sync(&reader, &writer, userName, true);
 					long long maxRevision = repo->GetMaxRevision();
 					if(lastSyncRevision < maxRevision)
 					{

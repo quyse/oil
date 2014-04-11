@@ -53,6 +53,8 @@ ServerRepo::ServerRepo(const char* fileName)
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS revs ("
 		"rev INTEGER PRIMARY KEY AUTOINCREMENT, "
+		"date INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+		"user INTEGER NOT NULL, "
 		"key BLOB NOT NULL, "
 		"value BLOB NOT NULL)",
 		0, 0, 0) != SQLITE_OK)
@@ -63,9 +65,22 @@ ServerRepo::ServerRepo(const char* fileName)
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create index revs_key_rev", db->Error());
 
+	// create table users
+	if(sqlite3_exec(*db,
+		"CREATE TABLE IF NOT EXISTS users ("
+		"id INTEGER PRIMARY KEY AUTOINCREMENT, "
+		"name TEXT NOT NULL)",
+		0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't create table users", db->Error());
+	// create index users_name
+	if(sqlite3_exec(*db,
+		"CREATE INDEX IF NOT EXISTS users_name ON users (name)",
+		0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't create index users_name", db->Error());
+
 	// create statements
 	stmtGetMaxRevision = db->CreateStatement("SELECT MAX(rev) FROM revs");
-	stmtWrite = db->CreateStatement("INSERT INTO revs (key, value) VALUES (?1, ?2)");
+	stmtWrite = db->CreateStatement("INSERT INTO revs (user, key, value) VALUES (?1, ?2, ?3)");
 #define SUBQUERY "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key"
 	stmtPull = db->CreateStatement(
 		"SELECT rev, key, value FROM revs NATURAL JOIN ("
@@ -78,6 +93,8 @@ ServerRepo::ServerRepo(const char* fileName)
 #undef SUBQUERY
 	stmtPullTotalSize = db->CreateStatement(
 		"SELECT COUNT(DISTINCT key) FROM revs WHERE rev > ?1");
+	stmtGetUserId = db->CreateStatement("SELECT id FROM users WHERE name = ?1");
+	stmtAddUser = db->CreateStatement("INSERT INTO users (name) VALUES (?1)");
 
 	END_TRY("Can't create server repo");
 }
@@ -90,6 +107,39 @@ long long ServerRepo::GetMaxRevision()
 		THROW_SECONDARY("Can't get max revision", db->Error());
 
 	return stmtGetMaxRevision->ColumnInt64(0);
+}
+
+long long ServerRepo::GetUserId(const String& userName)
+{
+	BEGIN_TRY();
+
+	// try to find user id
+	{
+		Data::SqliteQuery query(stmtGetUserId);
+		stmtGetUserId->Bind(1, userName);
+		switch(stmtGetUserId->Step())
+		{
+		case SQLITE_ROW:
+			return stmtGetUserId->ColumnInt64(0);
+		case SQLITE_DONE:
+			// no such user
+			break;
+		default:
+			THROW_SECONDARY("Can't find user id", db->Error());
+		}
+	}
+
+	// add new user
+	{
+		Data::SqliteQuery query(stmtAddUser);
+		stmtAddUser->Bind(1, userName);
+		if(stmtAddUser->Step() != SQLITE_DONE)
+			THROW("Can't add new user");
+
+		return db->LastInsertRowId();
+	}
+
+	END_TRY("Can't get user id");
 }
 
 void ServerRepo::WriteManifest(StreamWriter* writer)
@@ -111,9 +161,12 @@ void ServerRepo::WriteManifest(StreamWriter* writer)
 	END_TRY("Can't write server repo manifest");
 }
 
-bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
+bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer, const String& userName, bool writeAccess)
 {
 	BEGIN_TRY();
+
+	// get user id
+	long long userId = GetUserId(userName);
 
 	// push & pull should be in a one transaction
 	Data::SqliteTransaction transaction(db);
@@ -163,6 +216,10 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 		if(!keySize)
 			break;
 
+		// if there is no write access right, stop
+		if(!writeAccess)
+			THROW("Write access denied");
+
 		// check number of keys
 		if(i >= (size_t)maxPushKeysCount)
 			THROW("Too many keys");
@@ -190,8 +247,9 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer)
 
 		// do write
 		Data::SqliteQuery queryWrite(stmtWrite);
-		stmtWrite->Bind(1, keyFile);
-		stmtWrite->Bind(2, NEW(PartFile(valueBufferFile, value, valueSize)));
+		stmtWrite->Bind(1, userId);
+		stmtWrite->Bind(2, keyFile);
+		stmtWrite->Bind(3, NEW(PartFile(valueBufferFile, value, valueSize)));
 		if(stmtWrite->Step() != SQLITE_DONE)
 			THROW_SECONDARY("Can't do write", db->Error());
 
