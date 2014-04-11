@@ -1,4 +1,5 @@
 pref("toolkit.defaultChromeURI", "chrome://oil/content/main.xul");
+pref("toolkit.singletonWindowType", "main");
 
 pref("general.skins.selectedSkin", "ftdeepdark");
 
