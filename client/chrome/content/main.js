@@ -58,16 +58,58 @@ function onShowRoot() {
 	});
 }
 
-function onMaintenanceRootCreate() {
-	// check that there is no root
-	var entity = OIL.entityManager.GetEntity(OIL.ids.entities.root);
-	if(entity.GetScheme())
-		return;
+function onMaintenanceCreateEntity() {
+	try {
+		// prompt for entity id
+		var entityIdWrap = { value: "" };
+		if(!OIL.getPromptService().prompt(window, "create entity", "enter new entity id:", entityIdWrap, null, { value: false }))
+			return;
+		var entityId = entityIdWrap.value;
+		entityId = OIL.ids.entities[entityId] || entityId;
 
-	// create (hack way)
-	var action = OIL.createAction("create root");
-	action.AddChange(OIL.eid2f(OIL.ids.entities.root), OIL.esid2f(OIL.ids.schemes.folder));
-	OIL.finishAction(action);
+		// check that there is no such entity
+		var entity = OIL.entityManager.GetEntity(entityId);
+		if(entity.GetScheme())
+			throw "entity already exists";
+
+		// prompt for entity scheme id
+		var entitySchemeIdWrap = { value: "" };
+		if(!OIL.getPromptService().prompt(window, "create entity", "enter new entity scheme id:", entitySchemeIdWrap, null, { value: false }))
+			return;
+		var entitySchemeId = entitySchemeIdWrap.value;
+		entitySchemeId = OIL.ids.schemes[entitySchemeId] || entitySchemeId;
+
+		// create (hack way)
+		var action = OIL.createAction("create entity (maintenance)");
+		action.AddChange(OIL.eid2f(entityId), OIL.esid2f(entitySchemeId));
+		OIL.finishAction(action);
+	} catch(e) {
+		OIL.getPromptService().alert(window, "can't create entity", e);
+	}
+}
+
+function onMaintenanceOpenTool() {
+	try {
+		// prompt for str
+		var strWrap = { value: "" };
+		if(!OIL.getPromptService().prompt(window, "open tool", "<page>:{params}", strWrap, null, { value: false }))
+			return;
+
+		var str = strWrap.value;
+
+		// find page
+		var pageLength = str.indexOf(":");
+		if(pageLength < 0)
+			throw "can't get page from str";
+
+		var page = str.substr(0, pageLength);
+		var params = JSON.parse(str.substr(pageLength + 1));
+
+		createTool(page, params);
+
+	} catch(e) {
+		OIL.getPromptService().alert(window, "can't open tool", e);
+	}
 }
 
 // get preferences service

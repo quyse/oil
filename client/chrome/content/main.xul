@@ -19,7 +19,8 @@
 		<command id="commandRedo" oncommand="OIL.redo()" />
 		<command id="commandShowRoot" oncommand="onShowRoot()" />
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
-		<command id="commandMaintenanceCreateRoot" oncommand="onMaintenanceRootCreate()" />
+		<command id="commandMaintenanceCreateEntity" oncommand="onMaintenanceCreateEntity()" />
+		<command id="commandMaintenanceOpenTool" oncommand="onMaintenanceOpenTool()" />
 	</commandset>
 
 	<keyset>
@@ -57,13 +58,13 @@
 			</menu>
 			<menu label="tools" accesskey="t">
 				<menupopup>
-					<menuitem id="menuConsole" label="javascript console..." accesskey="c" command="commandJavascriptConsole" />
+					<menuitem label="javascript console..." accesskey="c" command="commandJavascriptConsole" />
 					<menu label="maintenance">
 						<menupopup>
-							<menuitem id="menuMaintenanceCreateRoot" label="create root" command="commandMaintenanceCreateRoot" />
+							<menuitem label="create entity..." command="commandMaintenanceCreateEntity" />
+							<menuitem label="open tool..." command="commandMaintenanceOpenTool" />
 						</menupopup>
 					</menu>
-					<menuitem label="create root folder" oncommand="createRootFolder()" hidden="true" />
 				</menupopup>
 			</menu>
 		</menubar>
