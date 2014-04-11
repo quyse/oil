@@ -45,6 +45,10 @@ ServerRepo::ServerRepo(const char* fileName)
 	// check format version
 	CheckAppVersion(serverRepoAppVersion);
 
+	// enable exclusive locking mode
+	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
+
 	// create table revs
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS revs ("
