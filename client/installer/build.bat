@@ -3,6 +3,8 @@ call tools\setenv.bat
 
 rem get version
 set /p version=<version.txt
+git rev-parse --short HEAD > out\commithash.txt
+set /p commithash=<out\commithash.txt
 
 echo ======================= make content.jar
 
@@ -39,7 +41,7 @@ echo [App]
 echo Vendor=quyse.net
 echo Name=oil
 echo Version=%version%
-echo BuildID=1234567
+echo BuildID=%commithash%
 echo ID=oil@quyse.net
 echo [Gecko]
 echo MinVersion=1.8
