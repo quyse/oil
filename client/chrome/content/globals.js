@@ -88,7 +88,7 @@ function watchRepo() {
 			}
 			else {
 				if(--repoWatchTryings <= 0)
-					alert(message);
+					onSyncFailed(message);
 				else
 					watchRepo();
 			}
@@ -147,7 +147,7 @@ function syncRepo() {
 			}
 			else {
 				if(--repoSyncTryings <= 0)
-					alert(message);
+					onSyncFailed(message);
 				else
 					syncRepo();
 			}
@@ -155,6 +155,12 @@ function syncRepo() {
 	}, 0);
 }
 OIL.syncRepo = syncRepo;
+
+function onSyncFailed(message) {
+	OIL.getPromptService().alert(window, "sync failed",
+		"error while syncing with remote repo:\n" + message);
+	OIL.quit();
+}
 
 //*** actions
 
@@ -239,4 +245,11 @@ OIL.esid2f = function(eid) {
 
 OIL.fileTrue = function() {
 	return OIL.s2f("\x01");
+};
+
+//*** prompts
+
+OIL.getPromptService = function() {
+	return Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+		.getService(Components.interfaces.nsIPromptService);
 };
