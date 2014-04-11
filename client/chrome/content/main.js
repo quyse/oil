@@ -32,6 +32,9 @@ function onRepoConnect() {
 		createTool("folder", {
 			entity: OIL.ids.entities.root
 		});
+
+		// init upgrade
+		initClientUpgrade();
 	}
 }
 
@@ -196,3 +199,72 @@ window.addEventListener('load', function() {
 window.addEventListener('unload', function() {
 	OIL.prefs.setCharPref("layout", JSON.stringify(toolspace.serialize()));
 });
+
+function initClientUpgrade() {
+	var scheme, version, url, upgradeNeeded = false;
+
+	// get current version
+	var currentVersion = Components.classes["@mozilla.org/xre/app-info;1"]
+		.getService(Components.interfaces.nsIXULAppInfo).version;
+
+	var check = function() {
+		upgradeNeeded = scheme && version && url && version != currentVersion;
+
+		var label = document.getElementById("labelClientUpgrade");
+		label.value = upgradeNeeded ? "available client upgrade to version " + version : "";
+		label.hidden = !upgradeNeeded;
+	};
+
+	onClientUpgrade = function() {
+		if(!upgradeNeeded)
+			return;
+
+		// confirm upgrade
+		if(!OIL.getPromptService().confirm(window, "client upgrade",
+			"Server announced that preferred client version is " + version + ".\n" +
+			"Current version is " + currentVersion + ".\n" +
+			"Download client upgrade from " + url + "?"))
+			return;
+
+		// launch download
+		var ioService = Components.classes["@mozilla.org/network/io-service;1"]
+			.getService(Components.interfaces.nsIIOService);
+
+		var uri = ioService.newURI(url, null, null);
+
+		var externalProtocolService = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"]
+			.getService(Components.interfaces.nsIExternalProtocolService);
+
+		externalProtocolService.loadURI(uri, window);
+	};
+
+	// get client version entity
+	var entity = OIL.entityManager.GetEntity(OIL.ids.entities.client_version);
+	var callback = function(type, key, value) {
+		switch(type) {
+		case "scheme":
+			scheme = value;
+			break;
+		case "field":
+			switch(key) {
+			case OIL.ids.schemeDescs.client_version.fields.version:
+				version = value;
+				break;
+			case OIL.ids.schemeDescs.client_version.fields.url:
+				url = value;
+				break;
+			default:
+				return;
+			}
+			break;
+		default:
+			return;
+		}
+		check();
+	};
+	clientVersionEntityCallback = entity.AddCallback(callback);
+	callback("scheme", null, entity.GetScheme());
+	clientVersionEntityCallback.EnumerateFields();
+}
+var clientVersionEntityCallback;
+var onClientUpgrade;

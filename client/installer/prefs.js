@@ -1,6 +1,9 @@
 pref("toolkit.defaultChromeURI", "chrome://oil/content/main.xul");
 pref("toolkit.singletonWindowType", "main");
 
+pref("network.protocol-handler.warn-external.http", false);
+pref("network.protocol-handler.warn-external.https", false);
+
 // application prefs
 pref("oil.tool-entity.place", "right");
 pref("oil.tool-folder.place", "left");

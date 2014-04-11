@@ -44,6 +44,22 @@ OIL.ids = {
 	- tool: name of tool for opening object
 	*/
 	schemesInit: [{
+		name: "client_version",
+		id: "cver",
+		displayName: "client version",
+		fieldsInit: [{
+			name: "version",
+			id: "vrsn",
+			displayName: "version",
+			type: "string"
+		}, {
+			name: "url",
+			id: "url ",
+			displayName: "url",
+			type: "string"
+		}],
+		interfacesInit: []
+	}, {
 		name: "folder",
 		id: "fold",
 		displayName: "folder",
@@ -77,9 +93,17 @@ OIL.ids = {
 		}],
 		interfacesInit: []
 	}],
-	entities: {
-		root: "0046c95e344a47569a96541a2b1f8e73"
-	}
+
+	// entities
+	entitiesInit: [{
+		// root folder
+		name: "root",
+		id: "0046c95e344a47569a96541a2b1f8e73"
+	}, {
+		// client version object
+		name: "client_version",
+		id: "9b57146613cf4e889aa233ac81075294"
+	}]
 };
 
 var initThings = function(initArray, convert, nameToIdArray, idNameToObjectArray) {
@@ -143,6 +167,9 @@ OIL.initIds = function(schemeManager) {
 
 	// init schemes
 	initThings(OIL.ids.schemesInit, convertSchemeId, OIL.ids.schemes = {}, OIL.ids.schemeDescs = {});
+
+	// init entities
+	initThings(OIL.ids.entitiesInit, null, OIL.ids.entities = {}, OIL.ids.entityDescs = {});
 
 	// register interfaces
 	for(var i = 0; i < OIL.ids.interfacesInit.length; ++i) {

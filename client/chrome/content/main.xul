@@ -75,7 +75,8 @@
 	<box id="toolspace" />
 
 	<hbox id="statusbar">
-		<label id="labelStatus" flex="1" value="status" />
+		<label id="labelClientUpgrade" value="" hidden="true" class="text-link" onclick="onClientUpgrade()" />
+		<label id="labelStatus" flex="1" value="" />
 		<label id="labelSyncStatus" value="not synced" />
 	</hbox>
 

@@ -1,7 +1,8 @@
 pref("toolkit.defaultChromeURI", "chrome://oil/content/main.xul");
 pref("toolkit.singletonWindowType", "main");
 
-pref("general.skins.selectedSkin", "ftdeepdark");
+pref("network.protocol-handler.warn-external.http", false);
+pref("network.protocol-handler.warn-external.https", false);
 
 /* debugging prefs, disable these before you deploy your application! */
 pref("browser.dom.window.dump.enabled", true);
