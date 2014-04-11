@@ -70,8 +70,8 @@ var executables = {
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']
 	},
-	'oilserver': {
-		objects: ['oilserver', 'Repo', 'ServerRepo'],
+	'oild': {
+		objects: ['oild', 'Repo', 'ServerRepo'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
 			'../inanity//libinanity-platform-filesystem',
@@ -80,7 +80,8 @@ var executables = {
 			'../inanity//libinanity-fcgi',
 			'../inanity/deps/fcgi//libfcgi'
 			],
-		'dynamicLibraries-win32': ['ws2_32.lib']
+		'dynamicLibraries-win32': ['ws2_32.lib'],
+		'dynamicLibraries-linux': ['pthread', 'dl']
 	},
 	'test-repo-sync': {
 		objects: ['test.repo-sync', 'Repo', 'ServerRepo', 'ClientRepo'],
