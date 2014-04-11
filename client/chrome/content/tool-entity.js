@@ -10,7 +10,7 @@ var schemeId = null;
 /// Functions to update tags.
 var tagsUpdate = {};
 /// Functions to update fields.
-var fieldsUpdate = [];
+var fieldsUpdate = {};
 
 function onChange(type, key, value) {
 	switch(type) {
@@ -32,7 +32,7 @@ function onChange(type, key, value) {
 		}
 		break;
 	case "data":
-		// TODO
+		// nothing
 		break;
 	}
 }
@@ -99,7 +99,7 @@ function addFieldControl(scheme, fieldId) {
 		if(lastValue !== undefined && lastValue == value)
 			return;
 
-		var action = OIL.createAction("change " + fieldName + " of " + schemeName);
+		var action = OIL.createAction("change " + fieldName + " of " + schemeName + " to " + JSON.stringify(value));
 		entity.WriteField(action, fieldId, value);
 		OIL.finishAction(action);
 
@@ -117,7 +117,14 @@ function addFieldControl(scheme, fieldId) {
 		return lastValue;
 	};
 
-	switch(scheme.GetFieldType(fieldId)) {
+	var createUpdateFunction = function(updateGui) {
+		return function(value) {
+			updateGui(value);
+			lastValue = value;
+		};
+	};
+
+	switch(scheme.GetFieldType(fieldId).GetName()) {
 
 	case "float":
 
@@ -131,7 +138,7 @@ function addFieldControl(scheme, fieldId) {
 			return true;
 		};
 
-		fieldsUpdate[fieldId] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 
@@ -146,7 +153,7 @@ function addFieldControl(scheme, fieldId) {
 			return true;
 		};
 
-		fieldsUpdate[fieldId] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 
@@ -156,7 +163,7 @@ function addFieldControl(scheme, fieldId) {
 			return true;
 		};
 
-		fieldsUpdate[fieldId] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 	case "vec3":
@@ -255,8 +262,6 @@ function init() {
 
 	// update values of fields
 	entityCallback.EnumerateFields();
-	// TODO: update values of data
-	entityCallback.EnumerateData();
 }
 
 window.addEventListener('unload', function() {
