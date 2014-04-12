@@ -21,6 +21,7 @@
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
 		<command id="commandMaintenanceCreateEntity" oncommand="onMaintenanceCreateEntity()" />
 		<command id="commandMaintenanceOpenTool" oncommand="onMaintenanceOpenTool()" />
+		<command id="commandHelpAbout" oncommand="onHelpAbout()" />
 	</commandset>
 
 	<keyset>
@@ -65,6 +66,11 @@
 							<menuitem label="open tool..." command="commandMaintenanceOpenTool" />
 						</menupopup>
 					</menu>
+				</menupopup>
+			</menu>
+			<menu label="help" accesskey="h">
+				<menupopup>
+					<menuitem label="about..." accesskey="a" command="commandHelpAbout" />
 				</menupopup>
 			</menu>
 		</menubar>

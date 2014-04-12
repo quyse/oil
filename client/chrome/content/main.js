@@ -200,15 +200,37 @@ window.addEventListener('unload', function() {
 	OIL.prefs.setCharPref("layout", JSON.stringify(toolspace.serialize()));
 });
 
+// get current version of app
+var currentVersion = Components.classes["@mozilla.org/xre/app-info;1"]
+	.getService(Components.interfaces.nsIXULAppInfo).version
+
 function initClientUpgrade() {
 	var scheme, version, url, upgradeNeeded = false;
 
-	// get current version
-	var currentVersion = Components.classes["@mozilla.org/xre/app-info;1"]
-		.getService(Components.interfaces.nsIXULAppInfo).version;
+	// compare versions (strings like 1.12.435)
+	function versionLess(a, b) {
+		a = a.split('.');
+		b = b.split('.');
+		for(var i = 0; i < a.length && i < b.length; ++i) {
+			// convert parts to numbers
+			var aa = parseInt(a[i], 10);
+			var bb = parseInt(b[i], 10);
+			// if not a number, compare as strings
+			if(Number.isNaN(aa) || Number.isNaN(bb)) {
+				aa = a[i];
+				bb = b[i];
+			}
+			if(aa < bb)
+				return true;
+			if(aa > bb)
+				return false;
+		}
+
+		return a.length < b.length;
+	}
 
 	var check = function() {
-		upgradeNeeded = scheme && version && url && version != currentVersion;
+		upgradeNeeded = scheme && version && url && versionLess(currentVersion, version);
 
 		var label = document.getElementById("labelClientUpgrade");
 		label.value = upgradeNeeded ? "available client upgrade to version " + version : "";
@@ -268,3 +290,10 @@ function initClientUpgrade() {
 }
 var clientVersionEntityCallback;
 var onClientUpgrade;
+
+function onHelpAbout() {
+	OIL.getPromptService().alert(window, "about",
+		"Inanity Oil Client is open source software.\n\n" +
+		"Source code and last releases are on https://github.com/quyse/oil\n\n" +
+		"Current version is " + currentVersion + ".");
+}
