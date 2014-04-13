@@ -165,11 +165,11 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer, const String& 
 {
 	BEGIN_TRY();
 
-	// get user id
-	long long userId = GetUserId(userName);
-
 	// push & pull should be in a one transaction
 	Data::SqliteTransaction transaction(db);
+
+	// get user id
+	long long userId = GetUserId(userName);
 
 	// get initial revision
 	long long prePushRevision = GetMaxRevision();
