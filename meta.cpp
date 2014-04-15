@@ -170,9 +170,8 @@ META_CLASS_END();
 
 #include "EntityInterface.hpp"
 META_CLASS(Inanity::Oil::EntityInterface, Inanity.Oil.EntityInterface);
-	META_CONSTRUCTOR(const Oil::EntityInterfaceId&, const String&);
-	META_METHOD(GetId);
-	META_METHOD(GetName);
+	META_METHOD(GetEntity);
+	META_METHOD(GetInterfaceId);
 META_CLASS_END();
 
 #include "EntitySchemeManager.hpp"
@@ -180,9 +179,6 @@ META_CLASS(Inanity::Oil::EntitySchemeManager, Inanity.Oil.EntitySchemeManager);
 	META_METHOD(TryGetScheme);
 	META_METHOD(GetScheme);
 	META_METHOD(RegisterScheme);
-	META_METHOD(TryGetInterface);
-	META_METHOD(GetInterface);
-	META_METHOD(RegisterInterface);
 	META_METHOD(GetStandardFieldType);
 META_CLASS_END();
 
@@ -190,6 +186,10 @@ META_CLASS_END();
 META_CLASS(Inanity::Oil::EntityCallback, Inanity.Oil.EntityCallback);
 	META_METHOD(EnumerateFields);
 	META_METHOD(EnumerateData);
+META_CLASS_END();
+
+#include "EntityInterfaceCallback.hpp"
+META_CLASS(Inanity::Oil::EntityInterfaceCallback, Inanity.Oil.EntityInterfaceCallback);
 META_CLASS_END();
 
 #include "EntityFieldType.hpp"

@@ -1,6 +1,5 @@
 #include "EntitySchemeManager.hpp"
 #include "EntityScheme.hpp"
-#include "EntityInterface.hpp"
 #include "EntityFieldTypes.hpp"
 #include "../inanity/Exception.hpp"
 
@@ -44,32 +43,6 @@ void EntitySchemeManager::RegisterScheme(ptr<EntityScheme> scheme)
 		THROW("Scheme already registered");
 
 	schemes.insert(std::make_pair(schemeId, scheme));
-}
-
-ptr<EntityInterface> EntitySchemeManager::TryGetInterface(const EntityInterfaceId& interfaceId) const
-{
-	Interfaces::const_iterator i = interfaces.find(interfaceId);
-	if(i == interfaces.end())
-		return nullptr;
-	return i->second;
-}
-
-ptr<EntityInterface> EntitySchemeManager::GetInterface(const EntityInterfaceId& interfaceId) const
-{
-	ptr<EntityInterface> interf = TryGetInterface(interfaceId);
-	if(!interf)
-		THROW("There is no such interface");
-	return interf;
-}
-
-void EntitySchemeManager::RegisterInterface(ptr<EntityInterface> interf)
-{
-	EntityInterfaceId interfaceId = interf->GetId();
-
-	if(interfaces.find(interfaceId) != interfaces.end())
-		THROW("Interface already registered");
-
-	interfaces.insert(std::make_pair(interfaceId, interf));
 }
 
 ptr<EntityFieldType> EntitySchemeManager::GetStandardFieldType(const String& name) const

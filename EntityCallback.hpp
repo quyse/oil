@@ -10,12 +10,6 @@ class File;
 
 END_INANITY
 
-BEGIN_INANITY_SCRIPT
-
-class Any;
-
-END_INANITY_SCRIPT
-
 BEGIN_INANITY_NP
 
 class Any;

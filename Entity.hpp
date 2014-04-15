@@ -4,6 +4,7 @@
 #include "EntityManager.hpp"
 #include "../inanity/script/script.hpp"
 #include <vector>
+#include <map>
 
 BEGIN_INANITY_SCRIPT
 
@@ -16,6 +17,7 @@ BEGIN_INANITY_OIL
 class EntityManager;
 class EntityScheme;
 class EntityCallback;
+class EntityInterface;
 class Action;
 
 /// Class of an entity.
@@ -45,6 +47,9 @@ private:
 	ptr<EntityScheme> scheme;
 	/// Callbacks.
 	std::vector<EntityCallback*> callbacks;
+
+	typedef std::map<EntityInterfaceId, EntityInterface*> Interfaces;
+	Interfaces interfaces;
 
 	ptr<File> GetFullTagKey(const EntityTagId& tagId) const;
 	ptr<File> GetFullFieldKey(const EntityFieldId& fieldId) const;
@@ -85,6 +90,8 @@ public:
 	void Delete(ptr<Action> action);
 
 	ptr<EntityCallback> AddCallback(ptr<Script::Any> callback);
+
+	ptr<EntityInterface> GetInterface(const EntityInterfaceId& interfaceId);
 };
 
 END_INANITY_OIL

@@ -1,7 +1,6 @@
 #include "EntityFieldTypes.hpp"
 #include "Entity.hpp"
 #include "EntityScheme.hpp"
-#include "EntityInterface.hpp"
 #include "EntityManager.hpp"
 #include "../inanity/MemoryFile.hpp"
 #include "../inanity/script/convert.hpp"
@@ -10,7 +9,6 @@
 #include "../inanity/Strings.hpp"
 #include "../inanity/inanity-math.hpp"
 #include "../inanity/Exception.hpp"
-#include <sstream>
 
 BEGIN_INANITY_SCRIPT
 
@@ -221,21 +219,7 @@ bool ReferenceEntityFieldType::CheckEntity(ptr<Entity> entity) const
 
 String ReferenceEntityFieldType::GetName() const
 {
-	std::ostringstream ss;
-	ss << "reference";
-
-	if(!interfaces.empty())
-	{
-		ss << " to ";
-		for(Interfaces::const_iterator i = interfaces.begin(); i != interfaces.end(); ++i)
-		{
-			if(i != interfaces.begin())
-				ss << ", ";
-			ss << (*i)->GetName();
-		}
-	}
-
-	return ss.str();
+	return "reference";
 }
 
 ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
@@ -263,9 +247,9 @@ ptr<File> ReferenceEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> va
 	return MemoryFile::CreateViaCopy(string.c_str(), string.length());
 }
 
-void ReferenceEntityFieldType::AddInterface(ptr<EntityInterface> interf)
+void ReferenceEntityFieldType::AddInterface(const EntityInterfaceId& interfaceId)
 {
-	interfaces.insert(interf);
+	interfaces.insert(interfaceId);
 }
 
 END_INANITY_OIL

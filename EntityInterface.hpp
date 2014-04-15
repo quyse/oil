@@ -2,20 +2,41 @@
 #define ___INANITY_OIL_ENTITY_INTERFACE_HPP___
 
 #include "Id.hpp"
+#include "../inanity/script/script.hpp"
+#include <vector>
+
+BEGIN_INANITY_SCRIPT
+
+class Any;
+
+END_INANITY_SCRIPT
 
 BEGIN_INANITY_OIL
 
+class Entity;
+class EntityInterfaceCallback;
+
+/// Entity interface object.
+/** Represents an object on interface level. */
 class EntityInterface : public Object
 {
 private:
-	EntityInterfaceId id;
-	String name;
+	ptr<Entity> entity;
+	EntityInterfaceId interfaceId;
+
+	/// Callbacks.
+	std::vector<EntityInterfaceCallback*> callbacks;
 
 public:
-	EntityInterface(const EntityInterfaceId& id, const String& name);
+	EntityInterface(ptr<Entity> entity, const EntityInterfaceId& interfaceId);
 
-	EntityInterfaceId GetId() const;
-	String GetName() const;
+	ptr<Entity> GetEntity() const;
+	EntityInterfaceId GetInterfaceId() const;
+
+	void OnNewCallback(EntityInterfaceCallback* callback);
+	void OnFreeCallback(EntityInterfaceCallback* callback);
+
+	ptr<EntityInterfaceCallback> AddCallback(ptr<Script::Any> callback);
 };
 
 END_INANITY_OIL

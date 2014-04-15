@@ -2,15 +2,20 @@
 #define ___INANITY_OIL_ENTITY_SCHEME_HPP___
 
 #include "Id.hpp"
+#include "../inanity/script/script.hpp"
 #include <map>
-#include <set>
 #include <vector>
+
+BEGIN_INANITY_SCRIPT
+
+class Any;
+
+END_INANITY_SCRIPT
 
 BEGIN_INANITY_OIL
 
 class Entity;
 class EntityFieldType;
-class EntityInterface;
 
 /// Scheme of fields in entity.
 class EntityScheme : public Object
@@ -22,7 +27,14 @@ public:
 		String name;
 	};
 	typedef std::map<EntityFieldId, Field> Fields;
-	typedef std::set<ptr<EntityInterface> > Interfaces;
+
+	/// Interface internal struct.
+	struct Interface
+	{
+		/// Callback for creating interface-specific object.
+		ptr<Script::Any> callback;
+	};
+	typedef std::map<EntityInterfaceId, Interface> Interfaces;
 
 private:
 	EntitySchemeId id;
@@ -51,7 +63,7 @@ public:
 	ptr<EntityFieldType> GetFieldType(const EntityFieldId& fieldId) const;
 	String GetFieldName(const EntityFieldId& fieldId) const;
 	void AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> type, const String& name);
-	void AddInterface(ptr<EntityInterface> entityInterface);
+	void AddInterface(const EntityInterfaceId& interfaceId, ptr<Script::Any> callback);
 };
 
 END_INANITY_OIL

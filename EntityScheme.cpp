@@ -1,6 +1,6 @@
 #include "EntityScheme.hpp"
 #include "EntityFieldType.hpp"
-#include "EntityInterface.hpp"
+#include "../inanity/script/Any.hpp"
 #include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
@@ -64,9 +64,11 @@ void EntityScheme::AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> t
 	fieldIds.push_back(fieldId);
 }
 
-void EntityScheme::AddInterface(ptr<EntityInterface> entityInterface)
+void EntityScheme::AddInterface(const EntityInterfaceId& interfaceId, ptr<Script::Any> callback)
 {
-	interfaces.insert(entityInterface);
+	Interface interf;
+	interf.callback = callback;
+	interfaces[interfaceId] = interf;
 }
 
 END_INANITY_OIL

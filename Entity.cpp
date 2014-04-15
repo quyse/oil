@@ -3,6 +3,7 @@
 #include "EntityManager.hpp"
 #include "EntitySchemeManager.hpp"
 #include "EntityCallback.hpp"
+#include "EntityInterface.hpp"
 #include "EntityFieldType.hpp"
 #include "Action.hpp"
 #include "ClientRepo.hpp"
@@ -327,6 +328,24 @@ void Entity::Delete(ptr<Action> action)
 ptr<EntityCallback> Entity::AddCallback(ptr<Script::Any> callback)
 {
 	return NEW(EntityCallback(this, callback.FastCast<Script::Np::Any>()));
+}
+
+ptr<EntityInterface> Entity::GetInterface(const EntityInterfaceId& interfaceId)
+{
+	BEGIN_TRY();
+
+	// try to find an interface
+	Interfaces::const_iterator i = interfaces.find(interfaceId);
+	if(i != interfaces.end())
+		return i->second;
+
+	// so there is no interface object
+	// create new
+	ptr<EntityInterface> interf = NEW(EntityInterface(this, interfaceId));
+
+	return interf;
+
+	END_TRY("Can't get entity interface");
 }
 
 END_INANITY_OIL

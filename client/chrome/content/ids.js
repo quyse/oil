@@ -145,7 +145,7 @@ var getFieldType = function(schemeManager, desc) {
 
 				let interfaces = desc.interfaces || [];
 				for(var i = 0; i < interfaces.length; ++i)
-					type.AddInterface(schemeManager.GetInterface(OIL.ids.interfaces[interfaces[i]]));
+					type.AddInterface(OIL.ids.interfaces[interfaces[i]]);
 			}
 			break;
 		}
@@ -171,14 +171,6 @@ OIL.initIds = function(schemeManager) {
 	// init entities
 	initThings(OIL.ids.entitiesInit, null, OIL.ids.entities = {}, OIL.ids.entityDescs = {});
 
-	// register interfaces
-	for(var i = 0; i < OIL.ids.interfacesInit.length; ++i) {
-		var interfaceDesc = OIL.ids.interfacesInit[i];
-		var interf = new OIL.classes.Inanity.Oil.EntityInterface(interfaceDesc.id, interfaceDesc.displayName);
-
-		schemeManager.RegisterInterface(interf);
-	}
-
 	// register schemes
 	for(var i = 0; i < OIL.ids.schemesInit.length; ++i) {
 		var schemeDesc = OIL.ids.schemesInit[i];
@@ -186,11 +178,6 @@ OIL.initIds = function(schemeManager) {
 
 		// init fields
 		initThings(schemeDesc.fieldsInit, convertFieldId, schemeDesc.fields = {}, schemeDesc.fieldDescs = {});
-
-		// init interfaces
-		var interfaces = schemeDesc.interfaces = [];
-		for(var j = 0; j < schemeDesc.interfacesInit.length; ++j)
-			interfaces.push(schemeManager.GetInterface(OIL.ids.interfaces[schemeDesc.interfacesInit[j]]));
 
 		for(var j = 0; j < schemeDesc.fieldsInit.length; ++j) {
 			var fieldDesc = schemeDesc.fieldsInit[j];

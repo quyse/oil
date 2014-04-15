@@ -8,7 +8,6 @@
 BEGIN_INANITY_OIL
 
 class Entity;
-class EntityInterface;
 
 class BlobEntityFieldType : public EntityFieldType
 {
@@ -81,7 +80,7 @@ public:
 class ReferenceEntityFieldType : public EntityFieldType
 {
 private:
-	typedef std::set<ptr<EntityInterface> > Interfaces;
+	typedef std::set<EntityInterfaceId> Interfaces;
 	/// Interfaces entity should have.
 	Interfaces interfaces;
 
@@ -96,7 +95,7 @@ public:
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 
 	//*** for scripts
-	void AddInterface(ptr<EntityInterface> interf);
+	void AddInterface(const EntityInterfaceId& interfaceId);
 };
 
 END_INANITY_OIL
