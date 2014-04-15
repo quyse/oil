@@ -20,6 +20,7 @@
 		<command id="commandShowRoot" oncommand="onShowRoot()" />
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
 		<command id="commandMaintenanceCreateEntity" oncommand="onMaintenanceCreateEntity()" />
+		<command id="commandMaintenanceOpenEntity" oncommand="onMaintenanceOpenEntity()" />
 		<command id="commandMaintenanceOpenTool" oncommand="onMaintenanceOpenTool()" />
 		<command id="commandHelpAbout" oncommand="onHelpAbout()" />
 	</commandset>
@@ -63,6 +64,7 @@
 					<menu label="maintenance">
 						<menupopup>
 							<menuitem label="create entity..." command="commandMaintenanceCreateEntity" />
+							<menuitem label="open entity..." command="commandMaintenanceOpenEntity" />
 							<menuitem label="open tool..." command="commandMaintenanceOpenTool" />
 						</menupopup>
 					</menu>

@@ -91,6 +91,28 @@ function onMaintenanceCreateEntity() {
 	}
 }
 
+function onMaintenanceOpenEntity() {
+	try {
+		// prompt for entity id
+		var entityIdWrap = { value: "" };
+		if(!OIL.getPromptService().prompt(window, "open entity", "enter existing entity id:", entityIdWrap, null, { value: false }))
+			return;
+		var entityId = entityIdWrap.value;
+		entityId = OIL.ids.entities[entityId] || entityId;
+
+		// check that it converts to id
+		OIL.eid2f(entityId);
+
+		// open
+		createTool("entity", {
+			entity: entityId
+		});
+
+	} catch(e) {
+		OIL.getPromptService().alert(window, "can't open entity", e);
+	}
+}
+
 function onMaintenanceOpenTool() {
 	try {
 		// prompt for str
