@@ -163,7 +163,7 @@ function createToolInTabbox(tabbox, page, params) {
 	// compose url
 	var url = "chrome://oil/content/tool-" + page + ".xul#tab=" + toolTab.id;
 	for(var i in params)
-		url += "&" + i + "=" + params[i];
+		url += "&" + encodeURIComponent(i) + "=" + encodeURIComponent(params[i]);
 
 	// init iframe
 	var tabpanel = toolTab.tabpanel;

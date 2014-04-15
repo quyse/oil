@@ -372,7 +372,7 @@ OIL.getParamsFromToolWindow = function(window) {
 		var param = params[i].split("=");
 		if(param.length != 2)
 			continue;
-		res[param[0]] = param[1];
+		res[decodeURIComponent(param[0])] = decodeURIComponent(param[1]);
 	}
 
 	// 'tab' parameter is required
