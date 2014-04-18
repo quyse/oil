@@ -1,12 +1,5 @@
 'use strict';
 
-Components.utils.import('resource://gre/modules/devtools/dbg-server.jsm');
-if (!DebuggerServer.initialized) {
-  DebuggerServer.init();
-  DebuggerServer.addBrowserActors();
-}
-DebuggerServer.openListener(6000);
-
 Components.utils.import('chrome://oil/content/oil.js');
 
 // set profile path
@@ -319,3 +312,16 @@ function onHelpAbout() {
 		"Source code and last releases are on https://github.com/quyse/oil\n\n" +
 		"Current version is " + currentVersion + ".");
 }
+
+// enable debug server if needed
+try {
+	if(OIL.prefs.getBoolPref("debug")) {
+		Components.utils.import('resource://gre/modules/devtools/dbg-server.jsm');
+		if (!DebuggerServer.initialized) {
+			DebuggerServer.init();
+			DebuggerServer.addBrowserActors();
+		}
+		DebuggerServer.openListener(6000);
+		OIL.log("debug server enabled");
+	}
+} catch(e) {}
