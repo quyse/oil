@@ -259,6 +259,7 @@ public:
 		catch(Exception* exception)
 		{
 			MakePointer(exception)->PrintStack(std::cerr);
+			std::cerr << "\n";
 			return 1;
 		}
 	}
