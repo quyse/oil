@@ -42,6 +42,7 @@ var executables = {
 			'Action',
 			'Id', 'Entity', 'EntityManager', 'EntityScheme', 'EntityInterface', 'EntitySchemeManager',
 			'EntityCallback', 'EntityInterfaceCallback', 'EntityFieldTypes',
+			'FileEntityScheme',
 			'meta'
 		],
 		staticLibraries: [
