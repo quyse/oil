@@ -92,6 +92,9 @@ public:
 	ptr<EntityCallback> AddCallback(ptr<Script::Any> callback);
 
 	ptr<EntityInterface> GetInterface(const EntityInterfaceId& interfaceId);
+	/// Set result of interface.
+	/** Called by script interface objects. */
+	void SetInterfaceResult(const EntityInterfaceId& interfaceId, ptr<Script::Any> result);
 };
 
 END_INANITY_OIL

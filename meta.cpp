@@ -145,6 +145,8 @@ META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
 	META_METHOD(WriteData);
 	META_METHOD(Delete);
 	META_METHOD(AddCallback);
+	META_METHOD(GetInterface);
+	META_METHOD(SetInterfaceResult);
 META_CLASS_END();
 
 #include "EntityManager.hpp"
@@ -172,6 +174,7 @@ META_CLASS_END();
 META_CLASS(Inanity::Oil::EntityInterface, Inanity.Oil.EntityInterface);
 	META_METHOD(GetEntity);
 	META_METHOD(GetInterfaceId);
+	META_METHOD(AddCallback);
 META_CLASS_END();
 
 #include "EntitySchemeManager.hpp"

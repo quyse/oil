@@ -348,4 +348,12 @@ ptr<EntityInterface> Entity::GetInterface(const EntityInterfaceId& interfaceId)
 	END_TRY("Can't get entity interface");
 }
 
+void Entity::SetInterfaceResult(const EntityInterfaceId& interfaceId, ptr<Script::Any> result)
+{
+	// try to find an interface
+	Interfaces::const_iterator i = interfaces.find(interfaceId);
+	if(i != interfaces.end())
+		i->second->SetResult(result);
+}
+
 END_INANITY_OIL

@@ -14,6 +14,7 @@ END_INANITY_SCRIPT
 BEGIN_INANITY_OIL
 
 class Entity;
+class EntityScheme;
 class EntityInterfaceCallback;
 
 /// Entity interface object.
@@ -23,18 +24,34 @@ class EntityInterface : public Object
 private:
 	ptr<Entity> entity;
 	EntityInterfaceId interfaceId;
+	/// Callback to free interface object.
+	ptr<Script::Any> freeInterfaceObject;
+	/// Result data.
+	ptr<Script::Any> result;
 
 	/// Callbacks.
 	std::vector<EntityInterfaceCallback*> callbacks;
 
+	void FreeInterfaceObject();
+
 public:
 	EntityInterface(ptr<Entity> entity, const EntityInterfaceId& interfaceId);
+	~EntityInterface();
 
 	ptr<Entity> GetEntity() const;
 	EntityInterfaceId GetInterfaceId() const;
 
+	// Notification methods called by EntityInterfaceCallback.
 	void OnNewCallback(EntityInterfaceCallback* callback);
 	void OnFreeCallback(EntityInterfaceCallback* callback);
+
+	/// Notify about changed result.
+	/** Called by Entity. */
+	void SetResult(ptr<Script::Any> result);
+	/// Get current result.
+	ptr<Script::Any> GetResult() const;
+
+	void OnChangeScheme(ptr<EntityScheme> entityScheme);
 
 	ptr<EntityInterfaceCallback> AddCallback(ptr<Script::Any> callback);
 };

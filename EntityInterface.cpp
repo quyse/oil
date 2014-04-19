@@ -1,13 +1,20 @@
 #include "EntityInterface.hpp"
 #include "Entity.hpp"
+#include "EntityScheme.hpp"
 #include "EntityInterfaceCallback.hpp"
 #include "../inanity/script/np/Any.hpp"
+#include "../inanity/script/np/State.hpp"
 #include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
 
 EntityInterface::EntityInterface(ptr<Entity> entity, const EntityInterfaceId& interfaceId)
 : entity(entity), interfaceId(interfaceId) {}
+
+EntityInterface::~EntityInterface()
+{
+	FreeInterfaceObject();
+}
 
 ptr<Entity> EntityInterface::GetEntity() const
 {
@@ -36,9 +43,45 @@ void EntityInterface::OnFreeCallback(EntityInterfaceCallback* callback)
 	THROW("Entity interface callback already freed");
 }
 
+void EntityInterface::SetResult(ptr<Script::Any> result)
+{
+	for(size_t i = 0; i < callbacks.size(); ++i)
+		callbacks[i]->SetResult(result);
+}
+
+ptr<Script::Any> EntityInterface::GetResult() const
+{
+	return result;
+}
+
+void EntityInterface::OnChangeScheme(ptr<EntityScheme> entityScheme)
+{
+	FreeInterfaceObject();
+
+	if(entityScheme)
+	{
+		const EntityScheme::Interfaces& interfaces = entityScheme->GetInterfaces();
+		EntityScheme::Interfaces::const_iterator i = interfaces.find(interfaceId);
+		if(i != interfaces.end())
+			freeInterfaceObject = i->second.callback->Call(
+				i->second.callback.FastCast<Script::Np::Any>()->GetState()->WrapObject(entity));
+	}
+}
+
 ptr<EntityInterfaceCallback> EntityInterface::AddCallback(ptr<Script::Any> callback)
 {
 	return NEW(EntityInterfaceCallback(this, callback.FastCast<Script::Np::Any>()));
+}
+
+void EntityInterface::FreeInterfaceObject()
+{
+	if(freeInterfaceObject)
+	{
+		// ensure reentrancy
+		ptr<Script::Any> copy = freeInterfaceObject;
+		freeInterfaceObject = nullptr;
+		copy->Call();
+	}
 }
 
 END_INANITY_OIL
