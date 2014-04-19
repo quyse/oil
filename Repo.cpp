@@ -13,11 +13,11 @@ const int Repo::serverRepoAppVersion = 0x424C494F; // "OILB" in little-endian
 const int Repo::clientRepoAppVersion = 0x314C494F; // "OIL1" in little-endian
 
 const size_t Repo::defaultMaxKeySize = 128;
-const size_t Repo::defaultMaxValueSize = 1024 * 1024 * 16;
-const int Repo::defaultMaxPushKeysCount = 128;
-const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 32;
-const int Repo::defaultMaxPullKeysCount = 256;
-const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 32;
+const size_t Repo::defaultMaxValueSize = 1024 * 1024;
+const int Repo::defaultMaxPushKeysCount = 1024;
+const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 2;
+const int Repo::defaultMaxPullKeysCount = 1024;
+const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 2;
 
 const char* Repo::fileNameMemory = ":memory:";
 const char* Repo::fileNameTemp = "";
