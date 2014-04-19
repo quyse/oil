@@ -3,7 +3,7 @@
 Components.utils.import('chrome://oil/content/oil.js');
 
 function enableConnectButton(enable) {
-	document.getElementById("connectrepo").setAttribute("buttondisableaccept", !enable);
+	document.getElementById("connectrepo").getButton("accept").disabled = !enable;
 }
 
 function onChangeSomething(types, currentType) {
@@ -373,6 +373,7 @@ function onConnect() {
 				window.arguments[0].repo = scriptRepo;
 				alreadyConnected = true;
 				var dialog = document.getElementById("connectrepo");
+				enableConnectButton(true); // otherwise dialog won't be accepted
 				dialog.acceptDialog();
 
 				// add recent repo
