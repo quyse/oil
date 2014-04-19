@@ -209,3 +209,17 @@ META_CLASS(Inanity::Oil::ReferenceEntityFieldType, Inanity.Oil.ReferenceEntityFi
 	META_METHOD(CheckEntity);
 	META_METHOD(AddInterface);
 META_CLASS_END();
+
+#include "FileEntityScheme.hpp"
+
+META_CLASS(Inanity::Oil::FileEntitySchemeInputStream, Inanity.Oil.FileEntitySchemeInputStream);
+	META_CLASS_PARENT(Inanity::InputStream);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Entity>);
+	META_METHOD(GetSize);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::FileEntitySchemeOutputStream, Inanity.Oil.FileEntitySchemeOutputStream);
+	META_CLASS_PARENT(Inanity::OutputStream);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Action>, ptr<Inanity::Oil::Entity>, size_t);
+	META_METHOD(End);
+META_CLASS_END();

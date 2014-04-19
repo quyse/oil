@@ -9,6 +9,7 @@
 #include "EntitySchemeManager.hpp"
 #include "Engine.hpp"
 #include "EntityFieldTypes.hpp"
+#include "FileEntityScheme.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
@@ -39,6 +40,8 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<EntityFieldId>();
 	scriptState->Register<EntityScheme>();
 	scriptState->Register<ReferenceEntityFieldType>();
+	scriptState->Register<FileEntitySchemeInputStream>();
+	scriptState->Register<FileEntitySchemeOutputStream>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const
