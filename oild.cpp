@@ -87,7 +87,7 @@ private:
 						try
 						{
 							ptr<Net::Fcgi::Request> request = watchRequests[i].first;
-							request->GetOutputStream()->WriteFile(watchResponse);
+							request->GetOutputStream()->Write(watchResponse);
 							request->End();
 						}
 						catch(Exception* exception)
@@ -167,7 +167,7 @@ private:
 							response = stream->ToFile();
 						}
 
-						watchRequests[i].first->GetOutputStream()->WriteFile(response);
+						watchRequests[i].first->GetOutputStream()->Write(response);
 						watchRequests[i].first->End();
 					}
 					else
