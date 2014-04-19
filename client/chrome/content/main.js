@@ -17,9 +17,34 @@ function onRepoConnect() {
 
 		OIL.repo.SetUndoRedoChangedCallback(onUndoRedoChanged);
 
-		window.openDialog('syncprogress.xul', '', 'chrome,modal,centerscreen,close=no', function() {
-			OIL.syncRepo();
-		});
+		{
+			let onChangedTarget;
+			let onSyncedTarget;
+			let progressCallback;
+			let cancelCallback;
+			window.openDialog('progress.xul', '', 'chrome,modal,centerscreen,close=no', {
+				setProgressCallback: function(callback) {
+					progressCallback = callback
+				},
+				setCancelCallback: function(callback) {
+					cancelCallback = callback
+				},
+				onStart: function() {
+					onChangedTarget = OIL.syncProgress.onChanged.addTarget(function(pushDone, pushTotal, pullDone, pullTotal) {
+						progressCallback(pushDone + pullDone, pushTotal + pullTotal);
+					});
+					onSyncedTarget = OIL.syncProgress.onSynced.addTarget(cancelCallback);
+					OIL.syncRepo();
+				},
+				onUnload: function() {
+					OIL.syncProgress.onChanged.removeTarget(onChangedTarget);
+					OIL.syncProgress.onSynced.removeTarget(onSyncedTarget);
+				},
+				title: "syncing...",
+				description: "syncing to server version of the repo, please wait...",
+				cancelButtonText: "don't wait"
+			});
+		}
 
 		// show root folder
 		createTool("folder", {
