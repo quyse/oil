@@ -93,6 +93,11 @@ void EntityCallback::FireData(ptr<File> key, ptr<File> value)
 	}
 }
 
+void EntityCallback::EnumerateScheme()
+{
+	FireScheme(entity->GetScheme());
+}
+
 void EntityCallback::EnumerateFields()
 {
 	class Enumerator : public Entity::FieldEnumerator

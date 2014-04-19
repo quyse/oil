@@ -184,6 +184,7 @@ META_CLASS_END();
 
 #include "EntityCallback.hpp"
 META_CLASS(Inanity::Oil::EntityCallback, Inanity.Oil.EntityCallback);
+	META_METHOD(EnumerateScheme);
 	META_METHOD(EnumerateFields);
 	META_METHOD(EnumerateData);
 META_CLASS_END();

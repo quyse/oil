@@ -37,6 +37,8 @@ public:
 	void FireField(const EntityFieldId& fieldId, ptr<File> value);
 	void FireData(ptr<File> key, ptr<File> value);
 
+	/// Fire callback for scheme.
+	void EnumerateScheme();
 	/// Fire callback for all fields.
 	void EnumerateFields();
 	/// Fire callback for all data.
