@@ -551,37 +551,121 @@ function onCommandUploadFile() {
 				if(result != nsIFilePicker.returnOK)
 					return;
 
+				// get list of files with total size
 				var files = fp.files;
 				var paths = [];
+				var totalSize = 0;
 				while(files.hasMoreElements()) {
 					var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+					var fileSize = file.fileSize;
 					paths.push({
 						path: file.path,
-						name: file.leafName
+						name: file.leafName,
+						size: fileSize
 					});
+					totalSize += fileSize;
 				}
 
 				if(paths.length <= 0)
 					return;
 
+				// create action
 				var actionDescription;
 				if(paths.length == 1)
 					actionDescription = "upload file " + JSON.stringify(paths[0].name);
 				else
 					actionDescription = "upload " + paths.length + " files";
-
 				var action = OIL.createAction(actionDescription);
+
 				var folderEntity = OIL.entityManager.GetEntity(folderId);
-				for(var i = 0; i < paths.length; ++i) {
-					var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
-					var schemeDesc = OIL.ids.schemeDescs.file;
-					entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[i].name));
-					entity.WriteField(action, schemeDesc.fields.originalFileName, paths[i].name);
-					entity.WriteData(action, null, OIL.core.GetNativeFileSystem().LoadFile(paths[i].path));
-					folderEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-					entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderId));
-				}
-				OIL.finishAction(action);
+
+				const blockSize = 1024 * 1024;
+				var pathIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
+				// do one step of uploading
+				var step = function() {
+					try {
+						// if we're starting new file
+						if(!fileEntity) {
+							// if there is no more files
+							if(pathIndex >= paths.length) {
+								// finish
+								OIL.finishAction(action);
+								cancelCallback();
+								return;
+							}
+
+							// open file stream
+							sourceStream = OIL.core.GetNativeFileSystem().LoadStream(paths[pathIndex].path);
+							// remember file size
+							fileSize = paths[pathIndex].size;
+							// create file entity, perform starting changes
+							fileEntity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
+							fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[pathIndex].name));
+							fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, paths[pathIndex].name);
+							folderEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
+							fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderId));
+
+							// create entity stream
+							entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
+
+							// increment index
+							++pathIndex;
+							// reset written file size
+							fileWrittenSize = 0;
+						}
+
+						// write a block
+						var block = sourceStream.Read(blockSize);
+						// if there is some data
+						var sizeOfBlock = block.GetSize();
+						if(sizeOfBlock) {
+							// write it
+							entityStream.Write(block);
+							// make some progress
+							fileWrittenSize += sizeOfBlock;
+							totalWrittenSize += sizeOfBlock;
+							// correct total size if needed
+							if(fileWrittenSize > fileSize) {
+								totalSize = totalSize - fileSize + fileWrittenSize;
+								fileSize = fileWrittenSize;
+							}
+							// report progress
+							progressCallback(totalWrittenSize, totalSize);
+						} else {
+							// else there is no more data
+							// finish with this file
+							entityStream.End();
+
+							// reset pointers
+							fileEntity = null;
+							sourceStream = null;
+							entityStream = null;
+						}
+
+						// next step
+						OIL.setTimeout(step, 0);
+					} catch(e) {
+						cancelCallback();
+						alert(e);
+					}
+				};
+
+				// show progress window
+				var progressCallback, cancelCallback;
+				window.openDialog('progress.xul', '', 'chrome,modal,centerscreen,close=no', {
+					setProgressCallback: function(callback) {
+						progressCallback = callback
+					},
+					setCancelCallback: function(callback) {
+						cancelCallback = callback
+					},
+					onStart: function() {
+						OIL.setTimeout(step, 0);
+					},
+					title: "uploading...",
+					description: "preparing file(s) to upload, please wait...",
+					cancelButtonText: null
+				});
 			}
 			catch(e) {
 				alert(e);
