@@ -68,6 +68,9 @@ public:
 	void OnNewCallback(EntityCallback* callback);
 	void OnFreeCallback(EntityCallback* callback);
 
+	void OnNewInterface(EntityInterface* interf);
+	void OnFreeInterface(EntityInterface* interf);
+
 	void OnChange(const void* keyData, size_t keySize, ptr<File> value);
 
 	ptr<File> ReadTag(const EntityTagId& tagId) const;

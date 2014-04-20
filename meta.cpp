@@ -194,6 +194,7 @@ META_CLASS_END();
 
 #include "EntityInterfaceCallback.hpp"
 META_CLASS(Inanity::Oil::EntityInterfaceCallback, Inanity.Oil.EntityInterfaceCallback);
+	META_METHOD(Fire);
 META_CLASS_END();
 
 #include "EntityFieldType.hpp"

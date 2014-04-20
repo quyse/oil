@@ -9,11 +9,23 @@
 BEGIN_INANITY_OIL
 
 EntityInterface::EntityInterface(ptr<Entity> entity, const EntityInterfaceId& interfaceId)
-: entity(entity), interfaceId(interfaceId) {}
+: entity(entity), interfaceId(interfaceId)
+{
+	entity->OnNewInterface(this);
+	OnChangeScheme(entity->GetScheme());
+}
 
 EntityInterface::~EntityInterface()
 {
-	FreeInterfaceObject();
+	try
+	{
+		FreeInterfaceObject();
+	}
+	catch(Exception* exception)
+	{
+		MakePointer(exception);
+	}
+	entity->OnFreeInterface(this);
 }
 
 ptr<Entity> EntityInterface::GetEntity() const
@@ -45,8 +57,9 @@ void EntityInterface::OnFreeCallback(EntityInterfaceCallback* callback)
 
 void EntityInterface::SetResult(ptr<Script::Any> result)
 {
+	this->result = result;
 	for(size_t i = 0; i < callbacks.size(); ++i)
-		callbacks[i]->SetResult(result);
+		callbacks[i]->Fire();
 }
 
 ptr<Script::Any> EntityInterface::GetResult() const

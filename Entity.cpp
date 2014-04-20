@@ -47,6 +47,11 @@ void Entity::SetScheme(ptr<EntityScheme> scheme)
 
 void Entity::OnNewCallback(EntityCallback* callback)
 {
+#ifdef _DEBUG
+	for(size_t i = 0; i < callbacks.size(); ++i)
+		if(callbacks[i] == callback)
+			THROW("Entity callback already registered");
+#endif
 	callbacks.push_back(callback);
 }
 
@@ -59,7 +64,30 @@ void Entity::OnFreeCallback(EntityCallback* callback)
 			return;
 		}
 
+#ifdef _DEBUG
 	THROW("Entity callback already freed");
+#endif
+}
+
+void Entity::OnNewInterface(EntityInterface* interf)
+{
+	EntityInterfaceId interfaceId = interf->GetInterfaceId();
+#ifdef _DEBUG
+	if(interfaces.find(interfaceId) != interfaces.end())
+		THROW("Entity interface already registered");
+#endif
+	interfaces[interfaceId] = interf;
+}
+
+void Entity::OnFreeInterface(EntityInterface* interf)
+{
+	Interfaces::iterator i = interfaces.find(interf->GetInterfaceId());
+	if(i != interfaces.end())
+		interfaces.erase(i);
+#ifdef _DEBUG
+	else
+		THROW("Entity interface already freed");
+#endif
 }
 
 ptr<File> Entity::GetFullTagKey(const EntityTagId& tagId) const

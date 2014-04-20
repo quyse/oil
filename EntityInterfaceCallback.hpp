@@ -19,15 +19,14 @@ class EntityInterfaceCallback : public Object
 private:
 	ptr<EntityInterface> entityInterface;
 	/// Callback for receiving changes.
-	/** function(hasInterfaceObject, interfaceObject) */
+	/** function(result) */
 	ptr<Script::Any> callback;
 
 public:
 	EntityInterfaceCallback(ptr<EntityInterface> entityInterface, ptr<Script::Any> callback);
 	~EntityInterfaceCallback();
 
-	ptr<Script::Any> GetResult() const;
-	void SetResult(ptr<Script::Any> result);
+	void Fire();
 };
 
 END_INANITY_OIL

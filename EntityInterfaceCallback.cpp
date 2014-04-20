@@ -15,14 +15,13 @@ EntityInterfaceCallback::~EntityInterfaceCallback()
 	entityInterface->OnFreeCallback(this);
 }
 
-ptr<Script::Any> EntityInterfaceCallback::GetResult() const
+void EntityInterfaceCallback::Fire()
 {
-	return entityInterface->GetResult();
-}
-
-void EntityInterfaceCallback::SetResult(ptr<Script::Any> result)
-{
-	callback->Call(result);
+	ptr<Script::Any> result = entityInterface->GetResult();
+	if(result)
+		callback->Call(result);
+	else
+		callback->Call();
 }
 
 END_INANITY_OIL
