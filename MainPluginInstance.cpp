@@ -26,6 +26,13 @@ MainPluginInstance::~MainPluginInstance()
 	instance = nullptr;
 }
 
+void MainPluginInstance::Destroy()
+{
+	// break circular dependency with script state
+	scriptState = nullptr;
+	scriptObject = nullptr;
+}
+
 ptr<Script::Np::State> MainPluginInstance::GetScriptState() const
 {
 	return scriptState;

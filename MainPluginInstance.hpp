@@ -31,6 +31,8 @@ public:
 	MainPluginInstance();
 	~MainPluginInstance();
 
+	void Destroy();
+
 	ptr<Script::Np::State> GetScriptState() const;
 };
 
