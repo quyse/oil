@@ -54,8 +54,9 @@ private:
 	ptr<Entity> entity;
 	size_t blockSize;
 	ptr<Crypto::HashStream> hashStream;
-	ptr<MemoryStream> descriptorStream;
-	ptr<StreamWriter> descriptorWriter;
+	ptr<MemoryStream> descriptorHashStream;
+	ptr<StreamWriter> descriptorHashWriter;
+	bigsize_t totalSize;
 	ptr<MemoryStream> currentBlockStream;
 	size_t currentBlockIndex, currentBlockSize;
 

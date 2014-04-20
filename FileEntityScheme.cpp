@@ -33,7 +33,7 @@ FileEntitySchemeInputStream::FileEntitySchemeInputStream(ptr<Entity> entity)
 
 	descriptorReader = NEW(StreamReader(NEW(FileInputStream(descriptorFile))));
 
-	totalSize = descriptorReader->ReadShortly();
+	totalSize = descriptorReader->ReadShortlyBig();
 	remainingSize = totalSize;
 
 	hashStream = NEW(Crypto::WhirlpoolStream());
@@ -106,10 +106,10 @@ size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 //*** FileEntitySchemeOutputStream class
 
 FileEntitySchemeOutputStream::FileEntitySchemeOutputStream(ptr<Action> action, ptr<Entity> entity, size_t blockSize)
-: action(action), entity(entity), blockSize(blockSize), currentBlockIndex(0), currentBlockSize(0)
+: action(action), entity(entity), blockSize(blockSize), totalSize(0), currentBlockIndex(0), currentBlockSize(0)
 {
-	descriptorStream = NEW(MemoryStream());
-	descriptorWriter = NEW(StreamWriter(descriptorStream));
+	descriptorHashStream = NEW(MemoryStream());
+	descriptorHashWriter = NEW(StreamWriter(descriptorHashStream));
 
 	hashStream = NEW(Crypto::WhirlpoolStream());
 }
@@ -127,10 +127,13 @@ void FileEntitySchemeOutputStream::FinishCurrentBlock()
 	hashStream->GetHash(hashFile->GetData());
 
 	// write hash to descriptor
-	descriptorWriter->Write(hashFile);
+	descriptorHashWriter->Write(hashFile);
 
 	// write block to entity
 	entity->WriteData(action, GetBlockName(currentBlockIndex), blockFile);
+
+	// increase total size
+	totalSize += blockFile->GetSize();
 
 	// reset current block
 	currentBlockStream = nullptr;
@@ -177,6 +180,12 @@ void FileEntitySchemeOutputStream::End()
 		FinishCurrentBlock();
 
 	// write descriptor
+	ptr<File> hashes = descriptorHashStream->ToFile();
+	descriptorHashStream = nullptr;
+	ptr<MemoryStream> descriptorStream = NEW(MemoryStream(hashes->GetSize() + 9));
+	StreamWriter writer(descriptorStream);
+	writer.WriteShortlyBig(totalSize);
+	writer.Write(hashes);
 	entity->WriteData(action, nullptr, descriptorStream->ToFile());
 }
 
