@@ -58,9 +58,7 @@ size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 
 	while(size)
 	{
-		size_t currentBlockSize = currentBlockFile ? currentBlockFile->GetSize() : 0;
-
-		if(currentBlockOffset >= currentBlockSize)
+		if(!currentBlockFile || currentBlockOffset >= currentBlockFile->GetSize())
 		{
 			// read next block
 
@@ -89,12 +87,13 @@ size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 				THROW("Wrong hash");
 		}
 
-		size_t sizeToCopy = currentBlockSize - currentBlockOffset;
+		size_t sizeToCopy = currentBlockFile->GetSize() - currentBlockOffset;
 		if(sizeToCopy > size)
 			sizeToCopy = size;
-		memcpy(dataPtr, currentBlockFile->GetData(), sizeToCopy);
+		memcpy(dataPtr, (const char*)currentBlockFile->GetData() + currentBlockOffset, sizeToCopy);
 		dataPtr += sizeToCopy;
 		size -= sizeToCopy;
+		currentBlockOffset += sizeToCopy;
 		remainingSize -= sizeToCopy;
 	}
 
@@ -151,10 +150,7 @@ void FileEntitySchemeOutputStream::Write(const void* data, size_t size)
 	{
 		// if there's no current block stream, create it
 		if(!currentBlockStream)
-		{
 			currentBlockStream = NEW(MemoryStream(blockSize));
-			currentBlockSize = 0;
-		}
 
 		// write data
 		size_t sizeToWrite = blockSize - currentBlockSize;

@@ -842,7 +842,9 @@ function onCommandDownloadFile() {
 				if(scheme.GetId() != OIL.ids.schemes.file)
 					return;
 
-				OIL.core.GetNativeFileSystem().SaveFile(entity.ReadData(null), fp.file.path);
+				var fileStream = OIL.core.GetNativeFileSystem().SaveStream(fp.file.path);
+				var entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
+				fileStream.ReadAllFromStream(entityStream);
 			}
 			catch(e) {
 				alert(e);
