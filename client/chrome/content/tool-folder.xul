@@ -24,7 +24,6 @@
 		<key id="keyOpen" keycode="VK_ENTER" command="commandOpen" />
 		<key id="keyRename" keycode="VK_F2" command="commandRename" />
 		<key id="keyDelete" keycode="VK_DELETE" command="commandDelete" />
-		<key id="keyUnlink" command="commandUnlink" />
 		<key id="keyProperties" keycode="VK_F4" command="commandProperties" />
 		<key id="keyShowRealPlace" keycode="VK_F12" command="commandShowRealPlace" />
 	</keyset>
