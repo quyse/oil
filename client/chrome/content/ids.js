@@ -42,6 +42,14 @@ OIL.ids = {
 		- type
 	- icon: path to icon
 	- tool: name of tool for opening object
+	- interfacesInit: [{
+			name (internal name of interface)
+			callback: function(entity) {
+				return function() {
+					// free all resources
+				};
+			}
+		}]
 	*/
 	schemesInit: [{
 		name: "client_version",
@@ -57,8 +65,7 @@ OIL.ids = {
 			id: "url ",
 			displayName: "url",
 			type: "string"
-		}],
-		interfacesInit: []
+		}]
 	}, {
 		name: "folder",
 		id: "fold",
@@ -77,7 +84,38 @@ OIL.ids = {
 			displayName: "original filename",
 			type: "string"
 		}],
-		interfacesInit: ["data"]
+		interfacesInit: [{
+			name: "data",
+			callback: function(entity) {
+				function getData() {
+					var file = null;
+					try {
+						var stream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
+						file = stream.Read(stream.GetSize());
+					} catch(e) {
+						OIL.log(e);
+					}
+					return file;
+				}
+
+				function setResult() {
+					entity.SetInterfaceResult(OIL.ids.interfaces.data, getData());
+				}
+
+				var entityCallback = entity.AddCallback(function(type, key, value) {
+					if(type == "data")
+						setResult();
+				});
+
+				setResult();
+
+				return function() {
+					entity = null;
+					entityCallback = null;
+				};
+			}
+		}],
+		tool: "data"
 	}, {
 		name: "texture",
 		id: "tex ",
@@ -90,8 +128,7 @@ OIL.ids = {
 				type: "reference",
 				interfaces: ["data"]
 			}
-		}],
-		interfacesInit: []
+		}]
 	}],
 
 	// entities
@@ -183,6 +220,13 @@ OIL.initIds = function(schemeManager) {
 			var fieldDesc = schemeDesc.fieldsInit[j];
 
 			scheme.AddField(fieldDesc.id, getFieldType(schemeManager, fieldDesc.type), fieldDesc.displayName);
+		}
+
+		// register interfaces
+		var interfaces = schemeDesc.interfacesInit || [];
+		for(var j = 0; j < interfaces.length; ++j) {
+			OIL.log("register interface " + interfaces[j].name + " for scheme " + scheme.GetName());
+			scheme.AddInterface(OIL.ids.interfaces[interfaces[j].name], interfaces[j].callback);
 		}
 
 		// register scheme
