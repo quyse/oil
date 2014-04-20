@@ -64,6 +64,9 @@ Item.prototype.onChange = function(type, key, value) {
 		switch(key) {
 		case OIL.ids.tags.name:
 			this.name = value ? OIL.f2s(value) : null;
+			// if this is root, update title
+			if(!this.parent)
+				window.toolTab.setTitle("folder: " + this.getVisibleName());
 			break;
 		case OIL.ids.tags.parent:
 			this.parentId = OIL.f2eid(value);

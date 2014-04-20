@@ -51,7 +51,15 @@ ToolTab.prototype.close = function() {
 	this.parent.removeTab(this);
 };
 ToolTab.prototype.setTitle = function(title) {
+	// shorten title if too long
+	var tooltip = "";
+	if(title.length > 20) {
+		tooltip = title;
+		title = title.substr(0, 18) + "...";
+	}
+
 	this.tab.setAttribute("label", title);
+	this.tab.setAttribute("tooltiptext", tooltip);
 };
 
 /// Tool tabbox class.

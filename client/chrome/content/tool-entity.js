@@ -22,6 +22,9 @@ function onChange(type, key, value) {
 			let update = tagsUpdate[key];
 			if(update)
 				update(value);
+
+			if(key == OIL.ids.tags.name)
+				window.toolTab.setTitle("entity: " + (OIL.f2s(value) || "<unnamed>"));
 		}
 		break;
 	case "field":

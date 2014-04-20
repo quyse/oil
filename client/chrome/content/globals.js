@@ -209,7 +209,7 @@ OIL.log = log;
 //*** things
 
 OIL.f2s = function(file) {
-	return OIL.classes.Inanity.Strings.File2String(file);
+	return file ? OIL.classes.Inanity.Strings.File2String(file) : null;
 };
 OIL.s2f = function(string) {
 	return OIL.classes.Inanity.Strings.String2File(string);
