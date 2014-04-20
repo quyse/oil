@@ -30,6 +30,7 @@ window.addEventListener('load', function() {
 	var dialog = document.getElementById("dialog");
 	if(config.setCancelCallback)
 		config.setCancelCallback(function() {
+			dialog.getButton("cancel").disabled = false;
 			dialog.cancelDialog();
 		});
 
@@ -40,7 +41,9 @@ window.addEventListener('load', function() {
 	if(config.cancelButtonText !== null) {
 		dialog.getButton("cancel").label = config.cancelButtonText || "cancel";
 	} else {
-		dialog.getButton("cancel").hidden = true;
+		var cancelButton = dialog.getButton("cancel");
+		cancelButton.hidden = true;
+		cancelButton.disabled = true;
 	}
 
 	if(config.description)
