@@ -34,6 +34,13 @@ Repo::Repo(const char* fileName) :
 
 	db = Data::SqliteDb::Open(fileName);
 
+	// enable exclusive locking mode
+	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
+	// enable WAL journal mode
+	if(sqlite3_exec(*db, "PRAGMA journal_mode = WAL", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable WAL journal mode on db", db->Error());
+
 	keyBufferFile = NEW(MemoryFile(maxKeySize));
 	valueBufferFile = NEW(MemoryFile(maxValueSize));
 

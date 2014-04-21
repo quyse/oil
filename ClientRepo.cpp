@@ -136,9 +136,6 @@ ClientRepo::ClientRepo(const char* fileName)
 	// check format version
 	CheckAppVersion(clientRepoAppVersion);
 
-	// enable exclusive locking mode
-	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
-		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
 	// disable syncing
 	if(sqlite3_exec(*db, "PRAGMA synchronous = OFF", 0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't disable db sync", db->Error());
