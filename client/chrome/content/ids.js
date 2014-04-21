@@ -114,8 +114,7 @@ OIL.ids = {
 					entityCallback = null;
 				};
 			}
-		}],
-		tool: "data"
+		}]
 	}, {
 		name: "texture",
 		id: "tex ",
@@ -225,7 +224,6 @@ OIL.initIds = function(schemeManager) {
 		// register interfaces
 		var interfaces = schemeDesc.interfacesInit || [];
 		for(var j = 0; j < interfaces.length; ++j) {
-			OIL.log("register interface " + interfaces[j].name + " for scheme " + scheme.GetName());
 			scheme.AddInterface(OIL.ids.interfaces[interfaces[j].name], interfaces[j].callback);
 		}
 
