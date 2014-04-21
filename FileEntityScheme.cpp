@@ -19,10 +19,17 @@ static ptr<File> GetBlockName(size_t index)
 	return stream->ToFile();
 }
 
+/* Descriptor format, version 1.
+descriptor version = 1 (shortly)
+total size (shortly big)
+total hash (64-byte WHIRLPOOL hash)
+block hash[blocks count] (64-byte WHIRLPOOL hash)
+*/
+
 //*** FileEntitySchemeInputStream class
 
 FileEntitySchemeInputStream::FileEntitySchemeInputStream(ptr<Entity> entity)
-: entity(entity), currentBlockIndex(0), currentBlockOffset(0)
+: entity(entity), currentBlockIndex(0), currentBlockOffset(0), ended(false)
 {
 	BEGIN_TRY();
 
@@ -33,10 +40,19 @@ FileEntitySchemeInputStream::FileEntitySchemeInputStream(ptr<Entity> entity)
 
 	descriptorReader = NEW(StreamReader(NEW(FileInputStream(descriptorFile))));
 
+	// read & check the version
+	size_t version = descriptorReader->ReadShortly();
+	// for now only version 1 is supported
+	if(version != 1)
+		THROW("Invalid descriptor version");
 	totalSize = descriptorReader->ReadShortlyBig();
 	remainingSize = totalSize;
 
 	hashStream = NEW(Crypto::WhirlpoolStream());
+	totalHashStream = NEW(Crypto::WhirlpoolStream());
+
+	// read total hash
+	totalHashFromDescriptor = descriptorReader->Read(totalHashStream->GetHashSize());
 
 	END_TRY("Can't create input stream for file entity");
 }
@@ -49,6 +65,9 @@ bigsize_t FileEntitySchemeInputStream::GetSize() const
 size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 {
 	BEGIN_TRY();
+
+	if(ended)
+		return 0;
 
 	char* dataPtr = (char*)data;
 
@@ -72,6 +91,9 @@ size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 
 			// increment index for next block
 			++currentBlockIndex;
+
+			// write it into total hash stream
+			totalHashStream->Write(currentBlockFile);
 
 			// read and check the hash
 			size_t hashSize = hashStream->GetHashSize();
@@ -97,6 +119,27 @@ size_t FileEntitySchemeInputStream::Read(void* data, size_t size)
 		remainingSize -= sizeToCopy;
 	}
 
+	// if there is no more data, check that data is actually ends
+	if(remainingSize <= 0)
+	{
+		ended = true;
+
+		// check total hash
+		totalHashStream->End();
+		size_t hashSize = totalHashStream->GetHashSize();
+		ptr<File> totalHash = NEW(MemoryFile(hashSize));
+		totalHashStream->GetHash(totalHash->GetData());
+		if(memcmp(totalHash->GetData(), totalHashFromDescriptor->GetData(), hashSize) != 0)
+			THROW("Wrong total hash");
+
+		// check that last block is over
+		if(currentBlockFile && currentBlockOffset < currentBlockFile->GetSize())
+			THROW("Last block is not over");
+
+		// check that last block is last
+		descriptorReader->ReadEnd();
+	}
+
 	return dataPtr - (char*)data;
 
 	END_TRY("Can't read data from file entity");
@@ -111,6 +154,7 @@ FileEntitySchemeOutputStream::FileEntitySchemeOutputStream(ptr<Action> action, p
 	descriptorHashWriter = NEW(StreamWriter(descriptorHashStream));
 
 	hashStream = NEW(Crypto::WhirlpoolStream());
+	totalHashStream = NEW(Crypto::WhirlpoolStream());
 }
 
 void FileEntitySchemeOutputStream::FinishCurrentBlock()
@@ -157,9 +201,13 @@ void FileEntitySchemeOutputStream::Write(const void* data, size_t size)
 		if(sizeToWrite > size)
 			sizeToWrite = size;
 		currentBlockStream->Write(dataPtr, sizeToWrite);
+		// write it also to total hash stream
+		totalHashStream->Write(dataPtr, sizeToWrite);
+		// move pointers and counters
 		dataPtr += sizeToWrite;
 		size -= sizeToWrite;
 		currentBlockSize += sizeToWrite;
+
 
 		// if block is over, finish it
 		if(currentBlockSize >= blockSize)
@@ -175,13 +223,24 @@ void FileEntitySchemeOutputStream::End()
 	if(currentBlockStream)
 		FinishCurrentBlock();
 
-	// write descriptor
+	// get hashes file
 	ptr<File> hashes = descriptorHashStream->ToFile();
 	descriptorHashStream = nullptr;
+
+	// get total hash file
+	ptr<File> totalHash = NEW(MemoryFile(totalHashStream->GetHashSize()));
+	totalHashStream->End();
+	totalHashStream->GetHash(totalHash->GetData());
+
+	// write descriptor, version 1
 	ptr<MemoryStream> descriptorStream = NEW(MemoryStream(hashes->GetSize() + 9));
 	StreamWriter writer(descriptorStream);
+	writer.WriteShortly(1); // descriptor version
 	writer.WriteShortlyBig(totalSize);
+	writer.Write(totalHash);
 	writer.Write(hashes);
+
+	// store descriptor
 	entity->WriteData(action, nullptr, descriptorStream->ToFile());
 }
 

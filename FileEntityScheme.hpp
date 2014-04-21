@@ -33,9 +33,12 @@ private:
 	bigsize_t totalSize, remainingSize;
 	size_t blockSize;
 	ptr<StreamReader> descriptorReader;
+	ptr<File> totalHashFromDescriptor;
 	size_t currentBlockIndex, currentBlockOffset, currentBlockSize;
 	ptr<File> currentBlockFile;
 	ptr<Crypto::HashStream> hashStream;
+	ptr<Crypto::HashStream> totalHashStream;
+	bool ended;
 
 public:
 	FileEntitySchemeInputStream(ptr<Entity> entity);
@@ -54,6 +57,7 @@ private:
 	ptr<Entity> entity;
 	size_t blockSize;
 	ptr<Crypto::HashStream> hashStream;
+	ptr<Crypto::HashStream> totalHashStream;
 	ptr<MemoryStream> descriptorHashStream;
 	ptr<StreamWriter> descriptorHashWriter;
 	bigsize_t totalSize;
