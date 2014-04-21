@@ -57,6 +57,7 @@ META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(CreateTempRemoteRepo);
 	META_METHOD(CreateMemoryRemoteRepo);
 	META_METHOD(CreateScriptRepo);
+	META_METHOD(ReclaimObject);
 META_CLASS_END();
 
 #include "ViewScriptObject.hpp"
