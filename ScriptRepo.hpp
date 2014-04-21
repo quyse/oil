@@ -86,6 +86,8 @@ public:
 	long long GetPullLag() const;
 	long long GetPulledKeysCount() const;
 
+	ptr<ClientRepo> GetClientRepo() const;
+
 	META_DECLARE_CLASS(ScriptRepo);
 };
 

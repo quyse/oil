@@ -155,6 +155,23 @@ function onMaintenanceOpenTool() {
 	}
 }
 
+function onMaintenanceVacuum() {
+	try {
+		OIL.repo.GetClientRepo().Vacuum();
+		OIL.getPromptService().alert(window, "defragment local cache", "completed successfully");
+	} catch(e) {
+		OIL.getPromptService().alert(window, "defragment local cache error", e);
+	}
+}
+
+function onMaintenanceIntegrityCheck() {
+	try {
+		OIL.getPromptService().alert(window, "local cache integrity check", OIL.repo.GetClientRepo().IntegrityCheck());
+	} catch(e) {
+		OIL.getPromptService().alert(window, "local cache integrity check", e);
+	}
+}
+
 // get preferences service
 OIL.prefs = Components.classes["@mozilla.org/preferences-service;1"]
 	.getService(Components.interfaces.nsIPrefService)

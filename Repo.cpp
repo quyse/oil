@@ -71,4 +71,16 @@ void Repo::CheckAppVersion(int appVersion)
 		THROW("Wrong repo format");
 }
 
+void Repo::Vacuum()
+{
+	db->Vacuum();
+}
+
+String Repo::IntegrityCheck() const
+{
+	std::ostringstream stream;
+	db->IntegrityCheck(stream);
+	return stream.str();
+}
+
 END_INANITY_OIL

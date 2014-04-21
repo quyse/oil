@@ -68,8 +68,15 @@ META_CLASS_END();
 META_CLASS(Inanity::Oil::RemoteRepo, Inanity.Oil.RemoteRepo);
 META_CLASS_END();
 
+#include "Repo.hpp"
+META_CLASS(Inanity::Oil::Repo, Inanity.Oil.Repo);
+	META_METHOD(Vacuum);
+	META_METHOD(IntegrityCheck);
+META_CLASS_END();
+
 #include "ClientRepo.hpp"
 META_CLASS(Inanity::Oil::ClientRepo, Inanity.Oil.ClientRepo);
+	META_CLASS_PARENT(Inanity::Oil::Repo);
 META_CLASS_END();
 
 #include "ScriptRepo.hpp"
@@ -87,6 +94,7 @@ META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
 	META_METHOD(GetPushedKeysCount);
 	META_METHOD(GetPullLag);
 	META_METHOD(GetPulledKeysCount);
+	META_METHOD(GetClientRepo);
 META_CLASS_END();
 
 #include "Action.hpp"

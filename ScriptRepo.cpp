@@ -332,4 +332,9 @@ long long ScriptRepo::GetPulledKeysCount() const
 	return clientRepo->GetPulledKeysCount();
 }
 
+ptr<ClientRepo> ScriptRepo::GetClientRepo() const
+{
+	return clientRepo;
+}
+
 END_INANITY_OIL

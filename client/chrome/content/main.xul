@@ -22,6 +22,8 @@
 		<command id="commandMaintenanceCreateEntity" oncommand="onMaintenanceCreateEntity()" />
 		<command id="commandMaintenanceOpenEntity" oncommand="onMaintenanceOpenEntity()" />
 		<command id="commandMaintenanceOpenTool" oncommand="onMaintenanceOpenTool()" />
+		<command id="commandMaintenanceVacuum" oncommand="onMaintenanceVacuum()" />
+		<command id="commandMaintenanceIntegrityCheck" oncommand="onMaintenanceIntegrityCheck()" />
 		<command id="commandHelpAbout" oncommand="onHelpAbout()" />
 	</commandset>
 
@@ -66,6 +68,8 @@
 							<menuitem label="create entity..." command="commandMaintenanceCreateEntity" />
 							<menuitem label="open entity..." command="commandMaintenanceOpenEntity" />
 							<menuitem label="open tool..." command="commandMaintenanceOpenTool" />
+							<menuitem label="defragment local cache" command="commandMaintenanceVacuum" />
+							<menuitem label="check local cache integrity" command="commandMaintenanceIntegrityCheck" />
 						</menupopup>
 					</menu>
 				</menupopup>
