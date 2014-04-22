@@ -14,6 +14,7 @@
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
 #include "../inanity/data/SQLiteFileSystem.hpp"
+#include "../inanity/data/Base64OutputStream.hpp"
 #include "../inanity/MemoryFile.hpp"
 
 // classes only for registration in script state
@@ -42,6 +43,7 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<ReferenceEntityFieldType>();
 	scriptState->Register<FileEntitySchemeInputStream>();
 	scriptState->Register<FileEntitySchemeOutputStream>();
+	scriptState->Register<Data::Base64OutputStream>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const
