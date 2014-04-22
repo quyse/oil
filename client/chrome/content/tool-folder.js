@@ -439,7 +439,7 @@ function checkDrop(row, orientation, dataTransfer, output) {
 		// if it's folder entry
 		var entry = dataTransfer.mozGetDataAt(MIME_DRAG_FOLDER_ENTRY, i);
 		if(entry) {
-			entries.push(entry);
+			entries.push(JSON.parse(entry));
 			continue;
 		}
 
@@ -956,10 +956,10 @@ function onTreeDragStart(event) {
 		return;
 
 	for(var i = 0; i < selectedItems.length; ++i)
-		event.dataTransfer.mozSetDataAt(MIME_DRAG_FOLDER_ENTRY, {
+		event.dataTransfer.mozSetDataAt(MIME_DRAG_FOLDER_ENTRY, JSON.stringify({
 			itemId: selectedItems[i].entityId,
 			folderId: selectedItems[i].parent.entityId
-		}, i);
+		}), i);
 
 	event.dataTransfer.effectAllowed = "linkMove";
 }
