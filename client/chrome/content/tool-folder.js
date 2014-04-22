@@ -2,7 +2,7 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
-const MIME_DRAG_FOLDER_ENTRIES = "application/x-inanityoil-folder-entry";
+const MIME_DRAG_FOLDER_ENTRY = "application/x-inanityoil-folder-entry";
 // maximum length of hierarchy to process
 const MAX_HIERARCHY_LENGTH = 64;
 
@@ -363,92 +363,129 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	var checkOutput = {};
 	if(!checkDrop(row, orientation, dataTransfer, checkOutput)) {
 		if(checkOutput.message)
-			alert(checkOutput.message);
+			OIL.getPromptService().prompt(window, "drop error", checkOutput.message);
 		return;
 	}
+
 	var entries = checkOutput.entries;
-
-	var actionDescription;
-	var operation = dataTransfer.dropEffect;
-	switch(operation) {
-	case "move":
-		actionDescription = "move ";
-		break;
-	case "link":
-		actionDescription = "link ";
-		break;
-	}
-
-	if(entries.length == 1) {
-		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.ids.tags.name);
-		actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
-	}
-	else
-		actionDescription += entries.length + " items";
+	var files = checkOutput.files;
 
 	var destItem = this.getItem(row);
 	var destEntity = destItem.entity;
-	var destIdFile = OIL.eid2f(destEntity.GetId());
 
-	actionDescription += " to " + destItem.getStringifiedName();
-
-	var action = OIL.createAction(actionDescription);
-	for(var i = 0; i < entries.length; ++i) {
-		var sourceFolderId = entries[i].folderId;
-		var sourceFolderEntity = OIL.entityManager.GetEntity(sourceFolderId);
-		var sourceFileEntity = OIL.entityManager.GetEntity(entries[i].itemId);
-
-		var entryIdFile = OIL.eid2f(entries[i].itemId);
-
-		// if we moving
-		if(operation == "move") {
-			// if we moving solid link, change the tag
-			if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.ids.tags.parent)) == sourceFolderId)
-				sourceFileEntity.WriteTag(action, OIL.ids.tags.parent, destIdFile);
-
-			// remove entry from source folder
-			sourceFolderEntity.WriteData(action, entryIdFile, null);
+	// if there are some entries
+	if(entries.length) {
+		var actionDescription;
+		var operation = dataTransfer.dropEffect;
+		switch(operation) {
+		case "move":
+			actionDescription = "move ";
+			break;
+		case "link":
+			actionDescription = "link ";
+			break;
 		}
 
-		// place entry into dest folder
-		destEntity.WriteData(action, entryIdFile, OIL.fileTrue());
+		if(entries.length == 1) {
+			let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.ids.tags.name);
+			actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
+		}
+		else
+			actionDescription += entries.length + " items";
+
+		var destIdFile = OIL.eid2f(destEntity.GetId());
+
+		actionDescription += " to " + destItem.getStringifiedName();
+
+		var action = OIL.createAction(actionDescription);
+
+		// perform operation on entries
+		for(var i = 0; i < entries.length; ++i) {
+			var sourceFolderId = entries[i].folderId;
+			var sourceFolderEntity = OIL.entityManager.GetEntity(sourceFolderId);
+			var sourceFileEntity = OIL.entityManager.GetEntity(entries[i].itemId);
+
+			var entryIdFile = OIL.eid2f(entries[i].itemId);
+
+			// if we moving
+			if(operation == "move") {
+				// if we moving solid link, change the tag
+				if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.ids.tags.parent)) == sourceFolderId)
+					sourceFileEntity.WriteTag(action, OIL.ids.tags.parent, destIdFile);
+
+				// remove entry from source folder
+				sourceFolderEntity.WriteData(action, entryIdFile, null);
+			}
+
+			// place entry into dest folder
+			destEntity.WriteData(action, entryIdFile, OIL.fileTrue());
+		}
+		OIL.finishAction(action);
 	}
-	OIL.finishAction(action);
+
+	// perform operation on files
+	if(files.length > 0)
+		uploadFiles(files, destEntity);
 };
 
 function checkDrop(row, orientation, dataTransfer, output) {
-	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
-		return false;
 	if(orientation != 0)
 		return false;
 
+	// get items to drop
+	var entries = [], files = [];
+	var itemsCount = dataTransfer.mozItemCount;
+	for(var i = 0; i < itemsCount; ++i) {
+		// if it's folder entry
+		var entry = dataTransfer.mozGetDataAt(MIME_DRAG_FOLDER_ENTRY, i);
+		if(entry) {
+			entries.push(entry);
+			continue;
+		}
+
+		// else if it's file
+		var file = dataTransfer.mozGetDataAt("application/x-moz-file", i);
+		if(file) {
+			file = file.QueryInterface(Components.interfaces.nsIFile);
+			if(file)
+				files.push(file);
+			else
+				return false;
+			continue;
+		}
+	}
+
+	// check operation
 	var operation = dataTransfer.dropEffect;
 	switch(operation) {
 	case "move":
+		break;
 	case "link":
+		// cannot link files
+		if(files.length > 0)
+			return false;
 		break;
 	default:
 		return false;
 	}
 
-	var entries = JSON.parse(dataTransfer.getData(MIME_DRAG_FOLDER_ENTRIES));
-	if(entries.length <= 0)
-		return false;
-
+	// get target item
 	var targetItem = view.getItem(row);
 
-	// if operation is move, check for cycles
+	// if operation is move, check for cycles for entries
 	if(operation == "move") {
 		for(var i = 0; i < entries.length; ++i)
 			if(isItemInto(targetItem.entityId, entries[i].itemId)) {
 				if(output)
-					output.message = "Operation would create a cycle of real paths which is forbidden.";
+					output.message = "operation would create a cycle of real paths which is forbidden";
 				return false;
 			}
 	}
 
-	if(output)
+	if(output) {
 		output.entries = entries;
+		output.files = files;
+	}
 
 	return true;
 }
@@ -547,7 +584,7 @@ function onCommandUploadFile() {
 
 	var nsIFilePicker = Components.interfaces.nsIFilePicker;
 	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
-	fp.init(window, "Select File to Upload", nsIFilePicker.modeOpenMultiple);
+	fp.init(window, "select files to upload", nsIFilePicker.modeOpenMultiple);
 	fp.open({
 		done: function(result) {
 			try {
@@ -555,126 +592,134 @@ function onCommandUploadFile() {
 					return;
 
 				// get list of files with total size
-				var files = fp.files;
-				var paths = [];
-				var totalSize = 0;
-				while(files.hasMoreElements()) {
-					var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-					var fileSize = file.fileSize;
-					paths.push({
-						path: file.path,
-						name: file.leafName,
-						size: fileSize
-					});
-					totalSize += fileSize;
-				}
+				var files = [];
+				var pickedFiles = fp.files;
+				while(pickedFiles.hasMoreElements())
+					files.push(pickedFiles.getNext().QueryInterface(Components.interfaces.nsIFile));
 
-				if(paths.length <= 0)
-					return;
-
-				// create action
-				var actionDescription;
-				if(paths.length == 1)
-					actionDescription = "upload file " + JSON.stringify(paths[0].name);
-				else
-					actionDescription = "upload " + paths.length + " files";
-				var action = OIL.createAction(actionDescription);
-
-				var folderEntity = OIL.entityManager.GetEntity(folderId);
-
-				const blockSize = 1024 * 1024;
-				var pathIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
-				// do one step of uploading
-				var step = function() {
-					try {
-						// if we're starting new file
-						if(!fileEntity) {
-							// if there is no more files
-							if(pathIndex >= paths.length) {
-								// finish
-								OIL.finishAction(action);
-								cancelCallback();
-								return;
-							}
-
-							// open file stream
-							sourceStream = OIL.core.GetNativeFileSystem().LoadStream(paths[pathIndex].path);
-							// remember file size
-							fileSize = paths[pathIndex].size;
-							// create file entity, perform starting changes
-							fileEntity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
-							fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[pathIndex].name));
-							fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, paths[pathIndex].name);
-							folderEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
-							fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderId));
-
-							// create entity stream
-							entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
-
-							// increment index
-							++pathIndex;
-							// reset written file size
-							fileWrittenSize = 0;
-						}
-
-						// write a block
-						var block = sourceStream.Read(blockSize);
-						// if there is some data
-						var sizeOfBlock = block.GetSize();
-						if(sizeOfBlock) {
-							// write it
-							entityStream.Write(block);
-							// make some progress
-							fileWrittenSize += sizeOfBlock;
-							totalWrittenSize += sizeOfBlock;
-							// correct total size if needed
-							if(fileWrittenSize > fileSize) {
-								totalSize = totalSize - fileSize + fileWrittenSize;
-								fileSize = fileWrittenSize;
-							}
-							// report progress
-							progressCallback(totalWrittenSize, totalSize);
-						} else {
-							// else there is no more data
-							// finish with this file
-							entityStream.End();
-
-							// reset pointers
-							fileEntity = null;
-							OIL.core.ReclaimObject(sourceStream);
-							sourceStream = null;
-							entityStream = null;
-						}
-
-						// next step
-						OIL.setTimeout(step, 0);
-					} catch(e) {
-						cancelCallback();
-						alert(e);
-					}
-				};
-
-				// show progress window
-				var progressCallback, cancelCallback;
-				window.openDialog('progress.xul', '', 'chrome,modal,centerscreen,close=no', {
-					setProgressCallback: function(callback) {
-						progressCallback = callback
-					},
-					setCancelCallback: function(callback) {
-						cancelCallback = callback
-					},
-					onStart: function() {
-						OIL.setTimeout(step, 0);
-					},
-					title: "uploading...",
-					description: "preparing file(s) to upload, please wait...",
-					cancelButtonText: null
-				});
+				uploadFiles(files, OIL.entityManager.GetEntity(folderId));
 			}
 			catch(e) {
 				alert(e);
 			}
 		}
+	});
+}
+
+/// upload files into folder
+/** \param files [nsIFile] */
+function uploadFiles(files, folderEntity) {
+	var paths = [];
+	var totalSize = 0;
+	for(var i = 0; i < files.length; ++i) {
+		var file = files[i];
+		var fileSize = file.fileSize;
+		paths.push({
+			path: file.path,
+			name: file.leafName,
+			size: fileSize
+		});
+		totalSize += fileSize;
+	}
+
+	if(paths.length <= 0)
+		return;
+
+	// create action
+	var actionDescription;
+	if(paths.length == 1)
+		actionDescription = "upload file " + JSON.stringify(paths[0].name);
+	else
+		actionDescription = "upload " + paths.length + " files";
+	var action = OIL.createAction(actionDescription);
+
+	const blockSize = 1024 * 1024;
+	var pathIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
+	// do one step of uploading
+	var step = function() {
+		try {
+			// if we're starting new file
+			if(!fileEntity) {
+				// if there is no more files
+				if(pathIndex >= paths.length) {
+					// finish
+					OIL.finishAction(action);
+					cancelCallback();
+					return;
+				}
+
+				// open file stream
+				sourceStream = OIL.core.GetNativeFileSystem().LoadStream(paths[pathIndex].path);
+				// remember file size
+				fileSize = paths[pathIndex].size;
+				// create file entity, perform starting changes
+				fileEntity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
+				fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[pathIndex].name));
+				fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, paths[pathIndex].name);
+				folderEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
+				fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderEntity.GetId()));
+
+				// create entity stream
+				entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
+
+				// increment index
+				++pathIndex;
+				// reset written file size
+				fileWrittenSize = 0;
+			}
+
+			// write a block
+			var block = sourceStream.Read(blockSize);
+			// if there is some data
+			var sizeOfBlock = block.GetSize();
+			if(sizeOfBlock) {
+				// write it
+				entityStream.Write(block);
+				// make some progress
+				fileWrittenSize += sizeOfBlock;
+				totalWrittenSize += sizeOfBlock;
+				// correct total size if needed
+				if(fileWrittenSize > fileSize) {
+					totalSize = totalSize - fileSize + fileWrittenSize;
+					fileSize = fileWrittenSize;
+				}
+				// report progress
+				progressCallback(totalWrittenSize, totalSize);
+			} else {
+				// else there is no more data
+				// finish with this file
+				entityStream.End();
+
+				// reset pointers
+				fileEntity = null;
+				OIL.core.ReclaimObject(sourceStream);
+				sourceStream = null;
+				entityStream = null;
+			}
+
+			// next step
+			OIL.setTimeout(step, 0);
+		} catch(e) {
+			cancelCallback();
+			alert(e);
+		}
+	};
+
+	// show progress window
+	var progressCallback, cancelCallback;
+	window.openDialog('progress.xul', '', 'chrome,modal,centerscreen,close=no', {
+		setProgressCallback: function(callback) {
+			progressCallback = callback
+		},
+		setCancelCallback: function(callback) {
+			cancelCallback = callback
+		},
+		onStart: function() {
+			OIL.setTimeout(step, 0);
+		},
+		title: "uploading...",
+		description: "preparing file(s) to upload, please wait...",
+		cancelButtonText: null
 	});
 }
 
@@ -890,12 +935,13 @@ function onTreeDragStart(event) {
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
 		return;
-	event.dataTransfer.setData(MIME_DRAG_FOLDER_ENTRIES, JSON.stringify(selectedItems.map(function(item) {
-		return {
-			itemId: item.entityId,
-			folderId: item.parent.entityId
-		};
-	})));
+
+	for(var i = 0; i < selectedItems.length; ++i)
+		event.dataTransfer.mozSetDataAt(MIME_DRAG_FOLDER_ENTRY, {
+			itemId: selectedItems[i].entityId,
+			folderId: selectedItems[i].parent.entityId
+		}, i);
+
 	event.dataTransfer.effectAllowed = "linkMove";
 }
 
