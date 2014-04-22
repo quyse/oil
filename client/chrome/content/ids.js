@@ -83,6 +83,11 @@ OIL.ids = {
 			id: "ornm",
 			displayName: "original filename",
 			type: "string"
+		}, {
+			name: "mimeType",
+			id: "mime",
+			displayName: "mime type",
+			type: "string"
 		}],
 		interfacesInit: [{
 			name: "data",
@@ -114,7 +119,8 @@ OIL.ids = {
 					entityCallback = null;
 				};
 			}
-		}]
+		}],
+		tool: "file"
 	}, {
 		name: "texture",
 		id: "tex ",

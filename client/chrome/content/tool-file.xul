@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<page id="tool"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<script src="tool-file.js" />
+
+	<vbox id="container" flex="1" />
+
+	<label id="labelNote" value="no such file" />
+
+</page>
