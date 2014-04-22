@@ -941,7 +941,6 @@ function onContextMenuShowing() {
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
-	document.getElementById("contextMenuUnlink").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuCreate").hidden = !oneFolder;
 	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
