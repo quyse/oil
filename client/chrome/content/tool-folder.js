@@ -608,62 +608,112 @@ function onCommandUploadFile() {
 
 /// upload files into folder
 /** \param files [nsIFile] */
-function uploadFiles(files, folderEntity) {
-	var paths = [];
+function uploadFiles(sourceFiles, folderEntity) {
+	var entries = [];
 	var totalSize = 0;
-	for(var i = 0; i < files.length; ++i) {
-		var file = files[i];
-		var fileSize = file.fileSize;
-		paths.push({
-			path: file.path,
-			name: file.leafName,
-			size: fileSize
-		});
-		totalSize += fileSize;
+	function addFiles(sourceFiles, entries) {
+		for(var i = 0; i < sourceFiles.length; ++i) {
+			var file = sourceFiles[i];
+			// if this is normal file
+			if(file.isFile()) {
+				var fileSize = file.fileSize;
+				entries.push({
+					type: "file",
+					path: file.path,
+					name: file.leafName,
+					size: fileSize
+				});
+				totalSize += fileSize;
+			}
+			// else if it's a directory
+			else if(file.isDirectory()) {
+				var subFiles = [];
+				var directoryEntries = file.directoryEntries;
+				while(directoryEntries.hasMoreElements())
+					subFiles.push(directoryEntries.getNext().QueryInterface(Components.interfaces.nsIFile));
+				var subPaths = [];
+				addFiles(subFiles, subPaths);
+				entries.push({
+					type: "directory",
+					name: file.leafName,
+					entries: subPaths
+				});
+			}
+		}
 	}
 
-	if(paths.length <= 0)
+	// add source files
+	addFiles(sourceFiles, entries);
+
+	if(entries.length <= 0)
 		return;
 
 	// create action
 	var actionDescription;
-	if(paths.length == 1)
-		actionDescription = "upload file " + JSON.stringify(paths[0].name);
+	if(entries.length == 1)
+		actionDescription = "upload file " + JSON.stringify(entries[0].name);
 	else
-		actionDescription = "upload " + paths.length + " files";
+		actionDescription = "upload " + entries.length + " files";
 	var action = OIL.createAction(actionDescription);
 
+	// create directories, and get flatten list of files
+	var files = [];
+	var processEntries = function(parentEntity, entries) {
+		for(var i = 0; i < entries.length; ++i) {
+			var entry = entries[i];
+			switch(entry.type) {
+			case "file":
+				// remember parent entity
+				entry.parentEntity = parentEntity;
+				// add entry to list of files
+				files.push(entry);
+				break;
+			case "directory":
+				// create directory
+				var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+				entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(entry.name));
+				parentEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+				entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(parentEntity.GetId()));
+				// process sub-entries
+				processEntries(entity, entry.entries);
+				break;
+			}
+		}
+	};
+	processEntries(folderEntity, entries);
+
+	// upload files
 	const blockSize = 1024 * 1024;
-	var pathIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
+	var fileIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
 	// do one step of uploading
 	var step = function() {
 		try {
 			// if we're starting new file
 			if(!fileEntity) {
 				// if there is no more files
-				if(pathIndex >= paths.length) {
+				if(fileIndex >= files.length) {
 					// finish
 					OIL.finishAction(action);
 					cancelCallback();
 					return;
 				}
 
+				var file = files[fileIndex++];
+
 				// open file stream
-				sourceStream = OIL.core.GetNativeFileSystem().LoadStream(paths[pathIndex].path);
+				sourceStream = OIL.core.GetNativeFileSystem().LoadStream(file.path);
 				// remember file size
-				fileSize = paths[pathIndex].size;
+				fileSize = file.size;
 				// create file entity, perform starting changes
 				fileEntity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
-				fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(paths[pathIndex].name));
-				fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, paths[pathIndex].name);
-				folderEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
-				fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(folderEntity.GetId()));
+				fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(file.name));
+				fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, file.name);
+				file.parentEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
+				fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(file.parentEntity.GetId()));
 
 				// create entity stream
 				entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
 
-				// increment index
-				++pathIndex;
 				// reset written file size
 				fileWrittenSize = 0;
 			}
