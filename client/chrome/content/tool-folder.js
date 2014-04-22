@@ -797,37 +797,6 @@ function onCommandDelete() {
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
 		var itemParent = item.parent;
-		item.entity.Delete(action);
-		itemParent.entity.WriteData(action, OIL.eid2f(item.entityId), null);
-	}
-
-	OIL.finishAction(action);
-}
-
-function onCommandUnlink() {
-	var selectedItems = getSelectedItems();
-	if(selectedItems.length <= 0)
-		return;
-
-	// construct action description
-	var actionDescription;
-	if(selectedItems.length == 1)
-		actionDescription = "unlink " + selectedItems[0].getStringifiedName();
-	else
-		actionDescription = "unlink " + selectedItems.length + " items";
-	// if all items from the same folder, add it to description
-	var parentItem = selectedItems[0].parent;
-	for(var i = 1; i < selectedItems.length; ++i)
-		if(selectedItems[i].parent != parentItem)
-			break;
-	if(i >= selectedItems.length)
-		actionDescription += " from folder " + parentItem.getStringifiedName();
-
-	var action = OIL.createAction(actionDescription);
-
-	for(var i = 0; i < selectedItems.length; ++i) {
-		var item = selectedItems[i];
-		var itemParent = item.parent;
 		if(item.parentId == itemParent.entityId)
 			item.entity.WriteTag(action, OIL.ids.tags.parent, null);
 		itemParent.entity.WriteData(action, OIL.eid2f(item.entityId), null);

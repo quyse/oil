@@ -11,7 +11,6 @@
 		<command id="commandOpen" oncommand="onCommandOpen()" />
 		<command id="commandRename" oncommand="onCommandRename()" />
 		<command id="commandDelete" oncommand="onCommandDelete()" />
-		<command id="commandUnlink" oncommand="onCommandUnlink()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
 		<command id="commandUploadFile" oncommand="onCommandUploadFile()" />
@@ -34,7 +33,6 @@
 			<menuitem id="contextMenuOpen" label="open" command="commandOpen" key="keyOpen" />
 			<menuitem id="contextMenuRename" label="rename" command="commandRename" key="keyRename" />
 			<menuitem id="contextMenuDelete" label="delete" command="commandDelete" key="keyDelete" />
-			<menuitem id="contextMenuUnlink" label="unlink" command="commandUnlink" />
 			<menu id="contextMenuCreate" label="create">
 				<menupopup>
 					<menuitem label="folder" command="commandCreateFolder" />
