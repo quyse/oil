@@ -966,13 +966,12 @@ function onTreeDragStart(event) {
 var rootItem;
 
 window.addEventListener('load', function() {
-	var params = OIL.getParamsFromToolWindow(window);
-	if(!params || !params.entity)
+	if(!OIL.initToolWindow(window) || !window.toolTab.params.entity)
 		return;
 
 	window.toolTab.setTitle("folder");
 
-	rootItem = new Item(OIL.entityManager.GetEntity(params.entity));
+	rootItem = new Item(OIL.entityManager.GetEntity(window.toolTab.params.entity));
 
 	document.getElementById("labelEmpty").remove();
 

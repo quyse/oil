@@ -37,7 +37,7 @@
 			onpopupshowing="onToolTabContextShowing(event)"
 			onpopuphiding="onToolTabContextHiding(event)">
 			<menuitem label="undock" default="true" disabled="true" />
-			<menuitem label="duplicate" id="contextMenuToolTabDuplicate" oncommand="onToolTabContextDuplicate()" />
+			<menuitem label="duplicate" oncommand="onToolTabContextDuplicate()" />
 			<menuitem label="close" oncommand="onToolTabContextClose()" />
 		</menupopup>
 	</popupset>

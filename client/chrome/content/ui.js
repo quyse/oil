@@ -22,7 +22,12 @@ function ToolTab() {
 	this.tabpanel = document.createElementNS(XUL_NS, "tabpanel");
 	this.tabpanel.toolTab = this;
 
-	// setup drag events
+	// create iframe
+	this.iframe = document.createElementNS(XUL_NS, "iframe");
+	this.iframe.flex = 1;
+	this.tabpanel.appendChild(this.iframe);
+
+	// setup tab drag events
 	var This = this;
 	this.tab.addEventListener("dragstart", function(event) {
 		event.dataTransfer.setData(MIME_DRAG_TOOL_TAB, This.id);
@@ -60,6 +65,17 @@ ToolTab.prototype.setTitle = function(title) {
 
 	this.tab.setAttribute("label", title);
 	this.tab.setAttribute("tooltiptext", tooltip);
+};
+ToolTab.prototype.navigate = function(page, params) {
+	// compose url
+	var url = "chrome://oil/content/tool-" + page + ".xul#tab=" + this.id;
+
+	// store data
+	this.page = page;
+	this.params = params;
+
+	// navigate iframe
+	this.iframe.setAttribute("src", url);
 };
 
 /// Tool tabbox class.
@@ -368,31 +384,26 @@ OIL.wrongToolWindow = function(window) {
 	window.location = "tool-wrong.xul";
 };
 
-OIL.getParamsFromToolWindow = function(window) {
-	if(window.location.hash.length <= 0) {
+OIL.initToolWindow = function(window) {
+	try {
+		// get tooltab
+		var tabId = /^\#tab\=(.+)$/.exec(window.location.hash);
+		if(!tabId)
+			throw "no tab id";
+		tabId = tabId[1];
+		var toolTab = OIL.ToolTab.get(tabId);
+		if(!toolTab)
+			throw "wrong tab id";
+
+		// store tooltab
+		window.toolTab = toolTab;
+
+		return true;
+
+	} catch(e) {
+		OIL.log(e);
 		OIL.wrongToolWindow(window);
-		return null;
-	}
 
-	var params = window.location.hash.substr(1).split("&");
-	var res = {};
-	for(var i = 0; i < params.length; ++i) {
-		var param = params[i].split("=");
-		if(param.length != 2)
-			continue;
-		res[decodeURIComponent(param[0])] = decodeURIComponent(param[1]);
+		return false;
 	}
-
-	// 'tab' parameter is required
-	if(res.tab) {
-		window.toolTab = OIL.ToolTab.get(res.tab);
-		delete res.tab;
-		window.toolTab.params = res;
-	}
-	else {
-		OIL.wrongToolWindow(window);
-		return null;
-	}
-
-	return res;
 };

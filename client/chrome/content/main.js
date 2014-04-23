@@ -195,34 +195,19 @@ function createToolInTabbox(tabbox, page, params) {
 	var toolTab = new OIL.ToolTab();
 	tabbox.appendTab(toolTab);
 
-	// compose url
-	var url = "chrome://oil/content/tool-" + page + ".xul#tab=" + toolTab.id;
-	for(var i in params)
-		url += "&" + encodeURIComponent(i) + "=" + encodeURIComponent(params[i]);
-
-	// init iframe
-	var tabpanel = toolTab.tabpanel;
-	var iframe = document.createElementNS(XUL_NS, "iframe");
-	iframe.setAttribute("src", url);
-	iframe.flex = 1;
-	tabpanel.appendChild(iframe);
-
-	// set duplicate command
-	toolTab.duplicateTool = function() {
-		createToolInTabbox(this.parent, page, toolTab.params);
-	};
+	// navigate tool tab
+	toolTab.navigate(page, params);
 };
 
 var toolTabContextTarget = null;
 function onToolTabContextShowing(event) {
 	toolTabContextTarget = event.target.triggerNode;
-	document.getElementById("contextMenuToolTabDuplicate").hidden = toolTabContextTarget.toolTab.duplicateTool === undefined;
 }
 function onToolTabContextHiding(event) {
 	toolTabContextTarget = null;
 }
 function onToolTabContextDuplicate(event) {
-	toolTabContextTarget.toolTab.duplicateTool();
+	createToolInTabbox(toolTabContextTarget.toolTab.parent, toolTabContextTarget.toolTab.page, toolTabContextTarget.toolTab.params);
 }
 function onToolTabContextClose(event) {
 	toolTabContextTarget.toolTab.close();

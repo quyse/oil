@@ -108,13 +108,12 @@ function rebuild() {
 }
 
 window.addEventListener('load', function() {
-	var params = OIL.getParamsFromToolWindow(window);
-	if(!params || !params.entity)
+	if(!OIL.initToolWindow(window) || !window.toolTab.params.entity)
 		return;
 
 	window.toolTab.setTitle("file");
 
-	entity = OIL.entityManager.GetEntity(params.entity);
+	entity = OIL.entityManager.GetEntity(window.toolTab.params.entity);
 	if(entity.GetScheme().GetId() != OIL.ids.schemes.file) {
 		document.getElementById("labelNote").value = "scheme is not file";
 		return;

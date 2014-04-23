@@ -183,10 +183,9 @@ function addFieldControl(scheme, fieldId) {
 }
 
 window.addEventListener('load', function() {
-	var params = OIL.getParamsFromToolWindow(window);
-	if(!params || !params.entity)
+	if(!OIL.initToolWindow(window) || !window.toolTab.params.entity)
 		return;
-	entity = OIL.entityManager.GetEntity(params.entity);
+	entity = OIL.entityManager.GetEntity(window.toolTab.params.entity);
 	if(!entity)
 		return;
 
