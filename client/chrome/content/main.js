@@ -47,9 +47,16 @@ function onRepoConnect() {
 		}
 
 		// show root folder
-		createTool("folder", {
+		var rootFolderToolTab = createTool("folder", {
 			entity: OIL.ids.entities.root
 		});
+		// TEST
+		// show file viewer
+		var fileToolTab = createTool("file", {});
+		rootFolderToolTab.addDependentToolTab(fileToolTab);
+		// show properties
+		var entityToolTab = createTool("entity", {});
+		rootFolderToolTab.addDependentToolTab(entityToolTab);
 
 		// init upgrade
 		initClientUpgrade();
@@ -186,7 +193,7 @@ function createTool(page, params) {
 	if(!tabbox)
 		tabbox = OIL.ToolTabbox.get("main");
 
-	createToolInTabbox(tabbox, page, params);
+	return createToolInTabbox(tabbox, page, params);
 }
 OIL.createTool = createTool;
 
@@ -196,18 +203,28 @@ function createToolInTabbox(tabbox, page, params) {
 	tabbox.appendTab(toolTab);
 
 	// navigate tool tab
-	toolTab.navigate(page, params);
+	toolTab.page = page;
+	toolTab.params = params;
+	toolTab.navigate();
+
+	return toolTab;
 };
 
 var toolTabContextTarget = null;
 function onToolTabContextShowing(event) {
 	toolTabContextTarget = event.target.triggerNode;
+
+	// hide "make independent" command if tab is already independent
+	document.getElementById("contextMenuToolTabMakeIndependent").hidden = toolTabContextTarget.toolTab.independent;
 }
 function onToolTabContextHiding(event) {
 	toolTabContextTarget = null;
 }
 function onToolTabContextDuplicate(event) {
 	createToolInTabbox(toolTabContextTarget.toolTab.parent, toolTabContextTarget.toolTab.page, toolTabContextTarget.toolTab.params);
+}
+function onToolTabContextMakeIndependent(event) {
+	toolTabContextTarget.toolTab.independent = true;
 }
 function onToolTabContextClose(event) {
 	toolTabContextTarget.toolTab.close();

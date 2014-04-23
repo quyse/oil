@@ -537,9 +537,9 @@ function onCommandOpen() {
 		var tool = OIL.ids.schemeDescs[scheme.GetId()].tool;
 		if(!tool)
 			continue;
-		OIL.createTool(tool, {
+		window.toolTab.addDependentToolTab(OIL.createTool(tool, {
 			entity: item.entityId
-		});
+		}));
 	}
 }
 
@@ -809,9 +809,9 @@ function onCommandProperties() {
 	var selectedItems = getSelectedItems();
 
 	for(var i = 0; i < selectedItems.length; ++i)
-		OIL.createTool("entity", {
+		window.toolTab.addDependentToolTab(OIL.createTool("entity", {
 			entity: selectedItems[i].entityId
-		});
+		}));
 }
 
 function onCommandPlace() {
@@ -961,6 +961,22 @@ function onTreeDragStart(event) {
 		}), i);
 
 	event.dataTransfer.effectAllowed = "linkMove";
+}
+
+var lastSelectedEntityId = null;
+function onTreeSelect(event) {
+	var selectedItems = getSelectedItems();
+
+	// update dependent tabs with selected entity
+	if(selectedItems.length == 1) {
+		var selectedEntityId = selectedItems[0].entityId;
+		if(lastSelectedEntityId != selectedEntityId) {
+			lastSelectedEntityId = selectedEntityId;
+			window.toolTab.updateDependentToolTabs(function(params) {
+				params.entity = selectedEntityId;
+			});
+		}
+	}
 }
 
 var rootItem;

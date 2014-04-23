@@ -23,9 +23,13 @@ function ToolTab() {
 	this.tabpanel.toolTab = this;
 
 	// create iframe
-	this.iframe = document.createElementNS(XUL_NS, "iframe");
-	this.iframe.flex = 1;
-	this.tabpanel.appendChild(this.iframe);
+	this.initFrame();
+
+	// set initial values for variables
+	this.page = null;
+	this.params = null;
+	this.dependentToolTabIds = []; // list of tool tab ids which depends on this tab
+	this.independent = true; // set to true to forbid dependency on some tab
 
 	// setup tab drag events
 	var This = this;
@@ -66,16 +70,36 @@ ToolTab.prototype.setTitle = function(title) {
 	this.tab.setAttribute("label", title);
 	this.tab.setAttribute("tooltiptext", tooltip);
 };
-ToolTab.prototype.navigate = function(page, params) {
+ToolTab.prototype.initFrame = function() {
+	if(this.iframe)
+		this.iframe.remove();
+	this.iframe = document.createElementNS(XUL_NS, "iframe");
+	this.iframe.flex = 1;
+	this.tabpanel.appendChild(this.iframe);
+};
+ToolTab.prototype.navigate = function() {
 	// compose url
-	var url = "chrome://oil/content/tool-" + page + ".xul#tab=" + this.id;
-
-	// store data
-	this.page = page;
-	this.params = params;
+	var url = "chrome://oil/content/tool-" + this.page + ".xul#tab=" + this.id;
 
 	// navigate iframe
+	this.initFrame();
 	this.iframe.setAttribute("src", url);
+};
+ToolTab.prototype.addDependentToolTab = function(toolTab) {
+	toolTab.independent = false;
+	this.dependentToolTabIds.push(toolTab.id);
+};
+ToolTab.prototype.updateDependentToolTabs = function(updateParams) {
+	for(var i = 0; i < this.dependentToolTabIds.length; ++i) {
+		var id = this.dependentToolTabIds[i];
+		var toolTab = ToolTab.get(id);
+		if(!toolTab || toolTab.independent) {
+			this.dependentToolTabIds.splice(i--, 1);
+			continue;
+		}
+		updateParams(toolTab.params);
+		toolTab.navigate();
+	}
 };
 
 /// Tool tabbox class.

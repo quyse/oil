@@ -46,7 +46,7 @@
 		</menupopup>
 	</popupset>
 
-	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true">
+	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true" onselect="onTreeSelect(event)">
 		<treecols>
 			<treecol id="treecolName" primary="true" label="name" flex="1" />
 			<splitter class="tree-splitter" />
