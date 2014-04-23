@@ -94,6 +94,20 @@ function rebuild() {
 		var image = document.createElementNS(OIL.XUL_NS, "image");
 		row.appendChild(image);
 		image.src = dataUrl;
+		var lastMoveX, lastMoveY;
+		grid.addEventListener("mousemove", function(event) {
+			if(event.buttons & 1) {
+				if(lastMoveX !== undefined && lastMoveY !== undefined) {
+					grid.scrollLeft = grid.scrollLeft - (event.clientX - lastMoveX);
+					grid.scrollTop = grid.scrollTop - (event.clientY - lastMoveY);
+				}
+				lastMoveX = event.clientX;
+				lastMoveY = event.clientY;
+			} else {
+				lastMoveX = undefined;
+				lastMoveY = undefined;
+			}
+		});
 	}
 	// if text
 	else if(mime.startsWith("text/")) {
