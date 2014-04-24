@@ -19,6 +19,7 @@ private:
 	//*** SQLite statements.
 	ptr<Data::SqliteStatement>
 		stmtGetMaxRevision,
+		stmtClearLatest,
 		stmtWrite,
 		stmtPull,
 		stmtGetWeakRevision,

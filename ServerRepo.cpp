@@ -49,17 +49,23 @@ ServerRepo::ServerRepo(const char* fileName)
 	if(sqlite3_exec(*db,
 		"CREATE TABLE IF NOT EXISTS revs ("
 		"rev INTEGER PRIMARY KEY AUTOINCREMENT, "
-		"date INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+		"date INTEGER NOT NULL, "
 		"user INTEGER NOT NULL, "
+		"latest INTEGER NOT NULL, "
 		"key BLOB NOT NULL, "
 		"value BLOB NOT NULL)",
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create table revs", db->Error());
-	// create index revs_key_rev
+	// create index revs_rev__latest_1
 	if(sqlite3_exec(*db,
-		"CREATE INDEX IF NOT EXISTS revs_key_rev ON revs (key, rev)",
+		"CREATE UNIQUE INDEX revs_rev__latest_1 ON revs (rev) WHERE latest = 1",
 		0, 0, 0) != SQLITE_OK)
-		THROW_SECONDARY("Can't create index revs_key_rev", db->Error());
+		THROW_SECONDARY("Can't create index revs_rev__latest_1", db->Error());
+	// create index revs_key__latest_1
+	if(sqlite3_exec(*db,
+		"CREATE UNIQUE INDEX revs_key__latest_1 ON revs (key) WHERE latest = 1",
+		0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't create index revs_key__latest_1", db->Error());
 
 	// create table users
 	if(sqlite3_exec(*db,
@@ -76,19 +82,11 @@ ServerRepo::ServerRepo(const char* fileName)
 
 	// create statements
 	stmtGetMaxRevision = db->CreateStatement("SELECT MAX(rev) FROM revs");
-	stmtWrite = db->CreateStatement("INSERT INTO revs (user, key, value) VALUES (?1, ?2, ?3)");
-#define SUBQUERY "SELECT key, MAX(rev) AS maxrev FROM revs GROUP BY key"
-	stmtPull = db->CreateStatement(
-		"SELECT rev, key, value FROM revs NATURAL JOIN ("
-		SUBQUERY
-		") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT ?3");
-	stmtGetWeakRevision = db->CreateStatement(
-		"SELECT rev FROM revs NATURAL JOIN ("
-		SUBQUERY
-		") WHERE rev > ?1 AND rev <= ?2 AND rev = maxrev ORDER BY rev LIMIT 1");
-#undef SUBQUERY
-	stmtPullTotalSize = db->CreateStatement(
-		"SELECT COUNT(DISTINCT key) FROM revs WHERE rev > ?1");
+	stmtClearLatest = db->CreateStatement("UPDATE revs SET latest = 0 WHERE key = ?1 AND latest = 1");
+	stmtWrite = db->CreateStatement("INSERT INTO revs (date, user, latest, key, value) VALUES (strftime('%s','now'), ?1, 1, ?2, ?3)");
+	stmtPull = db->CreateStatement("SELECT rev, key, value FROM revs WHERE rev > ?1 AND rev <= ?2 AND latest = 1 ORDER BY rev LIMIT ?3");
+	stmtGetWeakRevision = db->CreateStatement("SELECT rev FROM revs WHERE rev > ?1 AND rev <= ?2 AND latest = 1 ORDER BY rev LIMIT 1");
+	stmtPullTotalSize = db->CreateStatement("SELECT COUNT(rev) FROM revs WHERE rev > ?1 AND latest = 1");
 	stmtGetUserId = db->CreateStatement("SELECT id FROM users WHERE name = ?1");
 	stmtAddUser = db->CreateStatement("INSERT INTO users (name) VALUES (?1)");
 
@@ -241,6 +239,11 @@ bool ServerRepo::Sync(StreamReader* reader, StreamWriter* writer, const String& 
 
 		ptr<File> keyFile = NEW(PartFile(keyBufferFile, key, keySize));
 
+		// clear latest flag for that key
+		Data::SqliteQuery queryClearLatest(stmtClearLatest);
+		stmtClearLatest->Bind(1, keyFile);
+		if(stmtClearLatest->Step() != SQLITE_DONE)
+			THROW_SECONDARY("Can't clear latest flag", db->Error());
 		// do write
 		Data::SqliteQuery queryWrite(stmtWrite);
 		stmtWrite->Bind(1, userId);
