@@ -15,6 +15,9 @@
 #include "../inanity/platform/FileSystem.hpp"
 #include "../inanity/data/SQLiteFileSystem.hpp"
 #include "../inanity/data/Base64OutputStream.hpp"
+#include "../inanity/graphics/BmpImage.hpp"
+#include "../inanity/graphics/TgaImageLoader.hpp"
+#include "../inanity/MemoryStream.hpp"
 #include "../inanity/MemoryFile.hpp"
 
 // classes only for registration in script state
@@ -44,6 +47,10 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<FileEntitySchemeInputStream>();
 	scriptState->Register<FileEntitySchemeOutputStream>();
 	scriptState->Register<Data::Base64OutputStream>();
+	scriptState->Register<Graphics::BmpImage>();
+	scriptState->Register<Graphics::TgaImageLoader>();
+	scriptState->Register<MemoryStream>();
+	scriptState->Register<MemoryFile>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const

@@ -44,20 +44,28 @@ function onDataChange(result) {
 }
 
 function detectMimeType() {
+	// if there is explicit MIME type, use it
 	if(mimeType)
 		return mimeType;
 
+	// else try to detect MIME by extension
 	if(originalFileName) {
 		var extension = /\.([^.]+)$/.exec(originalFileName);
-		if(!extension)
-			return null;
-		extension = extension[1];
-		try {
-			var mimeService = Components.classes["@mozilla.org/mime;1"]
-				.getService(Components.interfaces.nsIMIMEService);
-			return mimeService.getTypeFromExtension(extension);
-		} catch(e) {
-			OIL.log(e);
+		if(extension) {
+			extension = extension[1].toLowerCase();
+
+			// try to use Mozilla MIME service
+			try {
+				var mimeService = Components.classes["@mozilla.org/mime;1"]
+					.getService(Components.interfaces.nsIMIMEService);
+				return mimeService.getTypeFromExtension(extension);
+			} catch(e) {
+				OIL.log(e);
+			}
+
+			// detect for self
+			if(extension == "tga")
+				return "image/x-tga";
 		}
 	}
 
@@ -75,7 +83,22 @@ function rebuild() {
 
 	// if image
 	if(mime.startsWith("image/")) {
-		var dataUrl = "data:" + mime + ";base64," + OIL.f2s(OIL.classes.Inanity.Data.Base64OutputStream.EncodeFile(dataResult));
+		var imageData = dataResult;
+
+		// TGA is not supported by Mozilla, convert to bmp
+		if(mime == "image/x-tga" || mime == "image/x-targa") {
+			try {
+				let memoryStream = new OIL.classes.Inanity.MemoryStream();
+				OIL.classes.Inanity.Graphics.BmpImage.Save((new OIL.classes.Inanity.Graphics.TgaImageLoader()).Load(imageData), memoryStream);
+				imageData = memoryStream.ToFile();
+				mime = "image/bmp";
+			} catch(e) {
+				OIL.log(e);
+				imageData = null;
+			}
+		}
+
+		var dataUrl = imageData ? ("data:" + mime + ";base64," + OIL.f2s(OIL.classes.Inanity.Data.Base64OutputStream.EncodeFile(imageData))) : "";
 
 		// create grid
 		var grid = document.createElementNS(OIL.XUL_NS, "grid");

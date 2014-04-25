@@ -86,7 +86,7 @@ OIL.ids = {
 		}, {
 			name: "mimeType",
 			id: "mime",
-			displayName: "mime type",
+			displayName: "MIME type",
 			type: "string"
 		}],
 		interfacesInit: [{
