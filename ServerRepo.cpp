@@ -58,12 +58,12 @@ ServerRepo::ServerRepo(const char* fileName)
 		THROW_SECONDARY("Can't create table revs", db->Error());
 	// create index revs_rev__latest_1
 	if(sqlite3_exec(*db,
-		"CREATE UNIQUE INDEX revs_rev__latest_1 ON revs (rev) WHERE latest = 1",
+		"CREATE UNIQUE INDEX IF NOT EXISTS revs_rev__latest_1 ON revs (rev) WHERE latest = 1",
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create index revs_rev__latest_1", db->Error());
 	// create index revs_key__latest_1
 	if(sqlite3_exec(*db,
-		"CREATE UNIQUE INDEX revs_key__latest_1 ON revs (key) WHERE latest = 1",
+		"CREATE UNIQUE INDEX IF NOT EXISTS revs_key__latest_1 ON revs (key) WHERE latest = 1",
 		0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't create index revs_key__latest_1", db->Error());
 
