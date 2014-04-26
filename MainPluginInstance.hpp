@@ -3,15 +3,7 @@
 
 #include "oil.hpp"
 #include "../inanity/platform/NpapiPluginInstance.hpp"
-#include "../inanity/graphics/graphics.hpp"
 #include "../inanity/input/Manager.hpp"
-
-BEGIN_INANITY_GRAPHICS
-
-class System;
-class Device;
-
-END_INANITY_GRAPHICS
 
 BEGIN_INANITY_NP
 
@@ -26,9 +18,6 @@ class MainPluginInstance : public Platform::NpapiPluginInstance
 private:
 	ptr<Script::Np::State> scriptState;
 
-	ptr<Graphics::System> graphicsSystem;
-	ptr<Graphics::Device> graphicsDevice;
-
 #ifdef ___INANITY_PLATFORM_WINDOWS
 	void Paint(HDC hdc);
 #endif
@@ -36,9 +25,15 @@ private:
 	void PostInit();
 
 public:
-	MainPluginInstance();
+	static MainPluginInstance* instance;
 
-	ptr<Graphics::Device> GetGraphicsDevice() const;
+public:
+	MainPluginInstance();
+	~MainPluginInstance();
+
+	void Destroy();
+
+	ptr<Script::Np::State> GetScriptState() const;
 };
 
 END_INANITY_OIL

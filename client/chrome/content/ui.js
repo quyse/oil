@@ -15,14 +15,23 @@ function ToolTab() {
 	this.tab = document.createElementNS(XUL_NS, "tab");
 	this.tab.toolTab = this;
 	this.tab.id = "toolTab" + this.id;
-	this.tab.setAttribute("label", "Tab");
+	this.tab.setAttribute("label", "tooltab");
 	this.tab.setAttribute("context", "contextMenuToolTab");
 
 	// create tabpanel
 	this.tabpanel = document.createElementNS(XUL_NS, "tabpanel");
 	this.tabpanel.toolTab = this;
 
-	// setup drag events
+	// create iframe
+	this.initFrame();
+
+	// set initial values for variables
+	this.page = null;
+	this.params = null;
+	this.dependentToolTabIds = []; // list of tool tab ids which depends on this tab
+	this.independent = true; // set to true to forbid dependency on some tab
+
+	// setup tab drag events
 	var This = this;
 	this.tab.addEventListener("dragstart", function(event) {
 		event.dataTransfer.setData(MIME_DRAG_TOOL_TAB, This.id);
@@ -49,6 +58,48 @@ ToolTab.get = function(id) {
 };
 ToolTab.prototype.close = function() {
 	this.parent.removeTab(this);
+};
+ToolTab.prototype.setTitle = function(title) {
+	// shorten title if too long
+	var tooltip = "";
+	if(title.length > 20) {
+		tooltip = title;
+		title = title.substr(0, 18) + "...";
+	}
+
+	this.tab.setAttribute("label", title);
+	this.tab.setAttribute("tooltiptext", tooltip);
+};
+ToolTab.prototype.initFrame = function() {
+	if(this.iframe)
+		this.iframe.remove();
+	this.iframe = document.createElementNS(XUL_NS, "iframe");
+	this.iframe.flex = 1;
+	this.tabpanel.appendChild(this.iframe);
+};
+ToolTab.prototype.navigate = function() {
+	// compose url
+	var url = "chrome://oil/content/tool-" + this.page + ".xul#tab=" + this.id;
+
+	// navigate iframe
+	this.initFrame();
+	this.iframe.setAttribute("src", url);
+};
+ToolTab.prototype.addDependentToolTab = function(toolTab) {
+	toolTab.independent = false;
+	this.dependentToolTabIds.push(toolTab.id);
+};
+ToolTab.prototype.updateDependentToolTabs = function(updateParams) {
+	for(var i = 0; i < this.dependentToolTabIds.length; ++i) {
+		var id = this.dependentToolTabIds[i];
+		var toolTab = ToolTab.get(id);
+		if(!toolTab || toolTab.independent) {
+			this.dependentToolTabIds.splice(i--, 1);
+			continue;
+		}
+		updateParams(toolTab.params);
+		toolTab.navigate();
+	}
 };
 
 /// Tool tabbox class.
@@ -351,4 +402,32 @@ ToolSpace.deserialize = function(o) {
 	}
 
 	return space;
+};
+
+OIL.wrongToolWindow = function(window) {
+	window.location = "tool-wrong.xul";
+};
+
+OIL.initToolWindow = function(window) {
+	try {
+		// get tooltab
+		var tabId = /^\#tab\=(.+)$/.exec(window.location.hash);
+		if(!tabId)
+			throw "no tab id";
+		tabId = tabId[1];
+		var toolTab = OIL.ToolTab.get(tabId);
+		if(!toolTab)
+			throw "wrong tab id";
+
+		// store tooltab
+		window.toolTab = toolTab;
+
+		return true;
+
+	} catch(e) {
+		OIL.log(e);
+		OIL.wrongToolWindow(window);
+
+		return false;
+	}
 };

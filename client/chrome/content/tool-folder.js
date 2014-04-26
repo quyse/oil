@@ -2,7 +2,7 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
-const MIME_DRAG_FOLDER_ENTRIES = "application/x-inanityoil-folder-entry";
+const MIME_DRAG_FOLDER_ENTRY = "application/x-inanityoil-folder-entry";
 // maximum length of hierarchy to process
 const MAX_HIERARCHY_LENGTH = 64;
 
@@ -56,16 +56,19 @@ Item.prototype.onChange = function(type, key, value) {
 		//   an array (initialized list of folder's children)
 		//   null (non-initialized list of folder's children)
 		//   undefined (this is not folder)
-		this.children = (this.scheme && this.scheme.GetId() == OIL.uuids.schemes.folder) ? null : undefined;
-		this.onChange('tag', OIL.uuids.tags.name, this.entity.ReadTag(OIL.uuids.tags.name));
-		this.onChange('tag', OIL.uuids.tags.parent, this.entity.ReadTag(OIL.uuids.tags.parent));
+		this.children = (this.scheme && this.scheme.GetId() == OIL.ids.schemes.folder) ? null : undefined;
+		this.onChange('tag', OIL.ids.tags.name, this.entity.ReadTag(OIL.ids.tags.name));
+		this.onChange('tag', OIL.ids.tags.parent, this.entity.ReadTag(OIL.ids.tags.parent));
 		break;
 	case 'tag':
 		switch(key) {
-		case OIL.uuids.tags.name:
+		case OIL.ids.tags.name:
 			this.name = value ? OIL.f2s(value) : null;
+			// if this is root, update title
+			if(!this.parent)
+				window.toolTab.setTitle("folder: " + this.getVisibleName());
 			break;
-		case OIL.uuids.tags.parent:
+		case OIL.ids.tags.parent:
 			this.parentId = OIL.f2eid(value);
 			break;
 		}
@@ -294,13 +297,16 @@ View.prototype.getImageSrc = function(row, col) {
 		return null;
 
 	var item = this.getItem(row);
-	return OIL.getSchemeDescById(item.getScheme().GetId()).icon;
+	return OIL.ids.schemeDescs[item.getScheme().GetId()].icon;
 };
 View.prototype.getRowProperties = function(row, props) {
+	return '';
 };
 View.prototype.getCellProperties = function(row, col, props) {
+	return '';
 };
 View.prototype.getColumnProperties = function(colid, col, props) {
+	return '';
 };
 View.prototype.getLevel = function(row) {
 	var item = this.getItem(row);
@@ -314,11 +320,8 @@ View.prototype.hasNextSibling = function(row, afterIndex) {
 	parent.ensureChildren();
 	var itemFullCount = item.getFullCount();
 	var itemParentIndex = item.getIndexInParent();
-	return
-		// there is next sibling
-		itemParentIndex + 1 < parent.children.length &&
-		// and its position after
-		row + 1 + itemFullCount > afterIndex;
+	// return if there is next sibling and its position after
+	return itemParentIndex + 1 < parent.children.length && row + 1 + itemFullCount > afterIndex;
 };
 View.prototype.getParentIndex = function(row) {
 	var parent = this.getItem(row).parent;
@@ -350,7 +353,7 @@ View.prototype.setCellText = function(row, col, value) {
 	var item = this.getItem(row);
 
 	var action = OIL.createAction("rename " + item.getStringifiedName() + " to " + JSON.stringify(value));
-	item.entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(value));
+	item.entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(value));
 	OIL.finishAction(action);
 };
 View.prototype.canDrop = function(row, orientation, dataTransfer) {
@@ -360,92 +363,129 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	var checkOutput = {};
 	if(!checkDrop(row, orientation, dataTransfer, checkOutput)) {
 		if(checkOutput.message)
-			alert(checkOutput.message);
+			OIL.getPromptService().prompt(window, "drop error", checkOutput.message);
 		return;
 	}
+
 	var entries = checkOutput.entries;
-
-	var actionDescription;
-	var operation = dataTransfer.dropEffect;
-	switch(operation) {
-	case "move":
-		actionDescription = "move ";
-		break;
-	case "link":
-		actionDescription = "link ";
-		break;
-	}
-
-	if(entries.length == 1) {
-		let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.uuids.tags.name);
-		actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
-	}
-	else
-		actionDescription += entries.length + " items";
+	var files = checkOutput.files;
 
 	var destItem = this.getItem(row);
 	var destEntity = destItem.entity;
-	var destIdFile = OIL.eid2f(destEntity.GetId());
 
-	actionDescription += " to " + destItem.getStringifiedName();
-
-	var action = OIL.createAction(actionDescription);
-	for(var i = 0; i < entries.length; ++i) {
-		var sourceFolderId = entries[i].folderId;
-		var sourceFolderEntity = OIL.entityManager.GetEntity(sourceFolderId);
-		var sourceFileEntity = OIL.entityManager.GetEntity(entries[i].itemId);
-
-		var entryIdFile = OIL.eid2f(entries[i].itemId);
-
-		// if we moving
-		if(operation == "move") {
-			// if we moving solid link, change the tag
-			if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.uuids.tags.parent)) == sourceFolderId)
-				sourceFileEntity.WriteTag(action, OIL.uuids.tags.parent, destIdFile);
-
-			// remove entry from source folder
-			sourceFolderEntity.WriteData(action, entryIdFile, null);
+	// if there are some entries
+	if(entries.length) {
+		var actionDescription;
+		var operation = dataTransfer.dropEffect;
+		switch(operation) {
+		case "move":
+			actionDescription = "move ";
+			break;
+		case "link":
+			actionDescription = "link ";
+			break;
 		}
 
-		// place entry into dest folder
-		destEntity.WriteData(action, entryIdFile, OIL.fileTrue());
+		if(entries.length == 1) {
+			let entryName = OIL.entityManager.GetEntity(entries[0].itemId).ReadTag(OIL.ids.tags.name);
+			actionDescription += entryName ? JSON.stringify(OIL.f2s(entryName)) : "<unnamed>";
+		}
+		else
+			actionDescription += entries.length + " items";
+
+		var destIdFile = OIL.eid2f(destEntity.GetId());
+
+		actionDescription += " to " + destItem.getStringifiedName();
+
+		var action = OIL.createAction(actionDescription);
+
+		// perform operation on entries
+		for(var i = 0; i < entries.length; ++i) {
+			var sourceFolderId = entries[i].folderId;
+			var sourceFolderEntity = OIL.entityManager.GetEntity(sourceFolderId);
+			var sourceFileEntity = OIL.entityManager.GetEntity(entries[i].itemId);
+
+			var entryIdFile = OIL.eid2f(entries[i].itemId);
+
+			// if we moving
+			if(operation == "move") {
+				// if we moving solid link, change the tag
+				if(OIL.f2eid(sourceFileEntity.ReadTag(OIL.ids.tags.parent)) == sourceFolderId)
+					sourceFileEntity.WriteTag(action, OIL.ids.tags.parent, destIdFile);
+
+				// remove entry from source folder
+				sourceFolderEntity.WriteData(action, entryIdFile, null);
+			}
+
+			// place entry into dest folder
+			destEntity.WriteData(action, entryIdFile, OIL.fileTrue());
+		}
+		OIL.finishAction(action);
 	}
-	OIL.finishAction(action);
+
+	// perform operation on files
+	if(files.length > 0)
+		uploadFiles(files, destEntity);
 };
 
 function checkDrop(row, orientation, dataTransfer, output) {
-	if(!dataTransfer.types.contains(MIME_DRAG_FOLDER_ENTRIES))
-		return false;
 	if(orientation != 0)
 		return false;
 
+	// get items to drop
+	var entries = [], files = [];
+	var itemsCount = dataTransfer.mozItemCount;
+	for(var i = 0; i < itemsCount; ++i) {
+		// if it's folder entry
+		var entry = dataTransfer.mozGetDataAt(MIME_DRAG_FOLDER_ENTRY, i);
+		if(entry) {
+			entries.push(JSON.parse(entry));
+			continue;
+		}
+
+		// else if it's file
+		var file = dataTransfer.mozGetDataAt("application/x-moz-file", i);
+		if(file) {
+			file = file.QueryInterface(Components.interfaces.nsIFile);
+			if(file)
+				files.push(file);
+			else
+				return false;
+			continue;
+		}
+	}
+
+	// check operation
 	var operation = dataTransfer.dropEffect;
 	switch(operation) {
 	case "move":
+		break;
 	case "link":
+		// cannot link files
+		if(files.length > 0)
+			return false;
 		break;
 	default:
 		return false;
 	}
 
-	var entries = JSON.parse(dataTransfer.getData(MIME_DRAG_FOLDER_ENTRIES));
-	if(entries.length <= 0)
-		return false;
-
+	// get target item
 	var targetItem = view.getItem(row);
 
-	// if operation is move, check for cycles
+	// if operation is move, check for cycles for entries
 	if(operation == "move") {
 		for(var i = 0; i < entries.length; ++i)
 			if(isItemInto(targetItem.entityId, entries[i].itemId)) {
 				if(output)
-					output.message = "Operation would create a cycle of real paths which is forbidden.";
+					output.message = "operation would create a cycle of real paths which is forbidden";
 				return false;
 			}
 	}
 
-	if(output)
+	if(output) {
 		output.entries = entries;
+		output.files = files;
+	}
 
 	return true;
 }
@@ -479,7 +519,7 @@ function isItemInto(targetId, containerId) {
 			return true;
 
 		var entity = OIL.entityManager.GetEntity(id);
-		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.ids.tags.parent));
 		if(!parentId)
 			return false;
 
@@ -494,10 +534,12 @@ function onCommandOpen() {
 		var scheme = item.entity.GetScheme();
 		if(!scheme)
 			continue;
-		var tool = OIL.getSchemeDescById(scheme.GetId()).tool;
+		var tool = OIL.ids.schemeDescs[scheme.GetId()].tool;
 		if(!tool)
 			continue;
-		OIL.createTool(tool, item.entityId);
+		window.toolTab.addDependentToolTab(OIL.createTool(tool, {
+			entity: item.entityId
+		}));
 	}
 }
 
@@ -514,9 +556,9 @@ function onCommandCreateFolder() {
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
 	var action = OIL.createAction("create folder");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.folder);
-	entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f("New Folder"));
-	entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(selectedItem.entityId));
+	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("New Folder"));
+	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
@@ -542,48 +584,192 @@ function onCommandUploadFile() {
 
 	var nsIFilePicker = Components.interfaces.nsIFilePicker;
 	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
-	fp.init(window, "Select File to Upload", nsIFilePicker.modeOpenMultiple);
+	fp.init(window, "select files to upload", nsIFilePicker.modeOpenMultiple);
 	fp.open({
 		done: function(result) {
 			try {
 				if(result != nsIFilePicker.returnOK)
 					return;
 
-				var files = fp.files;
-				var paths = [];
-				while(files.hasMoreElements()) {
-					var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-					paths.push({
-						path: file.path,
-						name: file.leafName
-					});
-				}
+				// get list of files with total size
+				var files = [];
+				var pickedFiles = fp.files;
+				while(pickedFiles.hasMoreElements())
+					files.push(pickedFiles.getNext().QueryInterface(Components.interfaces.nsIFile));
 
-				if(paths.length <= 0)
-					return;
-
-				var actionDescription;
-				if(paths.length == 1)
-					actionDescription = "upload file " + JSON.stringify(paths[0].name);
-				else
-					actionDescription = "upload " + paths.length + " files";
-
-				var action = OIL.createAction(actionDescription);
-				var folderEntity = OIL.entityManager.GetEntity(folderId);
-				for(var i = 0; i < paths.length; ++i) {
-					var entity = OIL.entityManager.CreateEntity(action, OIL.uuids.schemes.file);
-					entity.WriteTag(action, OIL.uuids.tags.name, OIL.s2f(paths[i].name));
-					entity.WriteField(action, "ofn", paths[i].name);
-					entity.WriteData(action, null, OIL.core.GetNativeFileSystem().LoadFile(paths[i].path));
-					folderEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-					entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(folderId));
-				}
-				OIL.finishAction(action);
+				uploadFiles(files, OIL.entityManager.GetEntity(folderId));
 			}
 			catch(e) {
 				alert(e);
 			}
 		}
+	});
+}
+
+/// upload files into folder
+/** \param files [nsIFile] */
+function uploadFiles(sourceFiles, folderEntity) {
+	var entries = [];
+	var totalSize = 0;
+	function addFiles(sourceFiles, entries) {
+		for(var i = 0; i < sourceFiles.length; ++i) {
+			var file = sourceFiles[i];
+			// if this is normal file
+			if(file.isFile()) {
+				var fileSize = file.fileSize;
+				entries.push({
+					type: "file",
+					path: file.path,
+					name: file.leafName,
+					size: fileSize
+				});
+				totalSize += fileSize;
+			}
+			// else if it's a directory
+			else if(file.isDirectory()) {
+				var subFiles = [];
+				var directoryEntries = file.directoryEntries;
+				while(directoryEntries.hasMoreElements())
+					subFiles.push(directoryEntries.getNext().QueryInterface(Components.interfaces.nsIFile));
+				var subPaths = [];
+				addFiles(subFiles, subPaths);
+				entries.push({
+					type: "directory",
+					name: file.leafName,
+					entries: subPaths
+				});
+			}
+		}
+	}
+
+	// add source files
+	addFiles(sourceFiles, entries);
+
+	if(entries.length <= 0)
+		return;
+
+	// create action
+	var actionDescription;
+	if(entries.length == 1)
+		actionDescription = "upload file " + JSON.stringify(entries[0].name);
+	else
+		actionDescription = "upload " + entries.length + " files";
+	var action = OIL.createAction(actionDescription);
+
+	// create directories, and get flatten list of files
+	var files = [];
+	var processEntries = function(parentEntity, entries) {
+		for(var i = 0; i < entries.length; ++i) {
+			var entry = entries[i];
+			switch(entry.type) {
+			case "file":
+				// remember parent entity
+				entry.parentEntity = parentEntity;
+				// add entry to list of files
+				files.push(entry);
+				break;
+			case "directory":
+				// create directory
+				var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+				entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(entry.name));
+				parentEntity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+				entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(parentEntity.GetId()));
+				// process sub-entries
+				processEntries(entity, entry.entries);
+				break;
+			}
+		}
+	};
+	processEntries(folderEntity, entries);
+
+	// upload files
+	const blockSize = 1024 * 1024;
+	var fileIndex = 0, fileEntity = null, sourceStream = null, entityStream = null, fileSize, fileWrittenSize, totalWrittenSize = 0;
+	// do one step of uploading
+	var step = function() {
+		try {
+			// if we're starting new file
+			if(!fileEntity) {
+				// if there is no more files
+				if(fileIndex >= files.length) {
+					// finish
+					OIL.finishAction(action);
+					cancelCallback();
+					return;
+				}
+
+				var file = files[fileIndex++];
+
+				// open file stream
+				sourceStream = OIL.core.GetNativeFileSystem().LoadStream(file.path);
+				// remember file size
+				fileSize = file.size;
+				// create file entity, perform starting changes
+				fileEntity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.file);
+				fileEntity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(file.name));
+				fileEntity.WriteField(action, OIL.ids.schemeDescs.file.fields.originalFileName, file.name);
+				file.parentEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
+				fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(file.parentEntity.GetId()));
+
+				// create entity stream
+				entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
+
+				// reset written file size
+				fileWrittenSize = 0;
+			}
+
+			// write a block
+			var block = sourceStream.Read(blockSize);
+			// if there is some data
+			var sizeOfBlock = block.GetSize();
+			if(sizeOfBlock) {
+				// write it
+				entityStream.Write(block);
+				// make some progress
+				fileWrittenSize += sizeOfBlock;
+				totalWrittenSize += sizeOfBlock;
+				// correct total size if needed
+				if(fileWrittenSize > fileSize) {
+					totalSize = totalSize - fileSize + fileWrittenSize;
+					fileSize = fileWrittenSize;
+				}
+				// report progress
+				progressCallback(totalWrittenSize, totalSize);
+			} else {
+				// else there is no more data
+				// finish with this file
+				entityStream.End();
+
+				// reset pointers
+				fileEntity = null;
+				OIL.core.ReclaimObject(sourceStream);
+				sourceStream = null;
+				entityStream = null;
+			}
+
+			// next step
+			OIL.setTimeout(step, 0);
+		} catch(e) {
+			cancelCallback();
+			alert(e);
+		}
+	};
+
+	// show progress window
+	var progressCallback, cancelCallback;
+	window.openDialog('progress.xul', '', 'chrome,modal,centerscreen,close=no', {
+		setProgressCallback: function(callback) {
+			progressCallback = callback
+		},
+		setCancelCallback: function(callback) {
+			cancelCallback = callback
+		},
+		onStart: function() {
+			OIL.setTimeout(step, 0);
+		},
+		title: "uploading...",
+		description: "preparing file(s) to upload, please wait...",
+		cancelButtonText: null
 	});
 }
 
@@ -612,7 +798,7 @@ function onCommandDelete() {
 		var item = selectedItems[i];
 		var itemParent = item.parent;
 		if(item.parentId == itemParent.entityId)
-			item.entity.WriteTag(action, OIL.uuids.tags.parent, null);
+			item.entity.WriteTag(action, OIL.ids.tags.parent, null);
 		itemParent.entity.WriteData(action, OIL.eid2f(item.entityId), null);
 	}
 
@@ -623,7 +809,9 @@ function onCommandProperties() {
 	var selectedItems = getSelectedItems();
 
 	for(var i = 0; i < selectedItems.length; ++i)
-		OIL.createTool("entity", selectedItems[i].entityId);
+		window.toolTab.addDependentToolTab(OIL.createTool("entity", {
+			entity: selectedItems[i].entityId
+		}));
 }
 
 function onCommandPlace() {
@@ -639,7 +827,7 @@ function onCommandPlace() {
 			continue;
 
 		// do place
-		item.entity.WriteTag(action, OIL.uuids.tags.parent, OIL.eid2f(item.parent.entityId));
+		item.entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(item.parent.entityId));
 	}
 
 	OIL.finishAction(action);
@@ -664,7 +852,7 @@ function onCommandShowRealPlace() {
 		pathIds.push(id);
 
 		var entity = OIL.entityManager.GetEntity(id);
-		var parentId = OIL.f2eid(entity.ReadTag(OIL.uuids.tags.parent));
+		var parentId = OIL.f2eid(entity.ReadTag(OIL.ids.tags.parent));
 		if(!parentId) {
 			alert("Selected entity doesn't have real place.");
 			return;
@@ -696,20 +884,59 @@ function onCommandShowRealPlace() {
 	item.view.selection.select(row);
 }
 
+function onCommandDownloadFile() {
+	var selectedItems = getSelectedItems();
+	if(selectedItems.length != 1)
+		return;
+
+	var nsIFilePicker = Components.interfaces.nsIFilePicker;
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, "Select Destination", nsIFilePicker.modeSave);
+	fp.appendFilters(nsIFilePicker.filterAll);
+	fp.defaultString = selectedItems[0].entity.ReadField(OIL.ids.schemeDescs.file.fields.originalFileName) || "";
+	fp.open({
+		done: function(result) {
+			try {
+				if(result != nsIFilePicker.returnOK)
+					return;
+
+				var entity = selectedItems[0].entity;
+				var scheme = entity.GetScheme();
+				if(!scheme)
+					return;
+				if(scheme.GetId() != OIL.ids.schemes.file)
+					return;
+
+				var fileStream = OIL.core.GetNativeFileSystem().SaveStream(fp.file.path);
+				var entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
+				fileStream.ReadAllFromStream(entityStream);
+				OIL.core.ReclaimObject(fileStream);
+			}
+			catch(e) {
+				alert(e);
+			}
+		}
+	});
+}
+
 function onContextMenuShowing() {
 	var selectedItems = getSelectedItems();
 
 	var hasFolder = false;
+	var hasFile = false;
 	var hasLink = false;
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
-		if(item.entity.GetScheme().GetId() == OIL.uuids.schemes.folder)
+		if(item.entity.GetScheme().GetId() == OIL.ids.schemes.folder)
 			hasFolder = true;
+		if(item.entity.GetScheme().GetId() == OIL.ids.schemes.file)
+			hasFile = true;
 		if(item.parentId != item.parent.entityId)
 			hasLink = true;
 	}
 
 	var oneFolder = hasFolder && selectedItems.length == 1 || selectedItems.length == 0;
+	var oneFile = hasFile && selectedItems.length == 1;
 
 	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
 	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
@@ -718,6 +945,7 @@ function onContextMenuShowing() {
 	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;
 	document.getElementById("contextMenuPlace").hidden = !hasLink;
 	document.getElementById("contextMenuShowRealPlace").hidden = selectedItems.length != 1;
+	document.getElementById("contextMenuDownloadFile").hidden = !oneFile;
 	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
 }
 
@@ -725,23 +953,41 @@ function onTreeDragStart(event) {
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
 		return;
-	event.dataTransfer.setData(MIME_DRAG_FOLDER_ENTRIES, JSON.stringify(selectedItems.map(function(item) {
-		return {
-			itemId: item.entityId,
-			folderId: item.parent.entityId
-		};
-	})));
+
+	for(var i = 0; i < selectedItems.length; ++i)
+		event.dataTransfer.mozSetDataAt(MIME_DRAG_FOLDER_ENTRY, JSON.stringify({
+			itemId: selectedItems[i].entityId,
+			folderId: selectedItems[i].parent.entityId
+		}), i);
+
 	event.dataTransfer.effectAllowed = "linkMove";
+}
+
+var lastSelectedEntityId = null;
+function onTreeSelect(event) {
+	var selectedItems = getSelectedItems();
+
+	// update dependent tabs with selected entity
+	if(selectedItems.length == 1) {
+		var selectedEntityId = selectedItems[0].entityId;
+		if(lastSelectedEntityId != selectedEntityId) {
+			lastSelectedEntityId = selectedEntityId;
+			window.toolTab.updateDependentToolTabs(function(params) {
+				params.entity = selectedEntityId;
+			});
+		}
+	}
 }
 
 var rootItem;
 
 window.addEventListener('load', function() {
-	var rootEntity = OIL.getEntityFromToolWindow(window);
-	if(!rootEntity)
+	if(!OIL.initToolWindow(window) || !window.toolTab.params.entity)
 		return;
 
-	rootItem = new Item(rootEntity);
+	window.toolTab.setTitle("folder");
+
+	rootItem = new Item(OIL.entityManager.GetEntity(window.toolTab.params.entity));
 
 	document.getElementById("labelEmpty").remove();
 

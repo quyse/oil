@@ -61,7 +61,10 @@ private:
 				ptr<File> watchResponse;
 				{
 					CriticalCode cc(csRepo);
-					repo->Sync(&reader, &writer);
+					// TODO: add actual user verification
+					// task postponed
+					static const String userName = "anonimous";
+					repo->Sync(&reader, &writer, userName, true);
 					long long maxRevision = repo->GetMaxRevision();
 					if(lastSyncRevision < maxRevision)
 					{
@@ -84,7 +87,7 @@ private:
 						try
 						{
 							ptr<Net::Fcgi::Request> request = watchRequests[i].first;
-							request->GetOutputStream()->WriteFile(watchResponse);
+							request->GetOutputStream()->Write(watchResponse);
 							request->End();
 						}
 						catch(Exception* exception)
@@ -164,7 +167,7 @@ private:
 							response = stream->ToFile();
 						}
 
-						watchRequests[i].first->GetOutputStream()->WriteFile(response);
+						watchRequests[i].first->GetOutputStream()->Write(response);
 						watchRequests[i].first->End();
 					}
 					else
@@ -256,6 +259,7 @@ public:
 		catch(Exception* exception)
 		{
 			MakePointer(exception)->PrintStack(std::cerr);
+			std::cerr << "\n";
 			return 1;
 		}
 	}

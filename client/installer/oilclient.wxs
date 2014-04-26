@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+	<Product
+		Id="*"
+		UpgradeCode="3F27FE5D-9707-4C35-90B9-019E50D8924C"
+		Name="Inanity Oil"
+		Manufacturer="quyse.net"
+		Version="$(var.version)"
+		Language="1033"
+		Codepage="1252"
+		>
+
+		<Package
+			Id="*"
+			Keywords="Installer"
+			Description="Inanity Oil's Installer"
+			Comments="Inanity Oil is open source software"
+			Manufacturer="quyse.net"
+			InstallerVersion="300"
+			Languages="1033"
+			Compressed="yes"
+			SummaryCodepage="1252"
+			/>
+
+		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+
+		<!-- directory structure -->
+
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="APPLICATIONFOLDER" Name="Inanity Oil">
+					<Directory Id="defaults" Name="defaults">
+						<Directory Id="preferences" Name="preferences" />
+					</Directory>
+					<Directory Id="chrome" Name="chrome">
+						<Directory Id="icons" Name="icons">
+							<Directory Id="icons_default" Name="default" />
+						</Directory>
+					</Directory>
+					<Directory Id="plugins" Name="plugins" />
+				</Directory>
+			</Directory>
+			<Directory Id="ProgramMenuFolder" />
+		</Directory>
+
+		<!-- components -->
+
+		<DirectoryRef Id="APPLICATIONFOLDER">
+			<Component Id="InanityOil.exe" Guid="*">
+				<File Id="InanityOil.exe" Name="InanityOil.exe" Source="tools\xulrunner\xulrunner-stub.exe" KeyPath="yes" Checksum="yes">
+					<Shortcut
+						Id="InanityOilShortcut"
+						Name="Inanity Oil"
+						Description="Inanity Oil Client"
+						Directory="ProgramMenuFolder"
+						WorkingDirectory="APPLICATIONFOLDER"
+						Icon="main.ico"
+						IconIndex="0"
+						Advertise="yes"
+						/>
+				</File>
+			</Component>
+			<Component Id="application.ini" Guid="*">
+				<File Id="application.ini" Source="out\application.ini" KeyPath="yes" />
+			</Component>
+			<Component Id="chrome.manifest" Guid="*">
+				<File Id="chrome.manifest" Source="chrome.manifest" KeyPath="yes" />
+			</Component>
+			<Component Id="content.jar" Guid="*">
+				<File Id="content.jar" Source="out\content.jar" KeyPath="yes" />
+			</Component>
+			<Component Id="D3Dcompiler_47.dll" Guid="*">
+				<File Id="D3Dcompiler_47.dll" Source="D3Dcompiler_47.dll" KeyPath="yes" Checksum="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<DirectoryRef Id="preferences">
+			<Component Id="prefs.js" Guid="*">
+				<File Id="prefs.js" Source="prefs.js" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<DirectoryRef Id="icons_default">
+			<Component Id="main.ico" Guid="*">
+				<File Id="main.ico" Source="../chrome/icons/default/main.ico" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+
+		<DirectoryRef Id="plugins">
+			<Component Id="npoil.dll" Guid="*">
+				<File Id="npoil.dll" Source="..\..\release\npoil.dll" KeyPath="yes" Checksum="yes" />
+			</Component>
+		</DirectoryRef>
+
+
+		<!-- features -->
+
+		<Feature Id="InanityOilClient" Title="Inanity Oil Client" Level="1">
+			<ComponentRef Id="InanityOil.exe" />
+			<ComponentRef Id="application.ini" />
+			<ComponentRef Id="chrome.manifest" />
+			<ComponentRef Id="content.jar" />
+			<ComponentRef Id="D3Dcompiler_47.dll" />
+			<ComponentRef Id="prefs.js" />
+			<ComponentRef Id="npoil.dll" />
+			<ComponentRef Id="main.ico" />
+			<ComponentGroupRef Id="assets" />
+			<ComponentGroupRef Id="xulrunner" />
+		</Feature>
+
+
+		<!-- icon -->
+		<Icon Id="main.ico" SourceFile="../chrome/icons/default/main.ico" />
+		<Property Id="ARPPRODUCTICON" Value="main.ico" />
+
+
+		<!-- UI -->
+
+		<WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+		<Property Id="ApplicationFolderName" Value="Inanity Oil" />
+		<Property Id="WixAppFolder" Value="WixPerMachineFolder" />
+		<UIRef Id="WixUI_Advanced" />
+
+		<MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+	</Product>
+
+</Wix>

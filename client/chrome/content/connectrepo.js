@@ -2,6 +2,10 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+function enableConnectButton(enable) {
+	document.getElementById("connectrepo").getButton("accept").disabled = !enable;
+}
+
 function onChangeSomething(types, currentType) {
 	// adjust visibility of all controls
 	for(var type in types) {
@@ -25,7 +29,7 @@ function onChangeRemoteType() {
 
 	var types = {
 		url: {
-			controls: ['rowRemoteUrl', 'rowLogin', 'rowPassword'],
+			controls: ['rowRemoteUrl'],
 			update: onChangeRemoteUrl,
 			focus: 'textboxRemoteUrl'
 		},
@@ -64,10 +68,6 @@ function onChangeCacheType() {
 	onChangeSomething(types, cacheType);
 }
 
-var defaultDocumentsPath =
-	Components.classes["@mozilla.org/file/directory_service;1"]
-	.getService(Components.interfaces.nsIProperties)
-	.get("ProfD", Components.interfaces.nsIFile);
 var lastCacheFileName = "";
 
 function suggestCacheFile(cacheFileName) {
@@ -81,7 +81,7 @@ function suggestCacheFile(cacheFileName) {
 
 function onChangeRemoteUrl() {
 	var url = document.getElementById("textboxRemoteUrl").value;
-	var file = defaultDocumentsPath.clone();
+	var file = OIL.profilePath.clone();
 	file.append(encodeURIComponent(url));
 	suggestCacheFile(file.path);
 }
@@ -152,6 +152,143 @@ function onBrowseCacheFile() {
 	});
 }
 
+/* List of recent repos.
+Format: {
+	type: "url" or "file"
+	remote: "url" or "path"
+	local: "local cache path"
+}
+*/
+var recentRepos = null;
+
+function loadRecentRepos() {
+	try {
+		recentRepos = JSON.parse(OIL.prefs.getCharPref("recentRepos"));
+	} catch(e) {}
+
+	if(!recentRepos)
+		recentRepos = [];
+
+	var listbox = document.getElementById("listboxRecentRepos");
+
+	for(var i = 0; i < recentRepos.length; ++i) {
+		var repo = recentRepos[i];
+		var repoType = repo.type;
+		var repoRemote, repoLocal;
+		switch(repoType) {
+		case "url":
+		case "path":
+			repoRemote = repo.remote;
+			break;
+		default:
+			continue;
+		}
+		repoLocal = repo.local;
+		if(!repoLocal)
+			continue;
+
+		var listItem = document.createElement("listitem");
+		listItem.value = i;
+		var listCellRemote = document.createElement("listcell");
+		listCellRemote.setAttribute("label", repoRemote);
+		var listCellLocal = document.createElement("listcell");
+		listCellLocal.setAttribute("label", repoLocal);
+
+		listItem.appendChild(listCellRemote);
+		listItem.appendChild(listCellLocal);
+
+		listbox.appendChild(listItem);
+	}
+
+	if(listbox.itemCount > 0)
+		listbox.selectedIndex = 0;
+}
+
+function saveRecentRepos() {
+	OIL.prefs.setCharPref("recentRepos", JSON.stringify(recentRepos));
+}
+
+function addRecentRepo(repo) {
+	// remove duplicates of the repo
+	var newLength = 0;
+	for(var i = 0; i < recentRepos.length; ++i)
+		if(recentRepos[i].type == repo.type) {
+			var keep = false;
+			switch(repo.type) {
+			case "url":
+			case "file":
+				keep = repo.remote != recentRepos[i].remote;
+				break;
+			}
+			if(keep)
+				recentRepos[newLength++] = recentRepos[i];
+		}
+
+	if(newLength != recentRepos.length)
+		recentRepos.splice(newLength, recentRepos.length - newLength);
+
+	recentRepos.splice(0, 0, repo);
+}
+
+function editRecentRepo() {
+	var selectedIndex = document.getElementById("listboxRecentRepos").selectedIndex;
+	if(selectedIndex < 0)
+		return false;
+
+	// fill details from repo
+	var repo = recentRepos[selectedIndex];
+	switch(repo.type) {
+	case "url":
+		document.getElementById("textboxRemoteUrl").value = repo.remote;
+		break;
+	case "file":
+		document.getElementById("textboxRemoteFile").value = repo.remote;
+		break;
+	default:
+		return false;
+	}
+
+	// set remote type
+	document.getElementById("menulistRemoteType").value = repo.type;
+	onChangeRemoteType();
+
+	// set local cache
+	document.getElementById("textboxCacheFile").value = repo.local;
+	document.getElementById("menulistCacheType").value = "file";
+	onChangeCacheType();
+
+	return true;
+}
+
+function onEditRecentRepo() {
+	if(editRecentRepo())
+		switchToNewRepoTab();
+}
+
+function onRemoveRecentRepo() {
+	var listbox = document.getElementById("listboxRecentRepos");
+	var selectedIndex = listbox.selectedIndex;
+	if(selectedIndex < 0)
+		return;
+
+	listbox.removeItemAt(selectedIndex);
+	recentRepos.splice(selectedIndex, 1);
+	saveRecentRepos();
+}
+
+function switchToNewRepoTab() {
+	document.getElementById("tabbox").selectedIndex = 0;
+}
+function switchToRecentReposTab() {
+	document.getElementById("tabbox").selectedIndex = 1;
+}
+
+function onContextMenuRecentRepoShowing() {
+	var hasSelectedItem = document.getElementById("listboxRecentRepos").selectedIndex >= 0;
+	document.getElementById("contextMenuEdit").hidden = !hasSelectedItem;
+	document.getElementById("contextMenuRemove").hidden = !hasSelectedItem;
+}
+
 var alreadyConnected = false;
 
 function onConnect() {
@@ -161,16 +298,39 @@ function onConnect() {
 
 	try {
 
-		window.buttondisableaccept = true;
+		// if current tab is recent repos, get info from that
+		if(document.getElementById("tabbox").selectedIndex == 1)
+			if(!editRecentRepo()) {
+				alert("no recent repo selected");
+				return false;
+			}
+
+		enableConnectButton(false);
+
+		var recentRepoToAdd = null;
 
 		// create remote repo
 		var remoteRepo;
 		switch(document.getElementById("menulistRemoteType").value) {
 		case "url":
-			remoteRepo = OIL.core.CreateUrlRemoteRepo(document.getElementById("textboxRemoteUrl").value);
+			{
+				let remoteUrl = document.getElementById("textboxRemoteUrl").value;
+				remoteRepo = OIL.core.CreateUrlRemoteRepo(remoteUrl);
+				recentRepoToAdd = {
+					type: "url",
+					remote: remoteUrl
+				};
+			}
 			break;
 		case "file":
-			remoteRepo = OIL.core.CreateLocalRemoteRepo(document.getElementById("textboxRemoteFile").value);
+			{
+				let remoteFile = document.getElementById("textboxRemoteFile").value;
+				remoteRepo = OIL.core.CreateLocalRemoteRepo(remoteFile);
+				recentRepoToAdd = {
+					type: "file",
+					remote: remoteFile
+				};
+			}
 			break;
 		case "temp":
 			remoteRepo = OIL.core.CreateTempRemoteRepo();
@@ -186,13 +346,19 @@ function onConnect() {
 		var clientRepo;
 		switch(document.getElementById("menulistCacheType").value) {
 		case "file":
-			clientRepo = OIL.core.CreateLocalClientRepo(document.getElementById("textboxCacheFile").value);
+			{
+				let localCache = document.getElementById("textboxCacheFile").value;
+				clientRepo = OIL.core.CreateLocalClientRepo(localCache);
+				recentRepoToAdd.local = localCache;
+			}
 			break;
 		case "temp":
 			clientRepo = OIL.core.CreateTempClientRepo();
+			recentRepoToAdd = null;
 			break;
 		case "memory":
 			clientRepo = OIL.core.CreateMemoryClientRepo();
+			recentRepoToAdd = null;
 			break;
 		default:
 			throw "wrong type of client repo";
@@ -207,17 +373,24 @@ function onConnect() {
 				window.arguments[0].repo = scriptRepo;
 				alreadyConnected = true;
 				var dialog = document.getElementById("connectrepo");
+				enableConnectButton(true); // otherwise dialog won't be accepted
 				dialog.acceptDialog();
+
+				// add recent repo
+				if(recentRepoToAdd) {
+					addRecentRepo(recentRepoToAdd);
+					saveRecentRepos();
+				}
 			} else {
 				alert(message);
-				window.buttondisableaccept = false;
+				enableConnectButton(true);
 			}
 		});
 
 		return false;
 
 	} catch(e) {
-		window.buttondisableaccept = false;
+		enableConnectButton(true);
 		alert(e);
 		return false;
 	}
@@ -226,4 +399,7 @@ function onConnect() {
 window.onload = function() {
 	onChangeRemoteType();
 	onChangeCacheType();
+	loadRecentRepos();
+	if(recentRepos.length)
+		switchToRecentReposTab();
 };

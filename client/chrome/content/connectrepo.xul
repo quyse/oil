@@ -2,11 +2,11 @@
 
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 
-<dialog id="connectrepo" title="Connect to Repo"
+<dialog id="connectrepo" title="connect to repo"
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons="accept,cancel"
-	buttonlabelaccept="Connect"
-	buttonlabelcancel="Cancel"
+	buttonlabelaccept="connect"
+	buttonlabelcancel="cancel"
 	ondialogaccept="return onConnect()"
 	>
 
@@ -18,89 +18,119 @@
 		<command id="commandOnChangeCacheType" oncommand="onChangeCacheType()" />
 		<command id="commandOnBrowseRemoteFile" oncommand="onBrowseRemoteFile()" />
 		<command id="commandOnBrowseCacheFile" oncommand="onBrowseCacheFile()" />
+		<command id="commandOnEditRecentRepo" oncommand="onEditRecentRepo()" />
+		<command id="commandOnRemoveRecentRepo" oncommand="onRemoveRecentRepo()" />
+		<command id="commandSwitchToNewRepoTab" oncommand="switchToNewRepoTab()" />
 	</commandset>
 
-	<grid>
-		<columns>
-			<column />
-			<column flex="1" minwidth="300" />
-			<column />
-		</columns>
-		<rows>
-			<dialogheader title="Remote Repo" />
-			<row align="baseline">
-				<label control="menulistRemoteType" value="Type:" />
-				<menulist id="menulistRemoteType" command="commandOnChangeRemoteType">
-					<menupopup>
-						<menuitem label="Remote URL" value="url" />
-<!--
-						<menuitem label="Local File" value="file" />
-						<menuitem label="Temporary File" value="temp" />
-						<menuitem label="Memory" value="memory" />
--->
-					</menupopup>
-				</menulist>
-			</row>
-			<row id="rowRemoteUrl" align="baseline">
-				<label control="textboxRemoteUrl" value="Remote URL:" />
-				<textbox id="textboxRemoteUrl" placeholder="URL of server repo" oninput="onChangeRemoteUrl()" />
-				<button id="buttonCheckRemoteUrl" label="Check" command="commandCheckRemoteUrl" />
-			</row>
-			<row id="rowLogin" align="baseline">
-				<label control="textboxLogin" value="Username:" />
-				<textbox id="textboxLogin" placeholder="Login if required" />
-			</row>
-			<row id="rowPassword" align="baseline">
-				<label control="textboxPassword" value="Password:" />
-				<textbox id="textboxPassword" type="password" placeholder="Password if required" />
-			</row>
-			<row id="rowRemoteFile" align="baseline">
-				<label control="textboxRemoteFile" value="Local File:" />
-				<textbox id="textboxRemoteFile" placeholder="Path to create or open server repo's file" oninput="onChangeRemoteFile()" />
-				<button label="Browse..." command="commandOnBrowseRemoteFile" />
-			</row>
-			<row id="rowRemoteTemp" align="baseline">
-				<box />
-				<label>
-					New empty server repo will be created in a temporary file which will be removed when editor closes. Use only for quick experiments!
-				</label>
-			</row>
-			<row id="rowRemoteMemory" align="baseline">
-				<box />
-				<label>
-					New empty server repo will be created in RAM and lost after closing. Use only for quick experiments!
-				</label>
-			</row>
-			<separator />
-			<dialogheader title="Local Cache" />
-			<row align="baseline">
-				<label control="menulistCacheType" value="Cache Type:" command="commandCacheType" />
-				<menulist id="menulistCacheType" command="commandOnChangeCacheType">
-					<menupopup>
-						<menuitem label="File" value="file" />
-						<menuitem label="Temp File" value="temp" />
-						<menuitem label="Memory" value="memory" />
-					</menupopup>
-				</menulist>
-			</row>
-			<row id="rowCacheFile" align="baseline">
-				<label control="textboxCacheFile" value="Cache File:" />
-				<textbox id="textboxCacheFile" placeholder="Path for local cache" />
-				<button label="Browse..." command="commandOnBrowseCacheFile" />
-			</row>
-			<row id="rowCacheTemp" align="baseline">
-				<box />
-				<label>
-					Cache will be created in a temporary file.
-				</label>
-			</row>
-			<row id="rowCacheMemory" align="baseline">
-				<box />
-				<label>
-					Cache will be created in RAM.
-				</label>
-			</row>
-		</rows>
-	</grid>
+	<popupset>
+		<menupopup id="contextMenuRecentRepo"
+			onpopupshowing="onContextMenuRecentRepoShowing()">
+			<menuitem id="contextMenuEdit" label="edit..." command="commandOnEditRecentRepo" />
+			<menuitem id="contextMenuRemove" label="remove from this list" command="commandOnRemoveRecentRepo" />
+			<menuitem label="new repo" command="commandSwitchToNewRepoTab" />
+		</menupopup>
+	</popupset>
+
+	<tabbox id="tabbox">
+		<tabs>
+			<tab label="new" />
+			<tab label="recent" />
+		</tabs>
+		<tabpanels>
+			<tabpanel>
+				<grid flex="1">
+					<columns>
+						<column />
+						<column flex="1" minwidth="300" />
+						<column />
+					</columns>
+					<rows>
+						<dialogheader title="remote repo" />
+						<row align="baseline">
+							<label control="menulistRemoteType" value="type:" />
+							<menulist id="menulistRemoteType" command="commandOnChangeRemoteType">
+								<menupopup>
+									<menuitem label="remote URL" value="url" />
+			<!--
+									<menuitem label="local file" value="file" />
+									<menuitem label="temporary file" value="temp" />
+									<menuitem label="memory" value="memory" />
+			-->
+								</menupopup>
+							</menulist>
+						</row>
+						<row id="rowRemoteUrl" align="baseline">
+							<label control="textboxRemoteUrl" value="remote URL:" />
+							<textbox id="textboxRemoteUrl" placeholder="URL of server repo" oninput="onChangeRemoteUrl()" />
+							<button id="buttonCheckRemoteUrl" label="check..." command="commandCheckRemoteUrl" />
+						</row>
+						<row id="rowRemoteFile" align="baseline">
+							<label control="textboxRemoteFile" value="local file:" />
+							<textbox id="textboxRemoteFile" placeholder="path to create or open server repo's file" oninput="onChangeRemoteFile()" />
+							<button label="browse..." command="commandOnBrowseRemoteFile" />
+						</row>
+						<row id="rowRemoteTemp" align="baseline">
+							<box />
+							<label>
+								New empty server repo will be created in a temporary file which will be removed when editor closes. Use only for quick experiments!
+							</label>
+						</row>
+						<row id="rowRemoteMemory" align="baseline">
+							<box />
+							<label>
+								New empty server repo will be created in RAM and lost after closing. Use only for quick experiments!
+							</label>
+						</row>
+						<separator />
+						<dialogheader title="local cache" />
+						<row align="baseline">
+							<label control="menulistCacheType" value="cache type:" command="commandCacheType" />
+							<menulist id="menulistCacheType" command="commandOnChangeCacheType">
+								<menupopup>
+									<menuitem label="file" value="file" />
+									<menuitem label="temp file" value="temp" />
+									<menuitem label="memory" value="memory" />
+								</menupopup>
+							</menulist>
+						</row>
+						<row id="rowCacheFile" align="baseline">
+							<label control="textboxCacheFile" value="cache file:" />
+							<textbox id="textboxCacheFile" placeholder="path for local cache" />
+							<button label="browse..." command="commandOnBrowseCacheFile" />
+						</row>
+						<row id="rowCacheTemp" align="baseline">
+							<box />
+							<label>
+								Cache will be created in a temporary file.
+							</label>
+						</row>
+						<row id="rowCacheMemory" align="baseline">
+							<box />
+							<label>
+								Cache will be created in RAM.
+							</label>
+						</row>
+					</rows>
+				</grid>
+			</tabpanel>
+			<tabpanel>
+				<vbox flex="1">
+					<dialogheader title="recent repos" />
+					<listbox id="listboxRecentRepos" context="contextMenuRecentRepo">
+						<listcols>
+							<listcol />
+							<listcol flex="1" />
+						</listcols>
+						<listhead>
+							<listheader label="remote" />
+							<listheader label="local cache" />
+						</listhead>
+					</listbox>
+					<label class="text-link" value="want to connect to new repo?" onclick="switchToNewRepoTab()" />
+				</vbox>
+			</tabpanel>
+		</tabpanels>
+	</tabbox>
 
 </dialog>

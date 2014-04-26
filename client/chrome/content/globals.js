@@ -88,7 +88,7 @@ function watchRepo() {
 			}
 			else {
 				if(--repoWatchTryings <= 0)
-					alert(message);
+					onSyncFailed(message);
 				else
 					watchRepo();
 			}
@@ -147,7 +147,7 @@ function syncRepo() {
 			}
 			else {
 				if(--repoSyncTryings <= 0)
-					alert(message);
+					onSyncFailed(message);
 				else
 					syncRepo();
 			}
@@ -155,6 +155,12 @@ function syncRepo() {
 	}, 0);
 }
 OIL.syncRepo = syncRepo;
+
+function onSyncFailed(message) {
+	OIL.getPromptService().alert(window, "sync failed",
+		"error while syncing with remote repo:\n" + message);
+	OIL.quit();
+}
 
 //*** actions
 
@@ -203,7 +209,7 @@ OIL.log = log;
 //*** things
 
 OIL.f2s = function(file) {
-	return OIL.classes.Inanity.Strings.File2String(file);
+	return file ? OIL.classes.Inanity.Strings.File2String(file) : null;
 };
 OIL.s2f = function(string) {
 	return OIL.classes.Inanity.Strings.String2File(string);
@@ -223,15 +229,27 @@ OIL.eid2f = function(eid) {
 	return OIL.classes.Inanity.Oil.EntityId.StaticToFile(eid);
 };
 
+OIL.f2esid = function(file) {
+	if(!file)
+		return null;
+	try {
+		return OIL.classes.Inanity.Oil.EntitySchemeId.FromFile(file);
+	}
+	catch(e) {
+		return null;
+	}
+};
+OIL.esid2f = function(eid) {
+	return OIL.classes.Inanity.Oil.EntitySchemeId.StaticToFile(eid);
+};
+
 OIL.fileTrue = function() {
 	return OIL.s2f("\x01");
 };
 
-OIL.getEntityFromToolWindow = function(window) {
-	var a = /^\#(.+)$/.exec(window.location.hash);
-	if(!a) {
-		window.location = "tool-wrong.xul";
-		return null;
-	}
-	return OIL.entityManager.GetEntity(a[1]);
+//*** prompts
+
+OIL.getPromptService = function() {
+	return Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+		.getService(Components.interfaces.nsIPromptService);
 };

@@ -10,7 +10,7 @@ var schemeId = null;
 /// Functions to update tags.
 var tagsUpdate = {};
 /// Functions to update fields.
-var fieldsUpdate = [];
+var fieldsUpdate = {};
 
 function onChange(type, key, value) {
 	switch(type) {
@@ -22,6 +22,9 @@ function onChange(type, key, value) {
 			let update = tagsUpdate[key];
 			if(update)
 				update(value);
+
+			if(key == OIL.ids.tags.name)
+				window.toolTab.setTitle("entity: " + (OIL.f2s(value) || "<unnamed>"));
 		}
 		break;
 	case "field":
@@ -32,7 +35,7 @@ function onChange(type, key, value) {
 		}
 		break;
 	case "data":
-		// TODO
+		// nothing
 		break;
 	}
 }
@@ -84,11 +87,11 @@ function createTextbox(parent, set, reset) {
 	};
 }
 
-function addFieldControl(scheme, fieldIndex) {
+function addFieldControl(scheme, fieldId) {
 	var row = createRow(getMainGridRows());
 
 	var schemeName = scheme.GetName();
-	var fieldName = scheme.GetFieldName(fieldIndex);
+	var fieldName = scheme.GetFieldName(fieldId);
 
 	var label = document.createElementNS(OIL.XUL_NS, "label");
 	row.appendChild(label);
@@ -99,8 +102,8 @@ function addFieldControl(scheme, fieldIndex) {
 		if(lastValue !== undefined && lastValue == value)
 			return;
 
-		var action = OIL.createAction("change " + fieldName + " of " + schemeName);
-		entity.WriteField(action, fieldIndex, value);
+		var action = OIL.createAction("change " + fieldName + " of " + schemeName + " to " + JSON.stringify(value));
+		entity.WriteField(action, fieldId, value);
 		OIL.finishAction(action);
 
 		lastValue = value;
@@ -117,7 +120,14 @@ function addFieldControl(scheme, fieldIndex) {
 		return lastValue;
 	};
 
-	switch(scheme.GetFieldType(fieldIndex)) {
+	var createUpdateFunction = function(updateGui) {
+		return function(value) {
+			updateGui(value);
+			lastValue = value;
+		};
+	};
+
+	switch(scheme.GetFieldType(fieldId).GetName()) {
 
 	case "float":
 
@@ -131,7 +141,7 @@ function addFieldControl(scheme, fieldIndex) {
 			return true;
 		};
 
-		fieldsUpdate[fieldIndex] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 
@@ -146,7 +156,7 @@ function addFieldControl(scheme, fieldIndex) {
 			return true;
 		};
 
-		fieldsUpdate[fieldIndex] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 
@@ -156,7 +166,7 @@ function addFieldControl(scheme, fieldIndex) {
 			return true;
 		};
 
-		fieldsUpdate[fieldIndex] = createTextbox(row, setField, resetField);
+		fieldsUpdate[fieldId] = createUpdateFunction(createTextbox(row, setField, resetField));
 
 		break;
 	case "vec3":
@@ -173,10 +183,13 @@ function addFieldControl(scheme, fieldIndex) {
 }
 
 window.addEventListener('load', function() {
-	entity = OIL.getEntityFromToolWindow(window);
-
+	if(!OIL.initToolWindow(window) || !window.toolTab.params.entity)
+		return;
+	entity = OIL.entityManager.GetEntity(window.toolTab.params.entity);
 	if(!entity)
 		return;
+
+	window.toolTab.setTitle("entity");
 
 	init();
 });
@@ -206,9 +219,9 @@ function init() {
 
 	// add tags
 	let addTag = function(tag) {
-		var tagId = OIL.uuids.tags[tag];
+		var tagId = OIL.ids.tags[tag];
 
-		var tagDesc = OIL.uuids.tagDescs[tag];
+		var tagDesc = OIL.ids.tagDescs[tag];
 		var tagName = tagDesc.name;
 
 		var lastValue;
@@ -244,15 +257,13 @@ function init() {
 	addTag("description");
 
 	// add fields from scheme
-	var schemeDesc = OIL.getSchemeDescById(scheme.GetId());
+	var schemeDesc = OIL.ids.schemeDescs[scheme.GetId()];
 	var fieldsCount = scheme.GetFieldsCount();
 	for(var i = 0; i < fieldsCount; ++i)
-		addFieldControl(scheme, i);
+		addFieldControl(scheme, scheme.GetFieldId(i));
 
 	// update values of fields
 	entityCallback.EnumerateFields();
-	// TODO: update values of data
-	entityCallback.EnumerateData();
 }
 
 window.addEventListener('unload', function() {

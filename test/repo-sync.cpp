@@ -76,7 +76,7 @@ public:
 		StreamReader reader(NEW(FileInputStream(client.pushFile)));
 		StreamWriter writer(stream);
 
-		serverRepo->Sync(&reader, &writer);
+		serverRepo->Sync(&reader, &writer, "anonimous", true);
 
 		client.pushFile = nullptr;
 		client.pullFile = stream->ToFile();

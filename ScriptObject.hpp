@@ -32,6 +32,7 @@ class ClientRepo;
 class RemoteRepo;
 class ScriptRepo;
 class EntitySchemeManager;
+class Engine;
 
 class ScriptObject : public Object
 {
@@ -39,12 +40,20 @@ private:
 	ptr<Script::Np::State> scriptState;
 	ptr<FileSystem> nativeFileSystem;
 	ptr<EntitySchemeManager> entitySchemeManager;
+	String profilePath;
+	ptr<FileSystem> profileFileSystem;
+
+	ptr<Engine> engine;
 
 public:
 	ScriptObject(ptr<Script::Np::State> scriptState);
 
 	ptr<Script::Any> GetRootNamespace() const;
 	ptr<FileSystem> GetNativeFileSystem() const;
+	ptr<FileSystem> GetProfileFileSystem() const;
+	void SetProfilePath(const String& profilePath);
+
+	void Init();
 
 	ptr<ClientRepo> CreateLocalClientRepo(const String& fileName);
 	ptr<ClientRepo> CreateTempClientRepo();
@@ -56,6 +65,9 @@ public:
 	ptr<RemoteRepo> CreateMemoryRemoteRepo();
 
 	ptr<ScriptRepo> CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
+
+	/// Temporary method to reclaim instances from script.
+	void ReclaimObject(ptr<Script::Any> object);
 
 	META_DECLARE_CLASS(ScriptObject);
 };

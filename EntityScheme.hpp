@@ -1,8 +1,16 @@
 #ifndef ___INANITY_OIL_ENTITY_SCHEME_HPP___
 #define ___INANITY_OIL_ENTITY_SCHEME_HPP___
 
-#include "EntityId.hpp"
-#include <unordered_map>
+#include "Id.hpp"
+#include "../inanity/script/script.hpp"
+#include <map>
+#include <vector>
+
+BEGIN_INANITY_SCRIPT
+
+class Any;
+
+END_INANITY_SCRIPT
 
 BEGIN_INANITY_OIL
 
@@ -15,10 +23,18 @@ class EntityScheme : public Object
 public:
 	struct Field
 	{
-		EntityFieldType* type;
+		ptr<EntityFieldType> type;
 		String name;
 	};
-	typedef std::unordered_map<String, Field> Fields;
+	typedef std::map<EntityFieldId, Field> Fields;
+
+	/// Interface internal struct.
+	struct Interface
+	{
+		/// Callback for creating interface-specific object.
+		ptr<Script::Any> callback;
+	};
+	typedef std::map<EntityInterfaceId, Interface> Interfaces;
 
 private:
 	EntitySchemeId id;
@@ -26,6 +42,11 @@ private:
 
 	/// Fields of scheme.
 	Fields fields;
+	/// Fields of scheme by index.
+	std::vector<EntityFieldId> fieldIds;
+
+	/// Interfaces supported by scheme.
+	Interfaces interfaces;
 
 public:
 	EntityScheme(const EntitySchemeId& id, const String& name);
@@ -34,12 +55,15 @@ public:
 	String GetName() const;
 
 	const Fields& GetFields() const;
+	const Interfaces& GetInterfaces() const;
 
 	//** for scripts
 	int GetFieldsCount() const;
-	const char* GetFieldType(const String& fieldId) const;
-	String GetFieldName(const String& fieldId) const;
-	void AddField(const String& fieldId, const String& type, const String& name);
+	EntityFieldId GetFieldId(int index) const;
+	ptr<EntityFieldType> GetFieldType(const EntityFieldId& fieldId) const;
+	String GetFieldName(const EntityFieldId& fieldId) const;
+	void AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> type, const String& name);
+	void AddInterface(const EntityInterfaceId& interfaceId, ptr<Script::Any> callback);
 };
 
 END_INANITY_OIL

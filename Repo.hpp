@@ -3,6 +3,7 @@
 
 #include "oil.hpp"
 #include "../inanity/data/data.hpp"
+#include "../inanity/String.hpp"
 
 BEGIN_INANITY
 
@@ -75,6 +76,9 @@ public: // for simplicity
 
 public:
 	Repo(const char* fileName);
+
+	void Vacuum();
+	String IntegrityCheck() const;
 };
 
 END_INANITY_OIL

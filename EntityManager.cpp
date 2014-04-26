@@ -67,7 +67,7 @@ ptr<Entity> EntityManager::CreateEntity(ptr<Action> action, const EntitySchemeId
 	BEGIN_TRY();
 
 	// get entity scheme
-	ptr<EntityScheme> scheme = schemeManager->Get(schemeId);
+	ptr<EntityScheme> scheme = schemeManager->GetScheme(schemeId);
 
 	// generate new entity id
 	EntityId entityId = EntityId::New();
@@ -104,7 +104,7 @@ ptr<Entity> EntityManager::GetEntity(const EntityId& entityId)
 	// try get scheme
 	ptr<EntityScheme> scheme;
 	if(schemeIdFile && schemeIdFile->GetSize() == EntitySchemeId::size)
-		scheme = schemeManager->TryGet(EntitySchemeId::FromData(schemeIdFile->GetData()));
+		scheme = schemeManager->TryGetScheme(EntitySchemeId::FromData(schemeIdFile->GetData()));
 
 	entity->SetScheme(scheme);
 

@@ -5,12 +5,13 @@
 <window id="main" title="Inanity Oil"
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	xmlns:html="http://www.w3.org/1999/xhtml"
-	persist="screenX screenY width height sizemode">
+	persist="screenX screenY width height sizemode"
+	windowtype="main">
 
 	<script src="globals.js" />
 	<script src="ui.js" />
 	<script src="main.js" />
-	<script src="uuids.js" />
+	<script src="ids.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
@@ -18,7 +19,12 @@
 		<command id="commandRedo" oncommand="OIL.redo()" />
 		<command id="commandShowRoot" oncommand="onShowRoot()" />
 		<command id="commandJavascriptConsole" oncommand="window.open('chrome://global/content/console.xul', '', 'chrome')" />
-		<command id="commandMaintenanceCreateRoot" oncommand="onMaintenanceRootCreate()" />
+		<command id="commandMaintenanceCreateEntity" oncommand="onMaintenanceCreateEntity()" />
+		<command id="commandMaintenanceOpenEntity" oncommand="onMaintenanceOpenEntity()" />
+		<command id="commandMaintenanceOpenTool" oncommand="onMaintenanceOpenTool()" />
+		<command id="commandMaintenanceVacuum" oncommand="onMaintenanceVacuum()" />
+		<command id="commandMaintenanceIntegrityCheck" oncommand="onMaintenanceIntegrityCheck()" />
+		<command id="commandHelpAbout" oncommand="onHelpAbout()" />
 	</commandset>
 
 	<keyset>
@@ -30,39 +36,48 @@
 		<menupopup id="contextMenuToolTab"
 			onpopupshowing="onToolTabContextShowing(event)"
 			onpopuphiding="onToolTabContextHiding(event)">
-			<menuitem label="Undock" default="true" disabled="true" />
-			<menuitem label="Duplicate" id="contextMenuToolTabDuplicate" oncommand="onToolTabContextDuplicate()" />
-			<menuitem label="Close" oncommand="onToolTabContextClose()" />
+			<menuitem label="undock" default="true" disabled="true" />
+			<menuitem label="duplicate" oncommand="onToolTabContextDuplicate()" />
+			<menuitem label="make independent" id="contextMenuToolTabMakeIndependent" oncommand="onToolTabContextMakeIndependent()" />
+			<menuitem label="close" oncommand="onToolTabContextClose()" />
 		</menupopup>
 	</popupset>
 
 	<toolbox>
 		<menubar>
-			<menu label="Repo" accesskey="R">
+			<menu label="repo" accesskey="r">
 				<menupopup>
-					<menuitem label="Connect..." accesskey="C" command="commandRepoConnect" />
+					<menuitem label="connect..." accesskey="c" command="commandRepoConnect" />
 				</menupopup>
 			</menu>
-			<menu label="Edit" accesskey="E">
+			<menu label="edit" accesskey="e">
 				<menupopup>
-					<menuitem id="menuUndo" accesskey="U" key="keyUndo" command="commandUndo" />
-					<menuitem id="menuRedo" accesskey="R" key="keyRedo" command="commandRedo" />
+					<menuitem id="menuUndo" accesskey="u" key="keyUndo" command="commandUndo" />
+					<menuitem id="menuRedo" accesskey="r" key="keyRedo" command="commandRedo" />
 				</menupopup>
 			</menu>
-			<menu label="View" accesskey="V">
+			<menu label="view" accesskey="v">
 				<menupopup>
-					<menuitem label="Show Root Folder" accesskey="R" command="commandShowRoot" />
+					<menuitem label="show root folder" accesskey="r" command="commandShowRoot" />
 				</menupopup>
 			</menu>
-			<menu label="Tools" accesskey="T">
+			<menu label="tools" accesskey="t">
 				<menupopup>
-					<menuitem id="menuConsole" label="Javascript Console..." accesskey="C" command="commandJavascriptConsole" />
-					<menu label="Maintenance">
+					<menuitem label="javascript console..." accesskey="c" command="commandJavascriptConsole" />
+					<menu label="maintenance">
 						<menupopup>
-							<menuitem id="menuMaintenanceCreateRoot" label="Create Root" command="commandMaintenanceCreateRoot" />
+							<menuitem label="create entity..." command="commandMaintenanceCreateEntity" />
+							<menuitem label="open entity..." command="commandMaintenanceOpenEntity" />
+							<menuitem label="open tool..." command="commandMaintenanceOpenTool" />
+							<menuitem label="defragment local cache" command="commandMaintenanceVacuum" />
+							<menuitem label="check local cache integrity" command="commandMaintenanceIntegrityCheck" />
 						</menupopup>
 					</menu>
-					<menuitem label="Create Root Folder" oncommand="createRootFolder()" hidden="true" />
+				</menupopup>
+			</menu>
+			<menu label="help" accesskey="h">
+				<menupopup>
+					<menuitem label="about..." accesskey="a" command="commandHelpAbout" />
 				</menupopup>
 			</menu>
 		</menubar>
@@ -73,8 +88,9 @@
 	<box id="toolspace" />
 
 	<hbox id="statusbar">
-		<label id="labelStatus" flex="1" value="Status" />
-		<label id="labelSyncStatus" value="Not Synced" />
+		<label id="labelClientUpgrade" value="" hidden="true" class="text-link" onclick="onClientUpgrade()" />
+		<label id="labelStatus" flex="1" value="" />
+		<label id="labelSyncStatus" value="not synced" />
 	</hbox>
 
 </window>

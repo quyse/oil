@@ -2,6 +2,7 @@
 #define ___INANITY_OIL_ENTITY_FIELD_TYPE_HPP___
 
 #include "oil.hpp"
+#include "../inanity/String.hpp"
 #include "../inanity/script/np/np.hpp"
 
 BEGIN_INANITY
@@ -30,11 +31,8 @@ class EntityManager;
 class EntityFieldType : public Object
 {
 public:
-	// Implemented in EntityFieldTypes.cpp.
-	static EntityFieldType* FromName(const char* name);
-
 	/// Gets name.
-	virtual const char* GetName() const = 0;
+	virtual String GetName() const = 0;
 	/// Convert value to script.
 	/** Returns null if wrong format. */
 	virtual ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value) = 0;

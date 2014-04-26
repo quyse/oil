@@ -9,15 +9,15 @@ BEGIN_INANITY_OIL
 const char Repo::protocolMagic[14] = { 'I', 'N', 'A', 'N', 'I', 'T', 'Y', 'O', 'I', 'L', 'R', 'E', 'P', 'O' };
 const size_t Repo::protocolVersion = 1;
 
-const int Repo::serverRepoAppVersion = 0x414C4941; // "OILA" in little-endian
+const int Repo::serverRepoAppVersion = 0x434C494F; // "OILC" in little-endian
 const int Repo::clientRepoAppVersion = 0x314C494F; // "OIL1" in little-endian
 
 const size_t Repo::defaultMaxKeySize = 128;
-const size_t Repo::defaultMaxValueSize = 1024 * 1024 * 16;
-const int Repo::defaultMaxPushKeysCount = 128;
-const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 32;
-const int Repo::defaultMaxPullKeysCount = 256;
-const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 32;
+const size_t Repo::defaultMaxValueSize = 1024 * 1024;
+const int Repo::defaultMaxPushKeysCount = 1024;
+const size_t Repo::defaultMaxPushTotalSize = 1024 * 1024 * 2;
+const int Repo::defaultMaxPullKeysCount = 1024;
+const size_t Repo::defaultMaxPullTotalSize = 1024 * 1024 * 2;
 
 const char* Repo::fileNameMemory = ":memory:";
 const char* Repo::fileNameTemp = "";
@@ -33,6 +33,13 @@ Repo::Repo(const char* fileName) :
 	BEGIN_TRY();
 
 	db = Data::SqliteDb::Open(fileName);
+
+	// enable exclusive locking mode
+	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
+	// enable WAL journal mode
+	if(sqlite3_exec(*db, "PRAGMA journal_mode = WAL", 0, 0, 0) != SQLITE_OK)
+		THROW_SECONDARY("Can't enable WAL journal mode on db", db->Error());
 
 	keyBufferFile = NEW(MemoryFile(maxKeySize));
 	valueBufferFile = NEW(MemoryFile(maxValueSize));
@@ -62,6 +69,18 @@ void Repo::CheckAppVersion(int appVersion)
 	}
 	else
 		THROW("Wrong repo format");
+}
+
+void Repo::Vacuum()
+{
+	db->Vacuum();
+}
+
+String Repo::IntegrityCheck() const
+{
+	std::ostringstream stream;
+	db->IntegrityCheck(stream);
+	return stream.str();
 }
 
 END_INANITY_OIL

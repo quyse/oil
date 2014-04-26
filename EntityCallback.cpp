@@ -53,7 +53,7 @@ void EntityCallback::FireTag(const EntityTagId& tagId, ptr<File> value)
 	}
 }
 
-void EntityCallback::FireField(const String& fieldId, ptr<File> value)
+void EntityCallback::FireField(const EntityFieldId& fieldId, ptr<File> value)
 {
 	try
 	{
@@ -68,7 +68,7 @@ void EntityCallback::FireField(const String& fieldId, ptr<File> value)
 		ptr<Script::Np::State> scriptState = callback->GetState();
 		callback->Call(
 			scriptState->NewString("field"),
-			scriptState->NewString(fieldId),
+			scriptState->NewString(fieldId.ToString()),
 			scriptValue);
 	}
 	catch(Exception* exception)
@@ -93,15 +93,20 @@ void EntityCallback::FireData(ptr<File> key, ptr<File> value)
 	}
 }
 
+void EntityCallback::EnumerateScheme()
+{
+	FireScheme(entity->GetScheme());
+}
+
 void EntityCallback::EnumerateFields()
 {
 	class Enumerator : public Entity::FieldEnumerator
 	{
 	private:
-		std::vector<std::pair<String, ptr<File> > > fields;
+		std::vector<std::pair<EntityFieldId, ptr<File> > > fields;
 
 	public:
-		void OnField(const String& fieldId, ptr<File> value)
+		void OnField(const EntityFieldId& fieldId, ptr<File> value)
 		{
 			fields.push_back(std::make_pair(fieldId, value));
 		}

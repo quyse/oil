@@ -7,9 +7,17 @@
 #include "EntityManager.hpp"
 #include "EntityScheme.hpp"
 #include "EntitySchemeManager.hpp"
+#include "Engine.hpp"
+#include "EntityFieldTypes.hpp"
+#include "FileEntityScheme.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
+#include "../inanity/data/SQLiteFileSystem.hpp"
+#include "../inanity/data/Base64OutputStream.hpp"
+#include "../inanity/graphics/BmpImage.hpp"
+#include "../inanity/graphics/TgaImageLoader.hpp"
+#include "../inanity/MemoryStream.hpp"
 #include "../inanity/MemoryFile.hpp"
 
 // classes only for registration in script state
@@ -30,7 +38,19 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<Strings>();
 	scriptState->Register<Action>();
 	scriptState->Register<EntityId>();
+	scriptState->Register<EntitySchemeId>();
+	scriptState->Register<EntityInterfaceId>();
+	scriptState->Register<EntityTagId>();
+	scriptState->Register<EntityFieldId>();
 	scriptState->Register<EntityScheme>();
+	scriptState->Register<ReferenceEntityFieldType>();
+	scriptState->Register<FileEntitySchemeInputStream>();
+	scriptState->Register<FileEntitySchemeOutputStream>();
+	scriptState->Register<Data::Base64OutputStream>();
+	scriptState->Register<Graphics::BmpImage>();
+	scriptState->Register<Graphics::TgaImageLoader>();
+	scriptState->Register<MemoryStream>();
+	scriptState->Register<MemoryFile>();
 }
 
 ptr<Script::Any> ScriptObject::GetRootNamespace() const
@@ -41,6 +61,22 @@ ptr<Script::Any> ScriptObject::GetRootNamespace() const
 ptr<FileSystem> ScriptObject::GetNativeFileSystem() const
 {
 	return nativeFileSystem;
+}
+
+ptr<FileSystem> ScriptObject::GetProfileFileSystem() const
+{
+	return profileFileSystem;
+}
+
+void ScriptObject::SetProfilePath(const String& profilePath)
+{
+	this->profilePath = profilePath;
+	profileFileSystem = NEW(Platform::FileSystem(profilePath));
+}
+
+void ScriptObject::Init()
+{
+	engine = NEW(Engine(NEW(Platform::FileSystem("assets")), NEW(Data::SQLiteFileSystem(profilePath + "/shaders"))));
 }
 
 ptr<ClientRepo> ScriptObject::CreateLocalClientRepo(const String& fileName)
@@ -84,6 +120,11 @@ ptr<ScriptRepo> ScriptObject::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<R
 		clientRepo,
 		remoteRepo,
 		NEW(EntityManager(clientRepo, entitySchemeManager))));
+}
+
+void ScriptObject::ReclaimObject(ptr<Script::Any> object)
+{
+	scriptState->ReclaimInstance(object->AsObject());
 }
 
 END_INANITY_OIL

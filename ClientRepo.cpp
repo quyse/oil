@@ -137,9 +137,6 @@ ClientRepo::ClientRepo(const char* fileName)
 	// check format version
 	CheckAppVersion(clientRepoAppVersion);
 
-	// enable exclusive locking mode
-	if(sqlite3_exec(*db, "PRAGMA locking_mode = EXCLUSIVE", 0, 0, 0) != SQLITE_OK)
-		THROW_SECONDARY("Can't enable exclusive locking mode on db", db->Error());
 	// disable syncing
 	if(sqlite3_exec(*db, "PRAGMA synchronous = OFF", 0, 0, 0) != SQLITE_OK)
 		THROW_SECONDARY("Can't disable db sync", db->Error());
@@ -202,20 +199,15 @@ ClientRepo::ClientRepo(const char* fileName)
 	{
 		std::ostringstream ss;
 		ss <<
-			"SELECT a.id, a.key, a.value"
-			" FROM items AS a LEFT JOIN items AS b ON a.key = b.key"
-			" AND b.status = " << ItemStatuses::server
-			<< " WHERE a.status = " << ItemStatuses::client
-			<< " ORDER BY a.id LIMIT ?1";
+			"SELECT id, key, value FROM items"
+			<< " WHERE status = " << ItemStatuses::client
+			<< " ORDER BY id LIMIT ?1";
 		stmtSelectKeysToPush = db->CreateStatement(ss.str().c_str());
 	}
 	{
 		std::ostringstream ss;
 		ss <<
-			"SELECT COUNT(a.id)"
-			" FROM items AS a LEFT JOIN items AS b ON a.key = b.key"
-			" AND b.status = " << ItemStatuses::server
-			<< " WHERE a.status = " << ItemStatuses::client;
+			"SELECT COUNT(*) FROM items WHERE status = " << ItemStatuses::client;
 		stmtGetPushLag = db->CreateStatement(ss.str().c_str());
 	}
 	stmtMassChangeStatus = db->CreateStatement("UPDATE OR REPLACE items SET status = ?2 WHERE status = ?1");

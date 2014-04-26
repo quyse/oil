@@ -33,7 +33,8 @@ void LocalRemoteRepo::Sync(ptr<File> pushData, ptr<DataHandler<ptr<File> > > pul
 		ptr<MemoryStream> stream = NEW(MemoryStream());
 		StreamWriter writer(stream);
 		StreamReader reader(NEW(FileInputStream(pushData)));
-		bool pushedSomething = serverRepo->Sync(&reader, &writer);
+		static const String userName = "local";
+		bool pushedSomething = serverRepo->Sync(&reader, &writer, userName, true);
 		pullHandler->FireData(stream->ToFile());
 
 		if(pushedSomething && deferredWatchHandler)

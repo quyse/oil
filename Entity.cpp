@@ -3,6 +3,7 @@
 #include "EntityManager.hpp"
 #include "EntitySchemeManager.hpp"
 #include "EntityCallback.hpp"
+#include "EntityInterface.hpp"
 #include "EntityFieldType.hpp"
 #include "Action.hpp"
 #include "ClientRepo.hpp"
@@ -47,6 +48,11 @@ void Entity::SetScheme(ptr<EntityScheme> scheme)
 
 void Entity::OnNewCallback(EntityCallback* callback)
 {
+#ifdef _DEBUG
+	for(size_t i = 0; i < callbacks.size(); ++i)
+		if(callbacks[i] == callback)
+			THROW("Entity callback already registered");
+#endif
 	callbacks.push_back(callback);
 }
 
@@ -59,7 +65,30 @@ void Entity::OnFreeCallback(EntityCallback* callback)
 			return;
 		}
 
+#ifdef _DEBUG
 	THROW("Entity callback already freed");
+#endif
+}
+
+void Entity::OnNewInterface(EntityInterface* interf)
+{
+	EntityInterfaceId interfaceId = interf->GetInterfaceId();
+#ifdef _DEBUG
+	if(interfaces.find(interfaceId) != interfaces.end())
+		THROW("Entity interface already registered");
+#endif
+	interfaces[interfaceId] = interf;
+}
+
+void Entity::OnFreeInterface(EntityInterface* interf)
+{
+	Interfaces::iterator i = interfaces.find(interf->GetInterfaceId());
+	if(i != interfaces.end())
+		interfaces.erase(i);
+#ifdef _DEBUG
+	else
+		THROW("Entity interface already freed");
+#endif
 }
 
 ptr<File> Entity::GetFullTagKey(const EntityTagId& tagId) const
@@ -72,13 +101,13 @@ ptr<File> Entity::GetFullTagKey(const EntityTagId& tagId) const
 	return key;
 }
 
-ptr<File> Entity::GetFullFieldKey(const String& fieldId) const
+ptr<File> Entity::GetFullFieldKey(const EntityFieldId& fieldId) const
 {
-	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + fieldId.length()));
+	ptr<MemoryFile> key = NEW(MemoryFile(EntityId::size + 1 + EntityFieldId::size));
 	char* keyData = (char*)key->GetData();
 	memcpy(keyData, id.data, EntityId::size);
 	keyData[EntityId::size] = 'f';
-	memcpy(keyData + EntityId::size + 1, fieldId.c_str(), fieldId.length());
+	memcpy(keyData + EntityId::size + 1, fieldId.data, EntityFieldId::size);
 
 	return key;
 }
@@ -103,7 +132,7 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 		// if it not, think like there is no scheme
 		ptr<EntityScheme> newScheme;
 		if(value && value->GetSize() == EntitySchemeId::size)
-			newScheme = manager->GetSchemeManager()->TryGet(EntitySchemeId::FromData(value->GetData()));
+			newScheme = manager->GetSchemeManager()->TryGetScheme(EntitySchemeId::FromData(value->GetData()));
 
 		// if scheme doesn't match
 		if(scheme != newScheme)
@@ -135,7 +164,9 @@ void Entity::OnChange(const void* keyData, size_t keySize, ptr<File> value)
 		break;
 	case 'f':
 		{
-			String fieldId((const char*)keyData + 1, keySize - 1);
+			if(keySize != EntityFieldId::size + 1)
+				break;
+			EntityFieldId fieldId = EntityFieldId::FromData((const char*)keyData + 1);
 			for(size_t i = 0; i < callbacks.size(); ++i)
 				callbacks[i]->FireField(fieldId, value);
 		}
@@ -166,12 +197,12 @@ void Entity::WriteTag(ptr<Action> action, const EntityTagId& tagId, ptr<File> ta
 	action->AddChange(GetFullTagKey(tagId), tagData);
 }
 
-ptr<File> Entity::RawReadField(const String& fieldId) const
+ptr<File> Entity::RawReadField(const EntityFieldId& fieldId) const
 {
 	return manager->GetRepo()->GetValue(GetFullFieldKey(fieldId));
 }
 
-void Entity::RawWriteField(ptr<Action> action, const String& fieldId, ptr<File> value)
+void Entity::RawWriteField(ptr<Action> action, const EntityFieldId& fieldId, ptr<File> value)
 {
 	action->AddChange(GetFullFieldKey(fieldId), value);
 }
@@ -192,10 +223,12 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 
 		bool OnKeyValue(ptr<File> key, ptr<File> value)
 		{
+			// skip keys with wrong length
+			if(key->GetSize() != EntityId::size + 1 + EntityFieldId::size)
+				return true;
+
 			enumerator->OnField(
-				String(
-					(const char*)key->GetData() + EntityId::size + 1,
-					key->GetSize() - EntityId::size - 1),
+				EntityFieldId::FromData((const char*)key->GetData() + EntityId::size + 1),
 				value);
 			return true;
 		}
@@ -210,7 +243,7 @@ void Entity::EnumerateFields(FieldEnumerator* enumerator)
 	manager->GetRepo()->EnumerateKeyValues(prefix, &e);
 }
 
-ptr<Script::Any> Entity::ReadField(const String& fieldId) const
+ptr<Script::Any> Entity::ReadField(const EntityFieldId& fieldId) const
 {
 	if(!scheme)
 		return nullptr;
@@ -226,7 +259,7 @@ ptr<Script::Any> Entity::ReadField(const String& fieldId) const
 		RawReadField(fieldId));
 }
 
-void Entity::WriteField(ptr<Action> action, const String& fieldId, ptr<Script::Any> value)
+void Entity::WriteField(ptr<Action> action, const EntityFieldId& fieldId, ptr<Script::Any> value)
 {
 	if(!scheme)
 		return;
@@ -327,6 +360,32 @@ void Entity::Delete(ptr<Action> action)
 ptr<EntityCallback> Entity::AddCallback(ptr<Script::Any> callback)
 {
 	return NEW(EntityCallback(this, callback.FastCast<Script::Np::Any>()));
+}
+
+ptr<EntityInterface> Entity::GetInterface(const EntityInterfaceId& interfaceId)
+{
+	BEGIN_TRY();
+
+	// try to find an interface
+	Interfaces::const_iterator i = interfaces.find(interfaceId);
+	if(i != interfaces.end())
+		return i->second;
+
+	// so there is no interface object
+	// create new
+	ptr<EntityInterface> interf = NEW(EntityInterface(this, interfaceId));
+
+	return interf;
+
+	END_TRY("Can't get entity interface");
+}
+
+void Entity::SetInterfaceResult(const EntityInterfaceId& interfaceId, ptr<Script::Any> result)
+{
+	// try to find an interface
+	Interfaces::const_iterator i = interfaces.find(interfaceId);
+	if(i != interfaces.end())
+		i->second->SetResult(result);
 }
 
 END_INANITY_OIL

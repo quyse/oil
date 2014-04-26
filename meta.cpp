@@ -1,5 +1,6 @@
 #include "../inanity/script/np/impl.ipp"
 #include "../inanity/inanity-base-meta.ipp"
+#include "../inanity/inanity-data-meta.ipp"
 #include "../inanity/inanity-graphics-meta.ipp"
 #include "../inanity/inanity-physics-meta.ipp"
 #include "../inanity/inanity-math-script.ipp"
@@ -7,27 +8,35 @@
 
 //*** Convertors for valuetypes.
 
-#include "EntityId.hpp"
+#include "Id.hpp"
 
 BEGIN_INANITY_SCRIPT
 
-template <>
-struct ConverterFromScript<Oil::EntityId>
-{
-	static Oil::EntityId Convert(ptr<Any> value)
-	{
-		return Oil::EntityId::FromString(value->AsString().c_str());
+#define ID_CONVERTER(T) \
+	template <> \
+	struct ConverterFromScript<T> \
+	{ \
+		static T Convert(ptr<Any> value) \
+		{ \
+			return T::FromString(value->AsString()); \
+		} \
+	}; \
+	template <> \
+	struct ConverterToScript<T> \
+	{ \
+		static ptr<Any> Convert(ptr<State> state, const T& value) \
+		{ \
+			return state->NewString(value.ToString()); \
+		} \
 	}
-};
 
-template <>
-struct ConverterToScript<Oil::EntityId>
-{
-	static ptr<Any> Convert(ptr<State> state, const Oil::EntityId& value)
-	{
-		return state->NewString(value.ToString());
-	}
-};
+ID_CONVERTER(Inanity::Oil::EntityId);
+ID_CONVERTER(Inanity::Oil::EntitySchemeId);
+ID_CONVERTER(Inanity::Oil::EntityInterfaceId);
+ID_CONVERTER(Inanity::Oil::EntityTagId);
+ID_CONVERTER(Inanity::Oil::EntityFieldId);
+
+#undef ID_CONVERTER
 
 END_INANITY_SCRIPT
 
@@ -38,6 +47,9 @@ END_INANITY_SCRIPT
 META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(GetRootNamespace);
 	META_METHOD(GetNativeFileSystem);
+	META_METHOD(GetProfileFileSystem);
+	META_METHOD(SetProfilePath);
+	META_METHOD(Init);
 	META_METHOD(CreateLocalClientRepo);
 	META_METHOD(CreateTempClientRepo);
 	META_METHOD(CreateMemoryClientRepo);
@@ -46,14 +58,27 @@ META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
 	META_METHOD(CreateTempRemoteRepo);
 	META_METHOD(CreateMemoryRemoteRepo);
 	META_METHOD(CreateScriptRepo);
+	META_METHOD(ReclaimObject);
+META_CLASS_END();
+
+#include "ViewScriptObject.hpp"
+META_CLASS(Inanity::Oil::ViewScriptObject, Inanity.Oil.ViewScriptObject);
+	META_METHOD(Invalidate);
 META_CLASS_END();
 
 #include "RemoteRepo.hpp"
 META_CLASS(Inanity::Oil::RemoteRepo, Inanity.Oil.RemoteRepo);
 META_CLASS_END();
 
+#include "Repo.hpp"
+META_CLASS(Inanity::Oil::Repo, Inanity.Oil.Repo);
+	META_METHOD(Vacuum);
+	META_METHOD(IntegrityCheck);
+META_CLASS_END();
+
 #include "ClientRepo.hpp"
 META_CLASS(Inanity::Oil::ClientRepo, Inanity.Oil.ClientRepo);
+	META_CLASS_PARENT(Inanity::Oil::Repo);
 META_CLASS_END();
 
 #include "ScriptRepo.hpp"
@@ -71,6 +96,7 @@ META_CLASS(Inanity::Oil::ScriptRepo, Inanity.Oil.ScriptRepo);
 	META_METHOD(GetPushedKeysCount);
 	META_METHOD(GetPullLag);
 	META_METHOD(GetPulledKeysCount);
+	META_METHOD(GetClientRepo);
 META_CLASS_END();
 
 #include "Action.hpp"
@@ -80,12 +106,39 @@ META_CLASS(Inanity::Oil::Action, Inanity.Oil.Action);
 	META_METHOD(AddChange);
 META_CLASS_END();
 
-#include "EntityId.hpp"
+//******* ids
+
 META_CLASS(Inanity::Oil::EntityId, Inanity.Oil.EntityId);
 	META_STATIC_METHOD(StaticToFile);
 	META_STATIC_METHOD(FromFile);
 	META_STATIC_METHOD(New);
 META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntitySchemeId, Inanity.Oil.EntitySchemeId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityInterfaceId, Inanity.Oil.EntityInterfaceId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityTagId, Inanity.Oil.EntityTagId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::EntityFieldId, Inanity.Oil.EntityFieldId);
+	META_STATIC_METHOD(StaticToFile);
+	META_STATIC_METHOD(FromStringData);
+	META_STATIC_METHOD(FromFile);
+META_CLASS_END();
+
+//*******
 
 #include "Entity.hpp"
 META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
@@ -102,6 +155,8 @@ META_CLASS(Inanity::Oil::Entity, Inanity.Oil.Entity);
 	META_METHOD(WriteData);
 	META_METHOD(Delete);
 	META_METHOD(AddCallback);
+	META_METHOD(GetInterface);
+	META_METHOD(SetInterfaceResult);
 META_CLASS_END();
 
 #include "EntityManager.hpp"
@@ -118,20 +173,64 @@ META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
 	META_METHOD(GetId);
 	META_METHOD(GetName);
 	META_METHOD(GetFieldsCount);
+	META_METHOD(GetFieldId);
 	META_METHOD(GetFieldType);
 	META_METHOD(GetFieldName);
 	META_METHOD(AddField);
+	META_METHOD(AddInterface);
+META_CLASS_END();
+
+#include "EntityInterface.hpp"
+META_CLASS(Inanity::Oil::EntityInterface, Inanity.Oil.EntityInterface);
+	META_METHOD(GetEntity);
+	META_METHOD(GetInterfaceId);
+	META_METHOD(AddCallback);
 META_CLASS_END();
 
 #include "EntitySchemeManager.hpp"
 META_CLASS(Inanity::Oil::EntitySchemeManager, Inanity.Oil.EntitySchemeManager);
-	META_METHOD(TryGet);
-	META_METHOD(Get);
-	META_METHOD(Register);
+	META_METHOD(TryGetScheme);
+	META_METHOD(GetScheme);
+	META_METHOD(RegisterScheme);
+	META_METHOD(GetStandardFieldType);
 META_CLASS_END();
 
 #include "EntityCallback.hpp"
 META_CLASS(Inanity::Oil::EntityCallback, Inanity.Oil.EntityCallback);
+	META_METHOD(EnumerateScheme);
 	META_METHOD(EnumerateFields);
 	META_METHOD(EnumerateData);
+META_CLASS_END();
+
+#include "EntityInterfaceCallback.hpp"
+META_CLASS(Inanity::Oil::EntityInterfaceCallback, Inanity.Oil.EntityInterfaceCallback);
+	META_METHOD(Fire);
+META_CLASS_END();
+
+#include "EntityFieldType.hpp"
+META_CLASS(Inanity::Oil::EntityFieldType, Inanity.Oil.EntityFieldType);
+	META_METHOD(GetName);
+META_CLASS_END();
+
+#include "EntityFieldTypes.hpp"
+
+META_CLASS(Inanity::Oil::ReferenceEntityFieldType, Inanity.Oil.ReferenceEntityFieldType);
+	META_CLASS_PARENT(Inanity::Oil::EntityFieldType);
+	META_CONSTRUCTOR();
+	META_METHOD(CheckEntity);
+	META_METHOD(AddInterface);
+META_CLASS_END();
+
+#include "FileEntityScheme.hpp"
+
+META_CLASS(Inanity::Oil::FileEntitySchemeInputStream, Inanity.Oil.FileEntitySchemeInputStream);
+	META_CLASS_PARENT(Inanity::InputStream);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Entity>);
+	META_METHOD(GetSize);
+META_CLASS_END();
+
+META_CLASS(Inanity::Oil::FileEntitySchemeOutputStream, Inanity.Oil.FileEntitySchemeOutputStream);
+	META_CLASS_PARENT(Inanity::OutputStream);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Action>, ptr<Inanity::Oil::Entity>, size_t);
+	META_METHOD(End);
 META_CLASS_END();

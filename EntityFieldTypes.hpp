@@ -2,13 +2,17 @@
 #define ___INANITY_OIL_ENTITY_FIELD_TYPES_HPP___
 
 #include "EntityFieldType.hpp"
+#include "Id.hpp"
+#include <set>
 
 BEGIN_INANITY_OIL
+
+class Entity;
 
 class BlobEntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -16,7 +20,7 @@ public:
 class BoolEntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -24,7 +28,7 @@ public:
 class FloatEntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -32,7 +36,7 @@ public:
 class IntegerEntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -40,7 +44,7 @@ public:
 class StringEntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -48,7 +52,7 @@ public:
 class Vec3EntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -56,7 +60,7 @@ public:
 class Vec4EntityFieldType : public EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
 };
@@ -64,21 +68,34 @@ public:
 class Color3EntityFieldType : public Vec3EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 };
 
 class Color4EntityFieldType : public Vec4EntityFieldType
 {
 public:
-	const char* GetName() const;
+	String GetName() const;
 };
 
 class ReferenceEntityFieldType : public EntityFieldType
 {
+private:
+	typedef std::set<EntityInterfaceId> Interfaces;
+	/// Interfaces entity should have.
+	Interfaces interfaces;
+
 public:
-	const char* GetName() const;
+	Interfaces& GetInterfaces();
+
+	/// Check if entity could be referenced.
+	bool CheckEntity(ptr<Entity> entity) const;
+
+	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
+
+	//*** for scripts
+	void AddInterface(const EntityInterfaceId& interfaceId);
 };
 
 END_INANITY_OIL

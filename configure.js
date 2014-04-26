@@ -15,6 +15,9 @@ exports.configureCompiler = function(objectFile, compiler) {
 		// .cpp
 		source = source.replace(/\./g, '/') + '.cpp';
 	compiler.setSourceFile(source);
+	compiler.addIncludeDir('../inanity/deps/bullet/repo/src');
+	compiler.addIncludeDir('../inanity/deps/freetype/repo/include');
+	compiler.addIncludeDir('../inanity/deps/harfbuzz/generated');
 };
 
 var libraries = {
@@ -26,7 +29,10 @@ var executables = {
 			'npoil',
 			'MainPluginInstance',
 			'ViewPluginInstance',
+			'Engine',
+			'Painter',
 			'ScriptObject',
+			'ViewScriptObject',
 			'ScriptRepo',
 			'Repo',
 			'ClientRepo',
@@ -34,8 +40,9 @@ var executables = {
 			'UrlRemoteRepo',
 			'LocalRemoteRepo',
 			'Action',
-			'EntityId', 'Entity', 'EntityManager', 'EntityScheme', 'EntitySchemeManager',
-			'EntityCallback', 'EntityFieldTypes',
+			'Id', 'Entity', 'EntityManager', 'EntityScheme', 'EntityInterface', 'EntitySchemeManager',
+			'EntityCallback', 'EntityInterfaceCallback', 'EntityFieldTypes',
+			'FileEntityScheme',
 			'meta'
 		],
 		staticLibraries: [
@@ -44,29 +51,38 @@ var executables = {
 			'../inanity//libinanity-dx11',
 			'../inanity//libinanity-gl',
 			'../inanity//libinanity-shaders',
+			'../inanity//libinanity-data',
+			'../inanity//libinanity-gui',
+			'../inanity//libinanity-crypto',
 			'../inanity//libinanity-platform',
+			'../inanity//libinanity-platform-filesystem',
 			'../inanity//libinanity-npapi',
 			'../inanity//libinanity-np',
 			'../inanity//libinanity-input',
 			'../inanity//libinanity-sqlite',
+			'../inanity//libinanity-sqlitefs',
+			'../inanity/deps/zlib//libz',
 			'../inanity/deps/glew//libglew',
-			'../inanity/deps/sqlite//libsqlite'
+			'../inanity/deps/sqlite//libsqlite',
+			'../inanity/deps/freetype//libfreetype',
+			'../inanity/deps/harfbuzz//libharfbuzz'
 		],
 		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']
 	},
-	'oilserver': {
-		objects: ['oilserver', 'Repo', 'ServerRepo'],
+	'oild': {
+		objects: ['oild', 'Repo', 'ServerRepo'],
 		staticLibraries: [
 			'../inanity//libinanity-base',
-			'../inanity//libinanity-platform',
+			'../inanity//libinanity-platform-filesystem',
 			'../inanity//libinanity-sqlite',
 			'../inanity/deps/sqlite//libsqlite',
 			'../inanity//libinanity-fcgi',
 			'../inanity/deps/fcgi//libfcgi'
 			],
-		'dynamicLibraries-win32': ['ws2_32.lib']
+		'dynamicLibraries-win32': ['ws2_32.lib'],
+		'dynamicLibraries-linux': ['pthread', 'dl']
 	},
 	'test-repo-sync': {
 		objects: ['test.repo-sync', 'Repo', 'ServerRepo', 'ClientRepo'],
