@@ -46,19 +46,18 @@ var executables = {
 			'meta'
 		],
 		staticLibraries: [
-			'../inanity//libinanity-base',
-			'../inanity//libinanity-graphics',
-			'../inanity//libinanity-dx11',
-			'../inanity//libinanity-gl',
-			'../inanity//libinanity-shaders',
-			'../inanity//libinanity-data',
 			'../inanity//libinanity-gui',
-			'../inanity//libinanity-crypto',
+			'../inanity//libinanity-gl',
+			'../inanity//libinanity-graphics',
 			'../inanity//libinanity-platform',
 			'../inanity//libinanity-platform-filesystem',
+			'../inanity//libinanity-shaders',
+			'../inanity//libinanity-input',
+			'../inanity//libinanity-crypto',
+			'../inanity//libinanity-data',
 			'../inanity//libinanity-npapi',
 			'../inanity//libinanity-np',
-			'../inanity//libinanity-input',
+			'../inanity//libinanity-base',
 			'../inanity//libinanity-sqlite',
 			'../inanity//libinanity-sqlitefs',
 			'../inanity/deps/zlib//libz',
@@ -67,7 +66,9 @@ var executables = {
 			'../inanity/deps/freetype//libfreetype',
 			'../inanity/deps/harfbuzz//libharfbuzz'
 		],
-		dynamicLibraries: ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
+		'staticLibraries-win32': ['../inanity//libinanity-dx11'],
+		'dynamicLibraries-linux': ['pthread', 'GL', 'dl', 'z', 'SDL2'],
+		'dynamicLibraries-win32': ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']
 	},
@@ -93,6 +94,7 @@ var executables = {
 		]
 	}
 };
+executables.libnpoil = executables.npoil;
 
 var platformed = function(object, field, platform) {
 	return (object[field] || []).concat(object[field + '-' + platform] || []);
@@ -117,8 +119,9 @@ exports.configureLinker = function(executableFile, linker) {
 	var executable = executables[a[3]];
 	for ( var i = 0; i < executable.objects.length; ++i)
 		linker.addObjectFile(confDir + executable.objects[i]);
-	for ( var i = 0; i < executable.staticLibraries.length; ++i) {
-		var staticLibrary = executable.staticLibraries[i];
+	var staticLibraries = platformed(executable, 'staticLibraries', linker.platform);
+	for ( var i = 0; i < staticLibraries.length; ++i) {
+		var staticLibrary = staticLibraries[i];
 		var confPos = staticLibrary.indexOf('//');
 		if(confPos >= 0)
 			staticLibrary = staticLibrary.replace('//', '/' + confDir);

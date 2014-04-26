@@ -8,6 +8,7 @@
 #include "../inanity/MemoryFile.hpp"
 #include "../inanity/FileInputStream.hpp"
 #include "../inanity/Exception.hpp"
+#include <cstring>
 
 BEGIN_INANITY_OIL
 
