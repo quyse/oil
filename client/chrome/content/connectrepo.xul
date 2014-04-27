@@ -32,12 +32,12 @@
 		</menupopup>
 	</popupset>
 
-	<tabbox id="tabbox">
+	<tabbox id="tabbox" flex="1">
 		<tabs>
 			<tab label="new" />
 			<tab label="recent" />
 		</tabs>
-		<tabpanels>
+		<tabpanels flex="1">
 			<tabpanel>
 				<grid flex="1">
 					<columns>
@@ -117,7 +117,7 @@
 			<tabpanel>
 				<vbox flex="1">
 					<dialogheader title="recent repos" />
-					<listbox id="listboxRecentRepos" context="contextMenuRecentRepo">
+					<listbox id="listboxRecentRepos" context="contextMenuRecentRepo" flex="1">
 						<listcols>
 							<listcol />
 							<listcol flex="1" />
