@@ -47,6 +47,7 @@ var executables = {
 		],
 		staticLibraries: [
 			'../inanity//libinanity-gui',
+			'../inanity//libinanity-platform',
 			'../inanity//libinanity-gl',
 			'../inanity//libinanity-graphics',
 			'../inanity//libinanity-platform',
