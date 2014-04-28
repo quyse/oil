@@ -9,7 +9,7 @@
 BEGIN_INANITY_OIL
 
 EntityInterface::EntityInterface(ptr<Entity> entity, const EntityInterfaceId& interfaceId)
-: entity(entity), interfaceId(interfaceId)
+: entity(entity), interfaceId(interfaceId), resultHasSet(false)
 {
 	entity->OnNewInterface(this);
 	OnChangeScheme(entity->GetScheme());
@@ -57,7 +57,11 @@ void EntityInterface::OnFreeCallback(EntityInterfaceCallback* callback)
 
 void EntityInterface::SetResult(ptr<Script::Any> result)
 {
+	// remember result
 	this->result = result;
+	// remember that result set
+	resultHasSet = true;
+	// fire callbacks
 	for(size_t i = 0; i < callbacks.size(); ++i)
 		callbacks[i]->Fire();
 }
@@ -83,7 +87,15 @@ void EntityInterface::OnChangeScheme(ptr<EntityScheme> entityScheme)
 
 ptr<EntityInterfaceCallback> EntityInterface::AddCallback(ptr<Script::Any> callback)
 {
-	return NEW(EntityInterfaceCallback(this, callback.FastCast<Script::Np::Any>()));
+	ptr<EntityInterfaceCallback> interfaceCallback =
+		NEW(EntityInterfaceCallback(this, callback.FastCast<Script::Np::Any>()));
+
+	// if result already has been set, fire callback immediately
+	if(resultHasSet)
+		interfaceCallback->Fire();
+	// else it will be fired at first result set
+
+	return interfaceCallback;
 }
 
 void EntityInterface::FreeInterfaceObject()

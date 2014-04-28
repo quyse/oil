@@ -50,6 +50,18 @@ OIL.ids = {
 				};
 			}
 		}]
+
+	How interface callback works.
+
+	Interface callback is a function with one argument - entity.
+	Interface callback creates all it needs to keep track of entity's
+	interface view, and returns a cancel callback - callback to
+	free all resources which was allocated for tracking.
+	For the first time interface callback should call
+	Entity::SetInterfaceResult with the current result, regardless of
+	did entity changed or not. After that interface callback should
+	call Entity::SetInterfaceResult each time data was changed.
+
 	*/
 	schemesInit: [{
 		name: "client_version",
@@ -92,29 +104,78 @@ OIL.ids = {
 		interfacesInit: [{
 			name: "data",
 			callback: function(entity) {
-				function getData() {
-					var file = null;
-					try {
-						var stream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
-						file = stream.Read(stream.GetSize());
-					} catch(e) {
-						OIL.log(e);
+				// number of current version, in order to cancel pending recalculation
+				var currentVersion = 0;
+
+				// recalculate interface result
+				function recalculate(version) {
+					const blockSize = 0x10000;
+					const timeout = 0;
+
+					var sourceStream = null, resultStream = null;
+
+					function cleanup() {
+						if(sourceStream)
+							sourceStream.__reclaim();
+						if(resultStream)
+							resultStream.__reclaim();
 					}
-					return file;
+
+					// one step in recalculation
+					function step() {
+						try {
+							if(version != currentVersion) {
+								cleanup();
+								return;
+							}
+
+							if(!sourceStream)
+								sourceStream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
+							if(!resultStream)
+								resultStream = new OIL.classes.Inanity.MemoryStream();
+
+							// perform one step
+							var block = sourceStream.Read(blockSize);
+							// if there is some data
+							if(block.GetSize() > 0) {
+								// write
+								resultStream.Write(block);
+								// schedule next step
+								OIL.setTimeout(step, timeout);
+							} else {
+								// data ends, finalize work
+								setResult(resultStream.ToFile());
+								cleanup();
+							}
+
+						} catch(e) {
+							// error
+							OIL.log(e);
+							setResult(null);
+							cleanup();
+						}
+					};
+					OIL.setTimeout(step, timeout);
 				}
 
-				function setResult() {
-					entity.SetInterfaceResult(OIL.ids.interfaces.data, getData());
+				function setResult(result) {
+					entity.SetInterfaceResult(OIL.ids.interfaces.data, result);
 				}
 
 				var entityCallback = entity.AddCallback(function(type, key, value) {
 					if(type == "data")
-						setResult();
+						recalculate(++currentVersion);
 				});
 
-				setResult();
+				// run first time
+				OIL.setTimeout(function() {
+					recalculate(0);
+				}, 0);
 
 				return function() {
+					// cancel pending recalculation
+					++currentVersion;
+					// free resources
 					entity = null;
 					entityCallback = null;
 				};

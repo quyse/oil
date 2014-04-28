@@ -28,6 +28,8 @@ private:
 	ptr<Script::Any> freeInterfaceObject;
 	/// Result data.
 	ptr<Script::Any> result;
+	/// Has result been set at least one time.
+	bool resultHasSet;
 
 	/// Callbacks.
 	std::vector<EntityInterfaceCallback*> callbacks;

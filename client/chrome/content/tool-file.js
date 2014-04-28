@@ -163,13 +163,14 @@ window.addEventListener('load', function() {
 
 	var entityDataInterface = entity.GetInterface(OIL.ids.interfaces.data);
 	entityDataInterfaceCallback = entityDataInterface.AddCallback(onDataChange);
-	entityDataInterfaceCallback.Fire();
 
 	document.getElementById("labelNote").remove();
 });
 
 window.addEventListener('unload', function() {
 	entity = null;
-	entityCallback = null;
-	entityDataInterfaceCallback = null;
+	if(entityCallback)
+		entityCallback.__reclaim();
+	if(entityCallback)
+		entityDataInterfaceCallback.__reclaim();
 });

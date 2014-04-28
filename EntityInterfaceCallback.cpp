@@ -1,5 +1,6 @@
 #include "EntityInterfaceCallback.hpp"
 #include "EntityInterface.hpp"
+#include "MainPluginInstance.hpp"
 #include "../inanity/script/Any.hpp"
 
 BEGIN_INANITY_OIL
@@ -16,6 +17,12 @@ EntityInterfaceCallback::~EntityInterfaceCallback()
 }
 
 void EntityInterfaceCallback::Fire()
+{
+	MainPluginInstance::instance->AsyncCall(
+		Handler::Bind<EntityInterfaceCallback>(this, &EntityInterfaceCallback::FireCallback));
+}
+
+void EntityInterfaceCallback::FireCallback()
 {
 	ptr<Script::Any> result = entityInterface->GetResult();
 	if(result)
