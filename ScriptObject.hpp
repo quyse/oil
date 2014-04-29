@@ -66,9 +66,6 @@ public:
 
 	ptr<ScriptRepo> CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 
-	/// Temporary method to reclaim instances from script.
-	void ReclaimObject(ptr<Script::Any> object);
-
 	META_DECLARE_CLASS(ScriptObject);
 };
 

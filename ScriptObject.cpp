@@ -122,9 +122,4 @@ ptr<ScriptRepo> ScriptObject::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<R
 		NEW(EntityManager(clientRepo, entitySchemeManager))));
 }
 
-void ScriptObject::ReclaimObject(ptr<Script::Any> object)
-{
-	scriptState->ReclaimInstance(object->AsObject());
-}
-
 END_INANITY_OIL

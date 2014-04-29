@@ -742,9 +742,9 @@ function uploadFiles(sourceFiles, folderEntity) {
 
 				// reset pointers
 				fileEntity = null;
-				OIL.core.ReclaimObject(sourceStream);
+				sourceStream.__reclaim();
 				sourceStream = null;
-				entityStream = null;
+				entityStream.__reclaim();
 			}
 
 			// next step
@@ -910,7 +910,8 @@ function onCommandDownloadFile() {
 				var fileStream = OIL.core.GetNativeFileSystem().SaveStream(fp.file.path);
 				var entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeInputStream(entity);
 				fileStream.ReadAllFromStream(entityStream);
-				OIL.core.ReclaimObject(fileStream);
+				entityStream.__reclaim();
+				fileStream.__reclaim();
 			}
 			catch(e) {
 				alert(e);
