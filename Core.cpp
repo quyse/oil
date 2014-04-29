@@ -1,4 +1,4 @@
-#include "ScriptObject.hpp"
+#include "Core.hpp"
 #include "ScriptRepo.hpp"
 #include "ClientRepo.hpp"
 #include "ServerRepo.hpp"
@@ -26,7 +26,7 @@
 
 BEGIN_INANITY_OIL
 
-ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
+Core::Core(ptr<Script::Np::State> scriptState)
 : scriptState(scriptState)
 {
 	nativeFileSystem = Platform::FileSystem::GetNativeFileSystem();
@@ -53,68 +53,68 @@ ScriptObject::ScriptObject(ptr<Script::Np::State> scriptState)
 	scriptState->Register<MemoryFile>();
 }
 
-ptr<Script::Any> ScriptObject::GetRootNamespace() const
+ptr<Script::Any> Core::GetRootNamespace() const
 {
 	return scriptState->GetRootNamespace();
 }
 
-ptr<FileSystem> ScriptObject::GetNativeFileSystem() const
+ptr<FileSystem> Core::GetNativeFileSystem() const
 {
 	return nativeFileSystem;
 }
 
-ptr<FileSystem> ScriptObject::GetProfileFileSystem() const
+ptr<FileSystem> Core::GetProfileFileSystem() const
 {
 	return profileFileSystem;
 }
 
-void ScriptObject::SetProfilePath(const String& profilePath)
+void Core::SetProfilePath(const String& profilePath)
 {
 	this->profilePath = profilePath;
 	profileFileSystem = NEW(Platform::FileSystem(profilePath));
 }
 
-void ScriptObject::Init()
+void Core::Init()
 {
 	engine = NEW(Engine(NEW(Platform::FileSystem("assets")), NEW(Data::SQLiteFileSystem(profilePath + "/shaders"))));
 }
 
-ptr<ClientRepo> ScriptObject::CreateLocalClientRepo(const String& fileName)
+ptr<ClientRepo> Core::CreateLocalClientRepo(const String& fileName)
 {
 	return NEW(ClientRepo(fileName.c_str()));
 }
 
-ptr<ClientRepo> ScriptObject::CreateTempClientRepo()
+ptr<ClientRepo> Core::CreateTempClientRepo()
 {
 	return NEW(ClientRepo(Repo::fileNameTemp));
 }
 
-ptr<ClientRepo> ScriptObject::CreateMemoryClientRepo()
+ptr<ClientRepo> Core::CreateMemoryClientRepo()
 {
 	return NEW(ClientRepo(Repo::fileNameMemory));
 }
 
-ptr<RemoteRepo> ScriptObject::CreateUrlRemoteRepo(const String& url)
+ptr<RemoteRepo> Core::CreateUrlRemoteRepo(const String& url)
 {
 	return NEW(UrlRemoteRepo(scriptState->GetPluginInstance(), url));
 }
 
-ptr<RemoteRepo> ScriptObject::CreateLocalRemoteRepo(const String& fileName)
+ptr<RemoteRepo> Core::CreateLocalRemoteRepo(const String& fileName)
 {
 	return NEW(LocalRemoteRepo(NEW(ServerRepo(fileName.c_str()))));
 }
 
-ptr<RemoteRepo> ScriptObject::CreateTempRemoteRepo()
+ptr<RemoteRepo> Core::CreateTempRemoteRepo()
 {
 	return NEW(LocalRemoteRepo(NEW(ServerRepo(Repo::fileNameTemp))));
 }
 
-ptr<RemoteRepo> ScriptObject::CreateMemoryRemoteRepo()
+ptr<RemoteRepo> Core::CreateMemoryRemoteRepo()
 {
 	return NEW(LocalRemoteRepo(NEW(ServerRepo(Repo::fileNameMemory))));
 }
 
-ptr<ScriptRepo> ScriptObject::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo)
+ptr<ScriptRepo> Core::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo)
 {
 	return NEW(ScriptRepo(
 		clientRepo,

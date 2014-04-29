@@ -1,5 +1,5 @@
-#ifndef ___INANITY_OIL_SCRIPT_OBJECT_HPP___
-#define ___INANITY_OIL_SCRIPT_OBJECT_HPP___
+#ifndef ___INANITY_OIL_CORE_HPP___
+#define ___INANITY_OIL_CORE_HPP___
 
 #include "oil.hpp"
 #include "../inanity/script/script.hpp"
@@ -34,7 +34,7 @@ class ScriptRepo;
 class EntitySchemeManager;
 class Engine;
 
-class ScriptObject : public Object
+class Core : public Object
 {
 private:
 	ptr<Script::Np::State> scriptState;
@@ -46,7 +46,7 @@ private:
 	ptr<Engine> engine;
 
 public:
-	ScriptObject(ptr<Script::Np::State> scriptState);
+	Core(ptr<Script::Np::State> scriptState);
 
 	ptr<Script::Any> GetRootNamespace() const;
 	ptr<FileSystem> GetNativeFileSystem() const;
@@ -66,7 +66,7 @@ public:
 
 	ptr<ScriptRepo> CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 
-	META_DECLARE_CLASS(ScriptObject);
+	META_DECLARE_CLASS(Core);
 };
 
 END_INANITY_OIL

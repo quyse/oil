@@ -43,8 +43,8 @@ END_INANITY_SCRIPT
 
 //*** Classes.
 
-#include "ScriptObject.hpp"
-META_CLASS(Inanity::Oil::ScriptObject, Inanity.Oil.ScriptObject);
+#include "Core.hpp"
+META_CLASS(Inanity::Oil::Core, Inanity.Oil.Core);
 	META_METHOD(GetRootNamespace);
 	META_METHOD(GetNativeFileSystem);
 	META_METHOD(GetProfileFileSystem);

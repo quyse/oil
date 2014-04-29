@@ -1,5 +1,5 @@
 #include "MainPluginInstance.hpp"
-#include "ScriptObject.hpp"
+#include "Core.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #ifdef ___INANITY_PLATFORM_WINDOWS
@@ -50,7 +50,7 @@ void MainPluginInstance::Paint(HDC hdc)
 void MainPluginInstance::PostInit()
 {
 	scriptState = NEW(Script::Np::State(this));
-	scriptObject = scriptState->WrapObject<ScriptObject>(NEW(ScriptObject(scriptState)));
+	scriptObject = scriptState->WrapObject<Core>(NEW(Core(scriptState)));
 }
 
 END_INANITY_OIL

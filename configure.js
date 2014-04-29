@@ -31,7 +31,7 @@ var executables = {
 			'ViewPluginInstance',
 			'Engine',
 			'Painter',
-			'ScriptObject',
+			'Core',
 			'ViewScriptObject',
 			'ScriptRepo',
 			'Repo',
