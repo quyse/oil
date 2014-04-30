@@ -260,7 +260,7 @@ window.addEventListener('unload', function() {
 });
 
 // get current version of app
-var currentVersion = Components.classes["@mozilla.org/xre/app-info;1"]
+var currentVersion = OIL.currentVersion = Components.classes["@mozilla.org/xre/app-info;1"]
 	.getService(Components.interfaces.nsIXULAppInfo).version
 
 function initClientUpgrade() {
@@ -351,10 +351,7 @@ var clientVersionEntityCallback;
 var onClientUpgrade;
 
 function onHelpAbout() {
-	OIL.getPromptService().alert(window, "about",
-		"Inanity Oil Client is open source software.\n\n" +
-		"Source code and last releases are on https://github.com/quyse/oil\n\n" +
-		"Current version is " + currentVersion + ".");
+	window.openDialog('about.xul', '', 'chrome,modal,centerscreen');
 }
 
 // enable debug server if needed
