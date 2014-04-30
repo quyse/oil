@@ -711,8 +711,8 @@ function uploadFiles(sourceFiles, folderEntity) {
 				file.parentEntity.WriteData(action, OIL.eid2f(fileEntity.GetId()), OIL.fileTrue());
 				fileEntity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(file.parentEntity.GetId()));
 
-				// create entity stream
-				entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(action, fileEntity, blockSize);
+				// create entity stream (without action)
+				entityStream = new OIL.classes.Inanity.Oil.FileEntitySchemeOutputStream(null, fileEntity, blockSize);
 
 				// reset written file size
 				fileWrittenSize = 0;
@@ -746,6 +746,7 @@ function uploadFiles(sourceFiles, folderEntity) {
 				sourceStream = null;
 				entityStream.__reclaim();
 			}
+			block.__reclaim();
 
 			// next step
 			OIL.setTimeout(step, 0);

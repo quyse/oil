@@ -64,6 +64,7 @@ private:
 	ptr<MemoryStream> currentBlockStream;
 	size_t currentBlockIndex, currentBlockSize;
 
+	void WriteData(ptr<File> name, ptr<File> value);
 	void FinishCurrentBlock();
 
 public:

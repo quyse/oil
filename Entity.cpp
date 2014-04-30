@@ -292,6 +292,14 @@ void Entity::RawWriteData(ptr<Action> action, const void* nameData, size_t nameS
 	action->AddChange(GetFullDataKey(nameData, nameSize), value);
 }
 
+void Entity::RawWriteDataStraight(const void* nameData, size_t nameSize, ptr<File> value)
+{
+	if(!scheme)
+		return;
+
+	manager->GetRepo()->Change(GetFullDataKey(nameData, nameSize), value);
+}
+
 void Entity::EnumerateData(DataEnumerator* enumerator)
 {
 	if(!scheme)
@@ -330,6 +338,11 @@ ptr<File> Entity::ReadData(ptr<File> name) const
 void Entity::WriteData(ptr<Action> action, ptr<File> name, ptr<File> value)
 {
 	RawWriteData(action, name ? name->GetData() : nullptr, name ? name->GetSize() : 0, value);
+}
+
+void Entity::WriteDataStraight(ptr<File> name, ptr<File> value)
+{
+	RawWriteDataStraight(name ? name->GetData() : nullptr, name ? name->GetSize() : 0, value);
 }
 
 void Entity::Delete(ptr<Action> action)

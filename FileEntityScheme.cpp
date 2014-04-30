@@ -158,6 +158,14 @@ FileEntitySchemeOutputStream::FileEntitySchemeOutputStream(ptr<Action> action, p
 	totalHashStream = NEW(Crypto::WhirlpoolStream());
 }
 
+void FileEntitySchemeOutputStream::WriteData(ptr<File> name, ptr<File> value)
+{
+	if(action)
+		entity->WriteData(action, name, value);
+	else
+		entity->WriteDataStraight(name, value);
+}
+
 void FileEntitySchemeOutputStream::FinishCurrentBlock()
 {
 	// get block
@@ -174,7 +182,7 @@ void FileEntitySchemeOutputStream::FinishCurrentBlock()
 	descriptorHashWriter->Write(hashFile);
 
 	// write block to entity
-	entity->WriteData(action, GetBlockName(currentBlockIndex), blockFile);
+	WriteData(GetBlockName(currentBlockIndex), blockFile);
 
 	// increase total size
 	totalSize += blockFile->GetSize();
@@ -242,7 +250,7 @@ void FileEntitySchemeOutputStream::End()
 	writer.Write(hashes);
 
 	// store descriptor
-	entity->WriteData(action, nullptr, descriptorStream->ToFile());
+	WriteData(nullptr, descriptorStream->ToFile());
 }
 
 END_INANITY_OIL

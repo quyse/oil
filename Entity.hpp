@@ -84,9 +84,11 @@ public:
 
 	ptr<File> RawReadData(const void* nameData, size_t nameSize) const;
 	void RawWriteData(ptr<Action> action, const void* nameData, size_t nameSize, ptr<File> value);
+	void RawWriteDataStraight(const void* nameData, size_t nameSize, ptr<File> value);
 	void EnumerateData(DataEnumerator* enumerator);
 	ptr<File> ReadData(ptr<File> name) const;
 	void WriteData(ptr<Action> action, ptr<File> name, ptr<File> value);
+	void WriteDataStraight(ptr<File> name, ptr<File> value);
 
 	/// Deletes an entity.
 	/** All things (tags, fields, etc.) deleted. But only if entity exists. */
