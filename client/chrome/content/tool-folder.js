@@ -2,6 +2,7 @@
 
 Components.utils.import('chrome://oil/content/oil.js');
 
+const MIME_DRAG_ENTITY = "application/x-inanityoil-entity";
 const MIME_DRAG_FOLDER_ENTRY = "application/x-inanityoil-folder-entry";
 // maximum length of hierarchy to process
 const MAX_HIERARCHY_LENGTH = 64;
@@ -368,6 +369,7 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	}
 
 	var entries = checkOutput.entries;
+	var entities = checkOutput.entities;
 	var files = checkOutput.files;
 
 	var destItem = this.getItem(row);
@@ -423,6 +425,32 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 		OIL.finishAction(action);
 	}
 
+	// if there are some entities
+	if(entities.length > 0) {
+		var actionDescription = "link ";
+		var operation = dataTransfer.dropEffect;
+
+		if(entities.length == 1) {
+			let entityName = OIL.entityManager.GetEntity(entities[0]).ReadTag(OIL.ids.tags.name);
+			actionDescription += entityName ? JSON.stringify(OIL.f2s(entityName)) : "<unnamed>";
+		}
+		else
+			actionDescription += entities.length + " items";
+
+		var destIdFile = OIL.eid2f(destEntity.GetId());
+
+		actionDescription += " to " + destItem.getStringifiedName();
+
+		var action = OIL.createAction(actionDescription);
+
+		// perform operation on entities
+		for(var i = 0; i < entities.length; ++i) {
+			// place entity into dest folder
+			destEntity.WriteData(action, OIL.eid2f(entities[i]), OIL.fileTrue());
+		}
+		OIL.finishAction(action);
+	}
+
 	// perform operation on files
 	if(files.length > 0)
 		uploadFiles(files, destEntity);
@@ -433,13 +461,20 @@ function checkDrop(row, orientation, dataTransfer, output) {
 		return false;
 
 	// get items to drop
-	var entries = [], files = [];
+	var entries = [], entities = [], files = [];
 	var itemsCount = dataTransfer.mozItemCount;
 	for(var i = 0; i < itemsCount; ++i) {
 		// if it's folder entry
 		var entry = dataTransfer.mozGetDataAt(MIME_DRAG_FOLDER_ENTRY, i);
 		if(entry) {
 			entries.push(JSON.parse(entry));
+			continue;
+		}
+
+		// else if it's entity
+		var entityId = dataTransfer.mozGetDataAt(MIME_DRAG_ENTITY, i);
+		if(entityId) {
+			entities.push(entityId);
 			continue;
 		}
 
@@ -484,6 +519,7 @@ function checkDrop(row, orientation, dataTransfer, output) {
 
 	if(output) {
 		output.entries = entries;
+		output.entities = entities;
 		output.files = files;
 	}
 
@@ -956,11 +992,13 @@ function onTreeDragStart(event) {
 	if(selectedItems.length <= 0)
 		return;
 
-	for(var i = 0; i < selectedItems.length; ++i)
+	for(var i = 0; i < selectedItems.length; ++i) {
 		event.dataTransfer.mozSetDataAt(MIME_DRAG_FOLDER_ENTRY, JSON.stringify({
 			itemId: selectedItems[i].entityId,
 			folderId: selectedItems[i].parent.entityId
 		}), i);
+		event.dataTransfer.mozSetDataAt(MIME_DRAG_ENTITY, selectedItems[i].entityId, i);
+	}
 
 	event.dataTransfer.effectAllowed = "linkMove";
 }
