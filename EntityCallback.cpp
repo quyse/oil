@@ -98,6 +98,11 @@ void EntityCallback::EnumerateScheme()
 	FireScheme(entity->GetScheme());
 }
 
+void EntityCallback::EnumerateTag(const EntityTagId& tagId)
+{
+	FireTag(tagId, entity->ReadTag(tagId));
+}
+
 void EntityCallback::EnumerateFields()
 {
 	class Enumerator : public Entity::FieldEnumerator

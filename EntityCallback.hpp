@@ -39,6 +39,8 @@ public:
 
 	/// Fire callback for scheme.
 	void EnumerateScheme();
+	/// Fire callback for tag.
+	void EnumerateTag(const EntityTagId& tagId);
 	/// Fire callback for all fields.
 	void EnumerateFields();
 	/// Fire callback for all data.
