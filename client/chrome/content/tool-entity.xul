@@ -19,8 +19,11 @@
 					<textbox id="textboxEntityId" readonly="true" />
 				</row>
 				<row align="baseline">
-					<label control="textboxScheme" value="scheme" />
-					<textbox id="textboxScheme" readonly="true" />
+					<label value="scheme" />
+					<hbox align="center">
+						<image id="imageScheme" />
+						<label id="labelScheme" />
+					</hbox>
 				</row>
 			</rows>
 		</grid>
