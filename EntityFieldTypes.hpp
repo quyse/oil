@@ -79,23 +79,10 @@ public:
 
 class ReferenceEntityFieldType : public EntityFieldType
 {
-private:
-	typedef std::set<EntityInterfaceId> Interfaces;
-	/// Interfaces entity should have.
-	Interfaces interfaces;
-
 public:
-	Interfaces& GetInterfaces();
-
-	/// Check if entity could be referenced.
-	bool CheckEntity(ptr<Entity> entity) const;
-
 	String GetName() const;
 	ptr<Script::Any> TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value);
 	ptr<File> TryConvertFromScript(ptr<Script::Np::Any> value);
-
-	//*** for scripts
-	void AddInterface(const EntityInterfaceId& interfaceId);
 };
 
 END_INANITY_OIL

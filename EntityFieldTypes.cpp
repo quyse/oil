@@ -194,29 +194,6 @@ String Color4EntityFieldType::GetName() const
 
 //*** class ReferenceEntityFieldType
 
-ReferenceEntityFieldType::Interfaces& ReferenceEntityFieldType::GetInterfaces()
-{
-	return interfaces;
-}
-
-bool ReferenceEntityFieldType::CheckEntity(ptr<Entity> entity) const
-{
-	// get entity scheme
-	ptr<EntityScheme> scheme = entity->GetScheme();
-	if(!scheme)
-		return false;
-
-	// get scheme's interfaces
-	const EntityScheme::Interfaces& schemeInterfaces = scheme->GetInterfaces();
-
-	// check that all needed interfaces here
-	for(Interfaces::const_iterator i = interfaces.begin(); i != interfaces.end(); ++i)
-		if(schemeInterfaces.find(*i) == schemeInterfaces.end())
-			return false;
-
-	return true;
-}
-
 String ReferenceEntityFieldType::GetName() const
 {
 	return "reference";
@@ -226,30 +203,27 @@ ptr<Script::Any> ReferenceEntityFieldType::TryConvertToScript(EntityManager* ent
 {
 	try
 	{
-		return scriptState->WrapObject(value
-			? entityManager->GetEntity(EntityId::FromString(Strings::File2String(value).c_str()))
-			: nullptr
-			);
+		if(value)
+			return scriptState->NewString(EntityId::FromFile(value).ToString());
 	}
 	catch(Exception* exception)
 	{
 		MakePointer(exception);
-		return scriptState->WrapObject<File>(nullptr);
 	}
+	return scriptState->NewString("");
 }
 
 ptr<File> ReferenceEntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 {
-	ptr<Entity> entity = value->AsObject().DynamicCast<Entity>();
-	if(!entity)
+	try
+	{
+		return EntityId::FromString(value->AsString()).ToFile();
+	}
+	catch(Exception* exception)
+	{
+		MakePointer(exception);
 		return nullptr;
-	String string = entity->GetId().ToString();
-	return MemoryFile::CreateViaCopy(string.c_str(), string.length());
-}
-
-void ReferenceEntityFieldType::AddInterface(const EntityInterfaceId& interfaceId)
-{
-	interfaces.insert(interfaceId);
+	}
 }
 
 END_INANITY_OIL

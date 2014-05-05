@@ -217,8 +217,6 @@ META_CLASS_END();
 META_CLASS(Inanity::Oil::ReferenceEntityFieldType, Inanity.Oil.ReferenceEntityFieldType);
 	META_CLASS_PARENT(Inanity::Oil::EntityFieldType);
 	META_CONSTRUCTOR();
-	META_METHOD(CheckEntity);
-	META_METHOD(AddInterface);
 META_CLASS_END();
 
 #include "FileEntityScheme.hpp"
