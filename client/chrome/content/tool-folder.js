@@ -587,22 +587,11 @@ function onCommandRename() {
 	tree.startEditing(selectedItems[0].getRow(), tree.columns.getNamedColumn("treecolName"));
 }
 
-function onCommandCreateFolder() {
-	var selectedItems = getSelectedItems();
-	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
-
-	var action = OIL.createAction("create folder");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("New Folder"));
-	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
-	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-	OIL.finishAction(action);
-
-	selectedItem.open(true);
-	var entityId = entity.GetId();
-	for(var i = 0; i < selectedItem.children.length; ++i) {
-		var item = selectedItem.children[i];
-		if(item.entityId == entityId) {
+function startRenameNewItem(parentItem, newEntityId) {
+	parentItem.open(true);
+	for(var i = 0; i < parentItem.children.length; ++i) {
+		var item = parentItem.children[i];
+		if(item.entityId == newEntityId) {
 			var row = item.getRow();
 			view.selection.select(row);
 			view.treebox.ensureRowIsVisible(row);
@@ -610,6 +599,48 @@ function onCommandCreateFolder() {
 			break;
 		}
 	}
+}
+
+function onCommandCreateFolder() {
+	var selectedItems = getSelectedItems();
+	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
+
+	var action = OIL.createAction("create folder");
+	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new folder"));
+	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
+	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+	OIL.finishAction(action);
+
+	startRenameNewItem(selectedItem, entity.GetId());
+}
+
+function onCommandCreateImage() {
+	var selectedItems = getSelectedItems();
+	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
+
+	var action = OIL.createAction("create image");
+	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.image);
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new image"));
+	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
+	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+	OIL.finishAction(action);
+
+	startRenameNewItem(selectedItem, entity.GetId());
+}
+
+function onCommandCreateImageTransform() {
+	var selectedItems = getSelectedItems();
+	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
+
+	var action = OIL.createAction("create image transform");
+	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.imageTransform);
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new image transform"));
+	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
+	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
+	OIL.finishAction(action);
+
+	startRenameNewItem(selectedItem, entity.GetId());
 }
 
 function onCommandUploadFile() {

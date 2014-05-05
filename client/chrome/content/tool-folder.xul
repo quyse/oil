@@ -13,6 +13,8 @@
 		<command id="commandDelete" oncommand="onCommandDelete()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
+		<command id="commandCreateImage" oncommand="onCommandCreateImage()" />
+		<command id="commandCreateImageTransform" oncommand="onCommandCreateImageTransform()" />
 		<command id="commandUploadFile" oncommand="onCommandUploadFile()" />
 		<command id="commandPlace" oncommand="onCommandPlace()" />
 		<command id="commandShowRealPlace" oncommand="onCommandShowRealPlace()" />
@@ -36,6 +38,8 @@
 			<menu id="contextMenuCreate" label="create">
 				<menupopup>
 					<menuitem label="folder" command="commandCreateFolder" />
+					<menuitem label="image" command="commandCreateImage" />
+					<menuitem label="image transform" command="commandCreateImageTransform" />
 				</menupopup>
 			</menu>
 			<menuitem id="contextMenuUploadFile" label="upload file(s)..." command="commandUploadFile" />

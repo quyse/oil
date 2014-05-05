@@ -25,10 +25,31 @@ OIL.ids = {
 	- id (4-byte)
 	- display name
 	*/
-	interfacesInit: [{
+	interfacesInit: [
+	/// data interface
+	/** result is ptr<File> */
+	{
 		name: "data",
 		id: "data",
 		displayName: "data"
+	},
+	/// image interface
+	/** result is ptr<RawImageData> */
+	{
+		name: "image",
+		id: "img ",
+		displayName: "image"
+	},
+	/// image transform interface
+	/** result is {
+		width: <required width or null>,
+		height: <required height or null>,
+		mips: <required mips or null>
+	} */
+	{
+		name: "imageTransform",
+		id: "imgt",
+		displayName: "image transform"
 	}],
 
 	/* Scheme is characterized by:
@@ -177,15 +198,17 @@ OIL.ids = {
 					++currentVersion;
 					// free resources
 					entity = null;
-					entityCallback = null;
+					entityCallback.__reclaim();
 				};
 			}
 		}],
 		tool: "file"
-	}, {
-		name: "texture",
-		id: "tex ",
-		displayName: "texture",
+	},
+	// object to import image from raw image data
+	{
+		name: "image",
+		id: "img ",
+		displayName: "image",
 		fieldsInit: [{
 			name: "data",
 			id: "data",
@@ -193,6 +216,150 @@ OIL.ids = {
 			type: {
 				type: "reference",
 				interfaces: ["data"]
+			}
+		}, {
+			name: "transform",
+			id: "tran",
+			displayName: "transform",
+			type: {
+				type: "reference",
+				interfaces: ["imageTransform"]
+			}
+		}],
+		interfacesInit: [{
+			name: "image",
+			callback: function(entity) {
+				var entityCallback;
+				var dataInterfaceCallback;
+				var dataResult;
+				var transformInterfaceCallback;
+				var transformResult;
+				var currentVersion = 0;
+
+				function recalculate() {
+					var version = ++currentVersion;
+
+					setTimeout(function() {
+						if(version != currentVersion)
+							return;
+
+						entity.SetInterfaceResult(OIL.ids.interfaces.image, dataResult ? OIL.core.LoadImage(dataResult) : null);
+					}, 0);
+				}
+
+				entityCallback = entity.AddCallback(function(type, key, value) {
+					switch(type) {
+					case "field":
+						switch(key) {
+						case OIL.ids.schemeDescs.image.fields.data:
+							if(dataInterfaceCallback)
+								dataInterfaceCallback.__reclaim();
+							if(value)
+								dataInterfaceCallback = value.GetInterface(OIL.ids.interfaces.data).AddCallback(function(result) {
+									dataResult = result;
+									recalculate();
+								});
+							else {
+								dataInterfaceCallback = null;
+								recalculate();
+							}
+							break;
+						case OIL.ids.schemeDescs.image.fields.transform:
+							if(transformInterfaceCallback)
+								transformInterfaceCallback.__reclaim();
+							if(value)
+								transformInterfaceCallback = value.GetInterface(OIL.ids.interfaces.imageTransform).AddCallback(function(result) {
+									transformResult = result;
+									recalculate();
+								});
+							else {
+								transformInterfaceCallback = null;
+								recalculate();
+							}
+							break;
+						}
+						break;
+					}
+				});
+
+				return function() {
+					entity = null;
+					entityCallback.__reclaim();
+					if(dataInterfaceCallback)
+						dataInterfaceCallback.__reclaim();
+					if(transformInterfaceCallback)
+						transformInterfaceCallback.__reclaim();
+				};
+			}
+		}]
+	},
+	// image transform
+	{
+		name: "imageTransform",
+		id: "imgt",
+		displayName: "image transform",
+		fieldsInit: [
+		// resize top mip to that width if > 0, else don't change
+		{
+			name: "width",
+			id: "sz_x",
+			displayName: "width",
+			type: "integer"
+		},
+		// resize top mip to that height if > 0, else don't change
+		{
+			name: "height",
+			id: "sz_y",
+			displayName: "height",
+			type: "integer"
+		},
+		// recalculate mips if > 0, else don't change
+		{
+			name: "mips",
+			id: "mips",
+			displayName: "mips",
+			type: "integer"
+		}],
+		interfacesInit: [{
+			name: "imageTransform",
+			callback: function(entity) {
+				var fields = {};
+
+				var entityCallback;
+				var currentVersion = 0;
+
+				function recalculate(version) {
+					OIL.setTimeout(function() {
+						if(currentVersion != version)
+							return;
+
+						entity.SetInterfaceResult(OIL.ids.interfaces.imageTransform, {
+							width: fields.width,
+							height: fields.height,
+							mips: fields.mips
+						});
+					}, 0);
+				};
+
+				entityCallback = entity.AddCallback(function(type, key, value) {
+					switch(type) {
+					case "field":
+						key = OIL.ids.schemeDescs.imageTransform.fieldDescs[key];
+						if(key) {
+							fields[key.name] = value;
+							recalculate(++currentVersion);
+						}
+						break;
+					}
+				});
+
+				return function() {
+					// cancel pending recalculation
+					++currentVersion;
+					// free resources
+					entity = null;
+					entityCallback.__reclaim();
+				};
 			}
 		}]
 	}],
@@ -238,21 +405,17 @@ var getFieldType = function(schemeManager, desc) {
 
 	if(typeof desc == 'string')
 		type = schemeManager.GetStandardFieldType(desc);
-
 	else if(typeof desc == 'object') {
-
 		switch(desc.type) {
 		case 'reference':
-			{
-				type = new OIL.classes.Inanity.Oil.ReferenceEntityFieldType();
-
-				let interfaces = desc.interfaces || [];
-				for(var i = 0; i < interfaces.length; ++i)
-					type.AddInterface(OIL.ids.interfaces[interfaces[i]]);
-			}
+			type = new OIL.classes.Inanity.Oil.ReferenceEntityFieldType();
+			// replace interface names with ids
+			if(!desc.interfaces)
+				desc.interfaces = [];
+			for(var i = 0; i < desc.interfaces.length; ++i)
+				desc.interfaces[i] = OIL.ids.interfaces[desc.interfaces[i]];
 			break;
 		}
-
 	}
 
 	if(!type)
@@ -282,9 +445,9 @@ OIL.initIds = function(schemeManager) {
 		// init fields
 		initThings(schemeDesc.fieldsInit, convertFieldId, schemeDesc.fields = {}, schemeDesc.fieldDescs = {});
 
+		// add fields
 		for(var j = 0; j < schemeDesc.fieldsInit.length; ++j) {
 			var fieldDesc = schemeDesc.fieldsInit[j];
-
 			scheme.AddField(fieldDesc.id, getFieldType(schemeManager, fieldDesc.type), fieldDesc.displayName);
 		}
 
