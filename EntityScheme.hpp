@@ -47,6 +47,8 @@ private:
 
 	/// Interfaces supported by scheme.
 	Interfaces interfaces;
+	/// Interfaces of scheme by index.
+	std::vector<EntityInterfaceId> interfaceIds;
 
 public:
 	EntityScheme(const EntitySchemeId& id, const String& name);
@@ -63,6 +65,9 @@ public:
 	ptr<EntityFieldType> GetFieldType(const EntityFieldId& fieldId) const;
 	String GetFieldName(const EntityFieldId& fieldId) const;
 	void AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> type, const String& name);
+	int GetInterfacesCount() const;
+	EntityInterfaceId GetInterfaceId(int index) const;
+	bool HasInterface(const EntityInterfaceId& interfaceId) const;
 	void AddInterface(const EntityInterfaceId& interfaceId, ptr<Script::Any> callback);
 };
 

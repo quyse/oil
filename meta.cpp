@@ -177,6 +177,9 @@ META_CLASS(Inanity::Oil::EntityScheme, Inanity.Oil.EntityScheme);
 	META_METHOD(GetFieldType);
 	META_METHOD(GetFieldName);
 	META_METHOD(AddField);
+	META_METHOD(GetInterfacesCount);
+	META_METHOD(GetInterfaceId);
+	META_METHOD(HasInterface);
 	META_METHOD(AddInterface);
 META_CLASS_END();
 

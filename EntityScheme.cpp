@@ -64,11 +64,28 @@ void EntityScheme::AddField(const EntityFieldId& fieldId, ptr<EntityFieldType> t
 	fieldIds.push_back(fieldId);
 }
 
+int EntityScheme::GetInterfacesCount() const
+{
+	return (int)interfaces.size();
+}
+
+EntityInterfaceId EntityScheme::GetInterfaceId(int index) const
+{
+	return interfaceIds[index];
+}
+
+bool EntityScheme::HasInterface(const EntityInterfaceId& interfaceId) const
+{
+	return interfaces.find(interfaceId) != interfaces.end();
+}
+
 void EntityScheme::AddInterface(const EntityInterfaceId& interfaceId, ptr<Script::Any> callback)
 {
 	Interface interf;
 	interf.callback = callback;
 	interfaces[interfaceId] = interf;
+
+	interfaceIds.push_back(interfaceId);
 }
 
 END_INANITY_OIL
