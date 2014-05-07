@@ -143,7 +143,7 @@ function ReferenceControl(parent, writeCallback, interfaces) {
 		// get scheme
 		var entity = OIL.entityManager.GetEntity(entityId);
 		var entityScheme = entity.GetScheme();
-		if(!entityScheme && interfaces.length)
+		if(!entityScheme)
 			return false;
 
 		// check interfaces
@@ -184,6 +184,56 @@ function ReferenceControl(parent, writeCallback, interfaces) {
 			OIL.createTool("entity", {
 				entity: This.entityId
 			});
+	});
+
+	this.buttonBrowse.addEventListener("command", function(event) {
+		var entityIds = null;
+
+		if(!OIL.openToolDialog({
+			page: "folder",
+			title: "select object",
+			acceptButtonLabel: "select",
+			toolParams: {
+				entity: OIL.ids.entities.root,
+				mode: "select",
+				readOnly: true,
+				singleSelection: true,
+				filterCallback: function(entityId) {
+					var entity = OIL.entityManager.GetEntity(entityId);
+					var entityScheme = entity.GetScheme();
+					if(!entityScheme)
+						return false;
+					// allow folders
+					if(entityScheme.GetId() == OIL.ids.schemes.folder)
+						return true;
+					// check that all interfaces supported
+					for(var i = 0; i < interfaces.length; ++i)
+						if(!entityScheme.HasInterface(interfaces[i]))
+							return false;
+					return true;
+				},
+				selectCallback: function(e) {
+					entityIds = e;
+
+					if(entityIds.length != 1)
+						return false;
+
+					var entity = OIL.entityManager.GetEntity(entityIds[0]);
+					var entityScheme = entity.GetScheme();
+					if(!entityScheme)
+						return false;
+					// check that all interfaces supported
+					for(var i = 0; i < interfaces.length; ++i)
+						if(!entityScheme.HasInterface(interfaces[i]))
+							return false;
+					return true;
+				}
+			}
+		}))
+			return;
+
+		if(entityIds && entityIds.length == 1)
+			writeCallback(entityIds[0]);
 	});
 
 	window.addEventListener("unload", function(event) {
