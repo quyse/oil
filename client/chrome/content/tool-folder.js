@@ -7,6 +7,15 @@ const MIME_DRAG_FOLDER_ENTRY = "application/x-inanityoil-folder-entry";
 // maximum length of hierarchy to process
 const MAX_HIERARCHY_LENGTH = 64;
 
+/// mode of tool
+/** could be "normal" or "select.
+Select mode means no context menu, no editing actions (renaming, drag-n-drop). */
+var toolMode = null;
+/// read-only mode of tool
+var toolReadOnly = false;
+/// single-selection mode
+var toolSingleSelection = false;
+
 function getTree() {
 	return document.getElementById("tree");
 }
@@ -460,6 +469,9 @@ function checkDrop(row, orientation, dataTransfer, output) {
 	if(orientation != 0)
 		return false;
 
+	if(toolReadOnly)
+		return false;
+
 	// get items to drop
 	var entries = [], entities = [], files = [];
 	var itemsCount = dataTransfer.mozItemCount;
@@ -564,6 +576,9 @@ function isItemInto(targetId, containerId) {
 }
 
 function onCommandOpen() {
+	if(toolMode != "normal")
+		return;
+
 	var selectedItems = getSelectedItems();
 	for(var i = 0; i < selectedItems.length; ++i) {
 		var item = selectedItems[i];
@@ -580,6 +595,9 @@ function onCommandOpen() {
 }
 
 function onCommandRename() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length != 1)
 		return;
@@ -602,6 +620,9 @@ function startRenameNewItem(parentItem, newEntityId) {
 }
 
 function onCommandCreateFolder() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
@@ -616,6 +637,9 @@ function onCommandCreateFolder() {
 }
 
 function onCommandCreateImage() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
@@ -630,6 +654,9 @@ function onCommandCreateImage() {
 }
 
 function onCommandCreateImageTransform() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
@@ -644,6 +671,9 @@ function onCommandCreateImageTransform() {
 }
 
 function onCommandUploadFile() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
@@ -842,6 +872,9 @@ function uploadFiles(sourceFiles, folderEntity) {
 }
 
 function onCommandDelete() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
 		return;
@@ -874,6 +907,9 @@ function onCommandDelete() {
 }
 
 function onCommandProperties() {
+	if(toolMode != "normal")
+		return;
+
 	var selectedItems = getSelectedItems();
 
 	for(var i = 0; i < selectedItems.length; ++i)
@@ -883,6 +919,9 @@ function onCommandProperties() {
 }
 
 function onCommandPlace() {
+	if(toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 
 	var action = OIL.createAction("place");
@@ -1007,18 +1046,21 @@ function onContextMenuShowing() {
 	var oneFolder = hasFolder && selectedItems.length == 1 || selectedItems.length == 0;
 	var oneFile = hasFile && selectedItems.length == 1;
 
-	document.getElementById("contextMenuOpen").hidden = selectedItems.length <= 0;
-	document.getElementById("contextMenuRename").hidden = selectedItems.length != 1;
-	document.getElementById("contextMenuDelete").hidden = selectedItems.length <= 0;
-	document.getElementById("contextMenuCreate").hidden = !oneFolder;
-	document.getElementById("contextMenuUploadFile").hidden = !oneFolder;
-	document.getElementById("contextMenuPlace").hidden = !hasLink;
+	document.getElementById("contextMenuOpen").hidden = toolMode != "normal" || selectedItems.length <= 0;
+	document.getElementById("contextMenuRename").hidden = toolReadOnly || selectedItems.length != 1;
+	document.getElementById("contextMenuDelete").hidden = toolReadOnly || selectedItems.length <= 0;
+	document.getElementById("contextMenuCreate").hidden = toolReadOnly || !oneFolder;
+	document.getElementById("contextMenuUploadFile").hidden = toolReadOnly || !oneFolder;
+	document.getElementById("contextMenuPlace").hidden = toolReadOnly || !hasLink;
 	document.getElementById("contextMenuShowRealPlace").hidden = selectedItems.length != 1;
 	document.getElementById("contextMenuDownloadFile").hidden = !oneFile;
-	document.getElementById("contextMenuProperties").hidden = selectedItems.length <= 0;
+	document.getElementById("contextMenuProperties").hidden = toolMode != "normal" || selectedItems.length <= 0;
 }
 
 function onTreeDragStart(event) {
+	if(toolMode != "normal" || toolReadOnly)
+		return;
+
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length <= 0)
 		return;
@@ -1039,7 +1081,7 @@ function onTreeSelect(event) {
 	var selectedItems = getSelectedItems();
 
 	// update dependent tabs with selected entity
-	if(selectedItems.length == 1) {
+	if(toolMode == "normal" && selectedItems.length == 1) {
 		var selectedEntityId = selectedItems[0].entityId;
 		if(lastSelectedEntityId != selectedEntityId) {
 			lastSelectedEntityId = selectedEntityId;
@@ -1048,6 +1090,13 @@ function onTreeSelect(event) {
 			});
 		}
 	}
+
+	// update select callback
+	var selectCallback = window.toolTab.params.selectCallback;
+	if(selectCallback)
+		selectCallback(selectedItems.map(function(v) {
+			return v.entityId;
+		}));
 }
 
 var rootItem;
@@ -1061,6 +1110,18 @@ window.addEventListener('load', function() {
 	rootItem = new Item(OIL.entityManager.GetEntity(window.toolTab.params.entity));
 
 	document.getElementById("labelEmpty").remove();
+
+	toolMode = window.toolTab.params.mode || "normal";
+	toolReadOnly = !!window.toolTab.params.readOnly;
+	toolSingleSelection = !!window.toolTab.params.singleSelection;
+
+	if(toolReadOnly) {
+		getTree().setAttribute("editable", false);
+	}
+
+	if(toolSingleSelection) {
+		getTree().setAttribute("seltype", "single");
+	}
 
 	view = new View(rootItem);
 	getTree().view = view;
