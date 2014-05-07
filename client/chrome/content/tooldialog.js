@@ -10,6 +10,10 @@ window.setToolTabTitle = function(title) {
 	document.getElementById("header").setAttribute("title", title);
 };
 
+window.setAcceptOk = function(ok) {
+	document.getElementById("tooldialog").getButton("accept").disabled = !ok;
+};
+
 function onAccept() {
 	window.arguments[1].ok = true;
 	return true;

@@ -8,6 +8,7 @@
 	buttonlabelaccept="accept"
 	buttonlabelcancel="cancel"
 	ondialogaccept="return onAccept()"
+	buttondisabledaccept="true"
 	minwidth="400"
 	minheight="400"
 	>

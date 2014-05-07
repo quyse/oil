@@ -15,6 +15,8 @@ var toolMode = null;
 var toolReadOnly = false;
 /// single-selection mode
 var toolSingleSelection = false;
+/// filter callback
+var toolFilterCallback = null;
 
 function getTree() {
 	return document.getElementById("tree");
@@ -97,6 +99,9 @@ Item.prototype.onChange = function(type, key, value) {
 					if(this.children[i].entityId == childEntityId)
 						break;
 				if(i < this.children.length)
+					break;
+				// check with filter callback
+				if(toolFilterCallback && !toolFilterCallback(childEntityId))
 					break;
 				// add new child
 				var newItem = new Item(OIL.entityManager.GetEntity(childEntityId));
@@ -1093,10 +1098,13 @@ function onTreeSelect(event) {
 
 	// update select callback
 	var selectCallback = window.toolTab.params.selectCallback;
-	if(selectCallback)
-		selectCallback(selectedItems.map(function(v) {
+	if(selectCallback) {
+		var ok = selectCallback(selectedItems.map(function(v) {
 			return v.entityId;
 		}));
+		if(window.toolDialog)
+			window.toolDialog.setAcceptOk(ok);
+	}
 }
 
 var rootItem;
@@ -1114,6 +1122,7 @@ window.addEventListener('load', function() {
 	toolMode = window.toolTab.params.mode || "normal";
 	toolReadOnly = !!window.toolTab.params.readOnly;
 	toolSingleSelection = !!window.toolTab.params.singleSelection;
+	toolFilterCallback = window.toolTab.params.filterCallback;
 
 	if(toolReadOnly) {
 		getTree().setAttribute("editable", false);

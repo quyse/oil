@@ -434,6 +434,9 @@ ToolDialog.prototype.getUrl = function(page) {
 ToolDialog.prototype.setTitle = function(title) {
 	this.window.setDialogTitle(title);
 };
+ToolDialog.prototype.setAcceptOk = function(ok) {
+	this.window.setAcceptOk(ok);
+};
 
 OIL.wrongToolWindow = function(window) {
 	window.location = "tool-wrong.xul";
