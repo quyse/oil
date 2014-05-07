@@ -404,25 +404,75 @@ ToolSpace.deserialize = function(o) {
 	return space;
 };
 
+var toolDialogNewId = 0;
+var toolDialogs = [];
+function ToolDialog(window, params) {
+	this.id = ++toolDialogNewId;
+	toolDialogs[this.id] = this;
+	this.window = window;
+	this.params = params;
+
+	// make a fictious tooltab
+	var This = this;
+	this.toolTab = {
+		setTitle: function(title) {
+			This.window.setToolTabTitle(title);
+		},
+		params: params
+	};
+}
+OIL.ToolDialog = ToolDialog;
+ToolDialog.get = function(id) {
+	return toolDialogs[id];
+};
+ToolDialog.prototype.destroy = function() {
+	delete toolDialogs[this.id];
+};
+ToolDialog.prototype.getUrl = function(page) {
+	return "chrome://oil/content/tool-" + page + ".xul#dialog=" + this.id;
+};
+ToolDialog.prototype.setTitle = function(title) {
+	this.window.setDialogTitle(title);
+};
+
 OIL.wrongToolWindow = function(window) {
 	window.location = "tool-wrong.xul";
 };
 
 OIL.initToolWindow = function(window) {
 	try {
-		// get tooltab
+		// try to get tooltab id
 		var tabId = /^\#tab\=(.+)$/.exec(window.location.hash);
-		if(!tabId)
-			throw "no tab id";
-		tabId = tabId[1];
-		var toolTab = OIL.ToolTab.get(tabId);
-		if(!toolTab)
-			throw "wrong tab id";
+		if(tabId) {
+			tabId = tabId[1];
 
-		// store tooltab
-		window.toolTab = toolTab;
+			var toolTab = OIL.ToolTab.get(tabId);
+			if(!toolTab)
+				throw "wrong tab id";
 
-		return true;
+			// store tooltab
+			window.toolTab = toolTab;
+
+			return true;
+		}
+
+		// try to get dialog id
+		var dialogId = /^\#dialog\=(.+)$/.exec(window.location.hash);
+		if(dialogId) {
+			dialogId = dialogId[1];
+
+			var toolDialog = OIL.ToolDialog.get(dialogId);
+			if(!toolDialog)
+				throw "wrong dialog id";
+
+			// store dialog
+			window.toolDialog = toolDialog;
+			window.toolTab = toolDialog.toolTab;
+
+			return true;
+		}
+
+		return false;
 
 	} catch(e) {
 		OIL.log(e);

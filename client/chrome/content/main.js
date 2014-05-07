@@ -210,6 +210,22 @@ function createToolInTabbox(tabbox, page, params) {
 	return toolTab;
 };
 
+/// open tool dialog
+/** params = {
+	page: "page",
+	title: "dialog title",
+	acceptButtonLabel: "accept button label",
+	toolParams: { tool params }
+} */
+function openToolDialog(params) {
+	var result = {
+		ok: false
+	};
+	window.openDialog('tooldialog.xul', '', 'chrome,modal,centerscreen,resizable', params, result);
+	return result.ok;
+}
+OIL.openToolDialog = openToolDialog;
+
 var toolTabContextTarget = null;
 function onToolTabContextShowing(event) {
 	toolTabContextTarget = event.target.triggerNode;
