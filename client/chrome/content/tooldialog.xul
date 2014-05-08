@@ -13,10 +13,10 @@
 	minheight="400"
 	>
 
-	<script src="tooldialog.js" />
-
 	<dialogheader id="header" />
 
 	<iframe id="iframe" flex="1" />
+
+	<script src="tooldialog.js" />
 
 </dialog>

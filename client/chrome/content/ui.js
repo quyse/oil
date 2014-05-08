@@ -22,9 +22,6 @@ function ToolTab() {
 	this.tabpanel = document.createElementNS(XUL_NS, "tabpanel");
 	this.tabpanel.toolTab = this;
 
-	// create iframe
-	this.initFrame();
-
 	// set initial values for variables
 	this.page = null;
 	this.params = null;
@@ -70,20 +67,17 @@ ToolTab.prototype.setTitle = function(title) {
 	this.tab.setAttribute("label", title);
 	this.tab.setAttribute("tooltiptext", tooltip);
 };
-ToolTab.prototype.initFrame = function() {
-	if(this.iframe)
-		this.iframe.remove();
-	this.iframe = document.createElementNS(XUL_NS, "iframe");
-	this.iframe.flex = 1;
-	this.tabpanel.appendChild(this.iframe);
-};
 ToolTab.prototype.navigate = function() {
 	// compose url
 	var url = "chrome://oil/content/tool-" + this.page + ".xul#tab=" + this.id;
 
 	// navigate iframe
-	this.initFrame();
+	if(this.iframe)
+		this.iframe.remove();
+	this.iframe = document.createElementNS(XUL_NS, "iframe");
+	this.iframe.flex = 1;
 	this.iframe.setAttribute("src", url);
+	this.tabpanel.appendChild(this.iframe);
 };
 ToolTab.prototype.addDependentToolTab = function(toolTab) {
 	toolTab.independent = false;
