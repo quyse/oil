@@ -116,7 +116,7 @@ private:
 				else
 				{
 					CriticalCode cc(csWatchRequests);
-					watchRequests.push_back(std::make_pair(request, Time::GetTicks()));
+					watchRequests.push_back(std::make_pair(request, Time::GetTick()));
 				}
 			}
 			else
@@ -146,7 +146,7 @@ private:
 		for(;;)
 		{
 			{
-				Time::Tick tick = Time::GetTicks();
+				Time::Tick tick = Time::GetTick();
 				CriticalCode cc(csWatchRequests);
 
 				ptr<File> response = nullptr;
