@@ -118,6 +118,9 @@ function rebuild() {
 		row.appendChild(image);
 		image.src = dataUrl;
 		var lastMoveX, lastMoveY;
+		grid.addEventListener("mousedown", function(event) {
+			this.setCapture();
+		});
 		grid.addEventListener("mousemove", function(event) {
 			if(event.buttons & 1) {
 				if(lastMoveX !== undefined && lastMoveY !== undefined) {
