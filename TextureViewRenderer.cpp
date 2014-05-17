@@ -14,7 +14,7 @@ BEGIN_INANITY_OIL
 using namespace Inanity::Graphics;
 
 TextureViewRenderer::TextureViewRenderer(ptr<Engine> engine)
-: engine(engine), scale(1), mipMode(0), mipLod(0), mipBias(0)
+: engine(engine), offset(0, 0), scale(1), mipMode(0), mipLod(0), mipBias(0)
 {
 }
 
@@ -35,13 +35,14 @@ void TextureViewRenderer::Render()
 
 		float viewportWidth = (float)context->GetViewportWidth();
 		float viewportHeight = (float)context->GetViewportHeight();
+		float imageWidth = (float)rawTextureData->GetImageWidth();
+		float imageHeight = (float)rawTextureData->GetImageHeight();
+		float scaleXCoef = 1.0f / (imageWidth * scale);
+		float scaleYCoef = 1.0f / (imageHeight * scale);
 
-		textureQuad->uTextureScale.SetValue(vec2(
-			viewportWidth / ((float)rawTextureData->GetMipWidth(0) * scale),
-			viewportHeight / ((float)rawTextureData->GetMipHeight(0) * scale)
-			));
+		textureQuad->uTextureScale.SetValue(vec2(viewportWidth * scaleXCoef, viewportHeight * scaleYCoef));
 		textureQuad->uBackgroundScale.SetValue(vec2(viewportWidth * 0.1f, viewportHeight * 0.1f));
-		textureQuad->uOffset.SetValue(vec2(0, 0));
+		textureQuad->uOffset.SetValue(vec2(-offset.x * scaleXCoef, -offset.y * scaleYCoef));
 		textureQuad->uLod.SetValue(mipLod);
 		textureQuad->uBias.SetValue(mipBias);
 
@@ -55,6 +56,11 @@ void TextureViewRenderer::SetTexture(ptr<RawTextureData> rawTextureData)
 {
 	this->rawTextureData = rawTextureData;
 	this->texture = engine->GetGraphicsDevice()->CreateStaticTexture(rawTextureData, SamplerSettings());
+}
+
+void TextureViewRenderer::SetOffset(const vec2& offset)
+{
+	this->offset = offset;
 }
 
 void TextureViewRenderer::SetScale(float scale)
@@ -77,6 +83,12 @@ void TextureViewRenderer::SetFilter(int filterType, int filterValue)
 		samplerSettings.magFilter = filter;
 		break;
 	}
+	samplerState = nullptr;
+}
+
+void TextureViewRenderer::SetTile(bool tile)
+{
+	samplerSettings.SetWrap(tile ? SamplerSettings::wrapRepeat : SamplerSettings::wrapBorder);
 	samplerState = nullptr;
 }
 

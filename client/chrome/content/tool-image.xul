@@ -64,9 +64,9 @@
 				</grid>
 			</panel>
 		</button>
-		<label control="scaleScale" value="scale" />
-		<textbox id="textboxScale" readonly="true" value="100%" width="40" />
-		<scale id="scaleScale" min="5" max="300" value="100" onchange="onScaleChange()" />
+		<checkbox id="checkboxTile" label="tile" oncommand="onTileChange()" />
+		<textbox id="textboxScale" value="100%" readonly="true" width="40" />
+		<button label="100%" oncommand="setScaleExp(0)" />
 	</hbox>
 
 	<stack id="container" flex="1">

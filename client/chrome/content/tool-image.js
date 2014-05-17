@@ -56,6 +56,40 @@ function onScaleChange() {
 	viewRenderer.SetScale(scale * 0.01);
 }
 
+function onTileChange() {
+	viewRenderer.SetTile(document.getElementById("checkboxTile").checked);
+}
+
+var offset = [0, 0];
+var scaleExp = 0;
+var scale = 1;
+function setScaleExp(newScaleExp, centerX, centerY) {
+	if(centerX === undefined || centerY === undefined) {
+		var container = document.getElementById("container");
+		if(centerX === undefined)
+			centerX = container.clientWidth / 2;
+		if(centerY === undefined)
+			centerY = container.clientHeight / 2;
+	}
+
+	if(newScaleExp < -3)
+		newScaleExp = -3;
+	else if(newScaleExp > 2)
+		newScaleExp = 2;
+	var scaleExpDelta = newScaleExp - scaleExp;
+	scaleExp = newScaleExp;
+
+	scale = Math.exp(scaleExp);
+	viewRenderer.SetScale(scale);
+
+	var scaleDelta = Math.exp(scaleExpDelta);
+	offset[0] = centerX - (centerX - offset[0]) * scaleDelta;
+	offset[1] = centerY - (centerY - offset[1]) * scaleDelta;
+	viewRenderer.SetOffset(offset);
+
+	document.getElementById("textboxScale").value = Math.floor(scale * 100) + "%";
+};
+
 var plugin;
 var viewRenderer;
 
@@ -94,6 +128,34 @@ window.addEventListener("load", function() {
 	document.getElementById("buttonFilterMipLinear").setAttribute("checked", true); onFilterChange(1, 1);
 	document.getElementById("buttonFilterMagLinear").setAttribute("checked", true); onFilterChange(2, 1);
 	onMipModeChange(0);
+	onTileChange();
+
+	// register move control
+	var lastMoveX, lastMoveY;
+	var container = document.getElementById("container");
+	container.addEventListener("mousedown", function(event) {
+		this.setCapture(true);
+	}, true);
+	container.addEventListener("mousemove", function(event) {
+		if(event.buttons & 1) {
+			if(lastMoveX !== undefined && lastMoveY !== undefined) {
+				offset[0] += (event.clientX - lastMoveX);
+				offset[1] += (event.clientY - lastMoveY);
+				viewRenderer.SetOffset(offset);
+			}
+			lastMoveX = event.clientX;
+			lastMoveY = event.clientY;
+		} else {
+			lastMoveX = undefined;
+			lastMoveY = undefined;
+		}
+	}, true);
+	// register scale control
+	container.addEventListener("wheel", function(event) {
+		setScaleExp(scaleExp - event.deltaY * 0.05, event.clientX, event.clientY);
+
+		event.preventDefault();
+	}, true);
 
 	// run an update loop
 	var updatePlugin = function() {

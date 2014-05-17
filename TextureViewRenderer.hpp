@@ -25,6 +25,7 @@ private:
 	ptr<Graphics::Texture> texture;
 	ptr<Graphics::SamplerState> samplerState;
 	Graphics::SamplerSettings samplerSettings;
+	Graphics::vec2 offset;
 	float scale;
 	int mipMode;
 	float mipLod;
@@ -39,7 +40,9 @@ public:
 
 	void SetTexture(ptr<Graphics::RawTextureData> rawTextureData);
 	void SetScale(float scale);
+	void SetOffset(const Graphics::vec2& offset);
 	void SetFilter(int filterType, int filterValue);
+	void SetTile(bool tile);
 	void SetMipMode(int mipMode);
 	void SetMipLod(float mipLod);
 	void SetMipBias(float mipBias);
