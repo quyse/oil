@@ -66,6 +66,8 @@ public:
 
 	ptr<ScriptRepo> CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRepo> remoteRepo);
 
+	ptr<Engine> GetEngine() const;
+
 	META_DECLARE_CLASS(Core);
 };
 

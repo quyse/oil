@@ -239,11 +239,11 @@ OIL.ids = {
 				function recalculate() {
 					var version = ++currentVersion;
 
-					setTimeout(function() {
+					OIL.setTimeout(function() {
 						if(version != currentVersion)
 							return;
 
-						entity.SetInterfaceResult(OIL.ids.interfaces.image, dataResult ? OIL.core.LoadImage(dataResult) : null);
+						entity.SetInterfaceResult(OIL.ids.interfaces.image, dataResult ? OIL.core.GetEngine().LoadRawTexture(dataResult).GenerateMips(0) : null);
 					}, 0);
 				}
 
@@ -254,11 +254,13 @@ OIL.ids = {
 						case OIL.ids.schemeDescs.image.fields.data:
 							if(dataInterfaceCallback)
 								dataInterfaceCallback.__reclaim();
-							if(value)
-								dataInterfaceCallback = value.GetInterface(OIL.ids.interfaces.data).AddCallback(function(result) {
+							if(value) {
+								var entity = OIL.entityManager.GetEntity(value);
+								dataInterfaceCallback = entity.GetInterface(OIL.ids.interfaces.data).AddCallback(function(result) {
 									dataResult = result;
 									recalculate();
 								});
+							}
 							else {
 								dataInterfaceCallback = null;
 								recalculate();
@@ -267,11 +269,13 @@ OIL.ids = {
 						case OIL.ids.schemeDescs.image.fields.transform:
 							if(transformInterfaceCallback)
 								transformInterfaceCallback.__reclaim();
-							if(value)
-								transformInterfaceCallback = value.GetInterface(OIL.ids.interfaces.imageTransform).AddCallback(function(result) {
+							if(value) {
+								var entity = OIL.entityManager.GetEntity(value);
+								transformInterfaceCallback = entity.GetInterface(OIL.ids.interfaces.imageTransform).AddCallback(function(result) {
 									transformResult = result;
 									recalculate();
 								});
+							}
 							else {
 								transformInterfaceCallback = null;
 								recalculate();
@@ -282,7 +286,12 @@ OIL.ids = {
 					}
 				});
 
+				entityCallback.EnumerateFields();
+
 				return function() {
+					// cancel pending recalculation
+					++currentVersion;
+					// free resources
 					entity = null;
 					entityCallback.__reclaim();
 					if(dataInterfaceCallback)
@@ -291,7 +300,8 @@ OIL.ids = {
 						transformInterfaceCallback.__reclaim();
 				};
 			}
-		}]
+		}],
+		tool: "image"
 	},
 	// image transform
 	{

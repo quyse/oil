@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<page id="tool"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml"
+	>
+
+	<script src="tool-image.js" />
+
+	<hbox align="baseline">
+		<button type="panel" label="mip">
+			<panel>
+				<grid>
+					<columns>
+						<column />
+						<column />
+						<column />
+					</columns>
+					<rows>
+						<row align="baseline">
+							<button id="buttonMipAuto" type="radio" group="mip" label="auto" oncommand="onMipModeChange(0)" />
+						</row>
+						<row align="baseline">
+							<button id="buttonMipLod" type="radio" group="mip" label="lod" oncommand="onMipModeChange(1)" />
+							<textbox id="textboxMipLod" width="30" value="0" readonly="true" />
+							<scale id="scaleMipLod" min="0" max="0" onchange="onMipLodChange()" />
+						</row>
+						<row align="baseline">
+							<button id="buttonMipBias" type="radio" group="mip" label="bias" oncommand="onMipModeChange(2)" />
+							<textbox id="textboxMipBias" width="30" value="0" readonly="true" />
+							<scale id="scaleMipBias" min="0" max="0" onchange="onMipBiasChange()" />
+						</row>
+					</rows>
+				</grid>
+			</panel>
+		</button>
+		<button type="panel" label="filter">
+			<panel>
+				<grid>
+					<columns>
+						<column />
+						<column />
+						<column />
+					</columns>
+					<rows>
+						<row align="baseline">
+							<label value="min" />
+							<button id="buttonFilterMinPoint" type="radio" group="filterMin" label="point" oncommand="onFilterChange(0, 0)" />
+							<button id="buttonFilterMinLinear" type="radio" group="filterMin" label="linear" oncommand="onFilterChange(0, 1)" />
+						</row>
+						<row align="baseline">
+							<label value="mip" />
+							<button id="buttonFilterMipPoint" type="radio" group="filterMip" label="point" oncommand="onFilterChange(1, 0)" />
+							<button id="buttonFilterMipLinear" type="radio" group="filterMip" label="linear" oncommand="onFilterChange(1, 1)" />
+						</row>
+						<row align="baseline">
+							<label value="mag" />
+							<button id="buttonFilterMagPoint" type="radio" group="filterMag" label="point" oncommand="onFilterChange(2, 0)" />
+							<button id="buttonFilterMagLinear" type="radio" group="filterMag" label="linear" oncommand="onFilterChange(2, 1)" />
+						</row>
+					</rows>
+				</grid>
+			</panel>
+		</button>
+		<label control="scaleScale" value="scale" />
+		<textbox id="textboxScale" readonly="true" value="100%" width="40" />
+		<scale id="scaleScale" min="5" max="300" value="100" onchange="onScaleChange()" />
+	</hbox>
+
+	<stack id="container" flex="1">
+		<html:embed id="plugin" type="application/x-inanityoil" oiltype="view" width="256px" height="256px" />
+	</stack>
+
+	<label id="labelNote" value="no such image" />
+
+</page>

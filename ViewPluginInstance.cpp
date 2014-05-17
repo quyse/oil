@@ -1,7 +1,8 @@
 #include "ViewPluginInstance.hpp"
 #include "MainPluginInstance.hpp"
-#include "ViewScriptObject.hpp"
 #include "Engine.hpp"
+#include "ViewScriptObject.hpp"
+#include "ViewRenderer.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/graphics/Device.hpp"
@@ -103,12 +104,36 @@ void ViewPluginInstance::Draw()
 	Graphics::Context::LetFrameBuffer letFrameBuffer(context, frameBuffer);
 	Graphics::Context::LetViewport letViewport(context, width, height);
 
+	if(viewRenderer)
+		viewRenderer->Render();
+
+	// draw frame time
+	{
+		float frameTime = ticker.Tick();
+
+		Gui::GrCanvas* canvas = engine->GetCanvas();
+		canvas->SetContext(context);
+		Gui::Font* font = engine->GetStandardFont();
+
+		std::ostringstream ss;
+		ss << "FPS: " << (1.0f / frameTime);
+
+		font->DrawString(canvas, ss.str(), Graphics::vec2(10.0f, height - 10.0f), Graphics::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		canvas->Flush();
+	}
+
 	END_TRY("Can't draw view");
 }
 
 void ViewPluginInstance::PostInit()
 {
-	scriptObject = MainPluginInstance::instance->GetScriptState()->WrapObject<ViewScriptObject>(NEW(ViewScriptObject(this)));
+	viewScriptObject = NEW(ViewScriptObject(this));
+	scriptObject = MainPluginInstance::instance->GetScriptState()->WrapObject<ViewScriptObject>(viewScriptObject);
+}
+
+void ViewPluginInstance::SetViewRenderer(ptr<ViewRenderer> viewRenderer)
+{
+	this->viewRenderer = viewRenderer;
 }
 
 END_INANITY_OIL

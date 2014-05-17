@@ -7,6 +7,7 @@
 
 BEGIN_INANITY
 
+class File;
 class FileSystem;
 
 END_INANITY
@@ -17,6 +18,8 @@ class System;
 class Device;
 class Context;
 class ShaderCache;
+class RawTextureData;
+class ImageLoader;
 
 END_INANITY_GRAPHICS
 
@@ -46,6 +49,8 @@ private:
 	ptr<Gui::GrCanvas> canvas;
 	ptr<Gui::Font> standardFont;
 
+	ptr<Graphics::ImageLoader> imageLoader;
+
 public:
 	Engine(ptr<FileSystem> assetFileSystem, ptr<FileSystem> shaderCacheFileSystem);
 	~Engine();
@@ -55,6 +60,8 @@ public:
 	ptr<Painter> GetPainter() const;
 	ptr<Gui::GrCanvas> GetCanvas() const;
 	ptr<Gui::Font> GetStandardFont() const;
+
+	ptr<Graphics::RawTextureData> LoadRawTexture(ptr<File> file);
 };
 
 END_INANITY_OIL

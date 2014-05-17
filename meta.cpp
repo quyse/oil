@@ -58,11 +58,43 @@ META_CLASS(Inanity::Oil::Core, Inanity.Oil.Core);
 	META_METHOD(CreateTempRemoteRepo);
 	META_METHOD(CreateMemoryRemoteRepo);
 	META_METHOD(CreateScriptRepo);
+	META_METHOD(GetEngine);
+META_CLASS_END();
+
+#include "Engine.hpp"
+META_CLASS(Inanity::Oil::Engine, Inanity.Oil.Engine);
+	META_METHOD(GetGraphicsDevice);
+	META_METHOD(LoadRawTexture);
+META_CLASS_END();
+
+#include "ViewRenderer.hpp"
+META_CLASS(Inanity::Oil::ViewRenderer, Inanity.Oil.ViewRenderer);
 META_CLASS_END();
 
 #include "ViewScriptObject.hpp"
 META_CLASS(Inanity::Oil::ViewScriptObject, Inanity.Oil.ViewScriptObject);
+	META_METHOD(GetId);
+	META_STATIC_METHOD(GetById);
 	META_METHOD(Invalidate);
+	META_METHOD(SetViewRenderer);
+META_CLASS_END();
+
+#include "TextureViewRenderer.hpp"
+META_CLASS(Inanity::Oil::TextureViewRenderer, Inanity.Oil.TextureViewRenderer);
+	META_CLASS_PARENT(Inanity::Oil::ViewRenderer);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Engine>);
+	META_METHOD(SetTexture);
+	META_METHOD(SetScale);
+	META_METHOD(SetFilter);
+	META_METHOD(SetMipMode);
+	META_METHOD(SetMipLod);
+	META_METHOD(SetMipBias);
+META_CLASS_END();
+
+#include "SceneViewRenderer.hpp"
+META_CLASS(Inanity::Oil::SceneViewRenderer, Inanity.Oil.SceneViewRenderer);
+	META_CLASS_PARENT(Inanity::Oil::ViewRenderer);
+	META_CONSTRUCTOR(ptr<Inanity::Oil::Engine>);
 META_CLASS_END();
 
 #include "RemoteRepo.hpp"

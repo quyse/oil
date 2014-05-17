@@ -4,6 +4,8 @@
 #include "../inanity/graphics/Adapter.hpp"
 #include "../inanity/graphics/Device.hpp"
 #include "../inanity/graphics/Context.hpp"
+#include "../inanity/graphics/RawTextureData.hpp"
+#include "../inanity/graphics/UniversalImageLoader.hpp"
 #include "../inanity/graphics/ShaderCache.hpp"
 #include "../inanity/graphics/ShaderCompiler.hpp"
 #include "../inanity/graphics/shaders/ShaderGenerator.hpp"
@@ -51,6 +53,8 @@ Engine::Engine(ptr<FileSystem> assetFileSystem, ptr<FileSystem> shaderCacheFileS
 		ptr<Gui::FontGlyphs> fontGlyphs = fontFace->CreateGlyphs(canvas, fontSize);
 		standardFont = NEW(Gui::Font(fontShape, fontGlyphs));
 	}
+
+	imageLoader = NEW(Graphics::UniversalImageLoader());
 }
 
 Engine::~Engine()
@@ -81,6 +85,11 @@ ptr<Gui::GrCanvas> Engine::GetCanvas() const
 ptr<Gui::Font> Engine::GetStandardFont() const
 {
 	return standardFont;
+}
+
+ptr<Graphics::RawTextureData> Engine::LoadRawTexture(ptr<File> file)
+{
+	return imageLoader->Load(file);
 }
 
 END_INANITY_OIL

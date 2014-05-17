@@ -10,6 +10,9 @@
 #include "Engine.hpp"
 #include "EntityFieldTypes.hpp"
 #include "FileEntityScheme.hpp"
+#include "ViewScriptObject.hpp"
+#include "TextureViewRenderer.hpp"
+#include "SceneViewRenderer.hpp"
 #include "../inanity/script/np/State.hpp"
 #include "../inanity/script/np/Any.hpp"
 #include "../inanity/platform/FileSystem.hpp"
@@ -46,6 +49,9 @@ Core::Core(ptr<Script::Np::State> scriptState)
 	scriptState->Register<ReferenceEntityFieldType>();
 	scriptState->Register<FileEntitySchemeInputStream>();
 	scriptState->Register<FileEntitySchemeOutputStream>();
+	scriptState->Register<ViewScriptObject>();
+	scriptState->Register<TextureViewRenderer>();
+	scriptState->Register<SceneViewRenderer>();
 	scriptState->Register<Data::Base64OutputStream>();
 	scriptState->Register<Graphics::BmpImage>();
 	scriptState->Register<Graphics::TgaImageLoader>();
@@ -120,6 +126,11 @@ ptr<ScriptRepo> Core::CreateScriptRepo(ptr<ClientRepo> clientRepo, ptr<RemoteRep
 		clientRepo,
 		remoteRepo,
 		NEW(EntityManager(clientRepo, entitySchemeManager))));
+}
+
+ptr<Engine> Core::GetEngine() const
+{
+	return engine;
 }
 
 END_INANITY_OIL

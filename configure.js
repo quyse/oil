@@ -31,6 +31,8 @@ var executables = {
 			'ViewPluginInstance',
 			'Engine',
 			'Painter',
+			'TextureViewRenderer',
+			'SceneViewRenderer',
 			'Core',
 			'ViewScriptObject',
 			'ScriptRepo',
@@ -63,6 +65,7 @@ var executables = {
 			'../inanity//libinanity-sqlitefs',
 			'../inanity/deps/zlib//libz',
 			'../inanity/deps/glew//libglew',
+			'../inanity/deps/libpng//libpng',
 			'../inanity/deps/sqlite//libsqlite',
 			'../inanity/deps/freetype//libfreetype',
 			'../inanity/deps/harfbuzz//libharfbuzz'
