@@ -2,6 +2,7 @@
 #include "EntityInterface.hpp"
 #include "MainPluginInstance.hpp"
 #include "../inanity/script/Any.hpp"
+#include "../inanity/Exception.hpp"
 
 BEGIN_INANITY_OIL
 
@@ -24,11 +25,15 @@ void EntityInterfaceCallback::Fire()
 
 void EntityInterfaceCallback::FireCallback()
 {
+	BEGIN_TRY();
+
 	ptr<Script::Any> result = entityInterface->GetResult();
 	if(result)
 		callback->Call(result);
 	else
 		callback->Call();
+
+	END_TRY("Can't fire entity interface callback");
 }
 
 END_INANITY_OIL
