@@ -9,7 +9,7 @@ var dataResult;
 function onChange(type, key, value) {
 	switch(type) {
 	case "scheme":
-		if(value.GetId() != OIL.ids.schemes.file)
+		if(!value || value.GetId() != OIL.ids.schemes.file)
 			window.location.reload();
 		break;
 	case "tag":
