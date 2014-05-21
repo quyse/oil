@@ -12,6 +12,9 @@
 	<script src="ui.js" />
 	<script src="main.js" />
 	<script src="ids.js" />
+	<script src="scheme-file.js" />
+	<script src="scheme-image.js" />
+	<script src="scheme-imageTransform.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />
