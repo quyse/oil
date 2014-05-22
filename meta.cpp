@@ -91,6 +91,8 @@ META_CLASS(Inanity::Oil::TextureViewRenderer, Inanity.Oil.TextureViewRenderer);
 	META_METHOD(SetMipMode);
 	META_METHOD(SetMipLod);
 	META_METHOD(SetMipBias);
+	META_METHOD(SetColorTransform);
+	META_METHOD(SetColorOffset);
 META_CLASS_END();
 
 #include "SceneViewRenderer.hpp"

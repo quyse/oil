@@ -56,6 +56,30 @@ function onScaleChange() {
 	viewRenderer.SetScale(scale * 0.01);
 }
 
+function onMaskChange() {
+	var r = document.getElementById("checkboxMaskR").checked;
+	var g = document.getElementById("checkboxMaskG").checked;
+	var b = document.getElementById("checkboxMaskB").checked;
+	var a = document.getElementById("checkboxMaskA").checked;
+
+	var count = 0;
+	if(r) ++count;
+	if(g) ++count;
+	if(b) ++count;
+	if(a) ++count;
+
+	var transform;
+	if(count == 1)
+		transform = [r, r, r, 0, g, g, g, 0, b, b, b, 0, a, a, a, 0];
+	else
+		transform = [r, 0, 0, 0, 0, g, 0, 0, 0, 0, b, 0, 0, 0, 0, a];
+
+	var offset = [0, 0, 0, (a && count != 1) ? 0 : 1];
+
+	viewRenderer.SetColorTransform(transform);
+	viewRenderer.SetColorOffset(offset);
+}
+
 function onTileChange() {
 	viewRenderer.SetTile(document.getElementById("checkboxTile").checked);
 }
@@ -128,6 +152,7 @@ window.addEventListener("load", function() {
 	document.getElementById("buttonFilterMipLinear").setAttribute("checked", true); onFilterChange(1, 1);
 	document.getElementById("buttonFilterMagLinear").setAttribute("checked", true); onFilterChange(2, 1);
 	onMipModeChange(0);
+	onMaskChange();
 	onTileChange();
 
 	// register move control

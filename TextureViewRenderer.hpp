@@ -30,6 +30,8 @@ private:
 	int mipMode;
 	float mipLod;
 	float mipBias;
+	Graphics::mat4x4 colorTransform;
+	Graphics::vec4 colorOffset;
 
 public:
 	TextureViewRenderer(ptr<Engine> engine);
@@ -46,6 +48,8 @@ public:
 	void SetMipMode(int mipMode);
 	void SetMipLod(float mipLod);
 	void SetMipBias(float mipBias);
+	void SetColorTransform(const Graphics::mat4x4& colorTransform);
+	void SetColorOffset(const Graphics::vec4& colorOffset);
 };
 
 END_INANITY_OIL

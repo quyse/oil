@@ -97,6 +97,8 @@ public:
 		GS::Uniform<G::vec2> uOffset;
 		GS::Uniform<float> uLod;
 		GS::Uniform<float> uBias;
+		GS::Uniform<G::mat4x4> uColorTransform;
+		GS::Uniform<G::vec4> uColorOffset;
 		GS::Sampler<G::vec4, 2> s;
 
 	private:

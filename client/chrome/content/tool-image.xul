@@ -64,6 +64,14 @@
 				</grid>
 			</panel>
 		</button>
+		<button type="panel" label="mask">
+			<panel>
+				<checkbox id="checkboxMaskR" label="red" checked="true" oncommand="onMaskChange()" />
+				<checkbox id="checkboxMaskG" label="green" checked="true" oncommand="onMaskChange()" />
+				<checkbox id="checkboxMaskB" label="blue" checked="true" oncommand="onMaskChange()" />
+				<checkbox id="checkboxMaskA" label="alpha" checked="true" oncommand="onMaskChange()" />
+			</panel>
+		</button>
 		<checkbox id="checkboxTile" label="tile" oncommand="onTileChange()" />
 		<textbox id="textboxScale" value="100%" readonly="true" width="40" />
 		<button label="100%" oncommand="setScaleExp(0)" />

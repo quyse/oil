@@ -88,6 +88,8 @@ Painter::TextureQuad::TextureQuad(ptr<Device> device, ptr<ShaderCache> shaderCac
 	uOffset(ug->AddUniform<vec2>()),
 	uLod(ug->AddUniform<float>()),
 	uBias(ug->AddUniform<float>()),
+	uColorTransform(ug->AddUniform<mat4x4>()),
+	uColorOffset(ug->AddUniform<vec4>()),
 	s(0)
 {
 	ug->Finalize(device);
@@ -103,6 +105,7 @@ Painter::TextureQuad::TextureQuad(ptr<Device> device, ptr<ShaderCache> shaderCac
 	);
 
 	Expression tail = (
+		sample = mul(uColorTransform, sample) + uColorOffset,
 		backgroundTexcoord = quad->iTexcoord * uBackgroundScale,
 		background = mod(floor(backgroundTexcoord["x"]) + floor(backgroundTexcoord["y"]), 2.0f) * Value<float>(0.5f) + Value<float>(0.5f),
 		fragment(0, newvec4(lerp(newvec3(background, background, background), sample["xyz"], sample["w"]), 1.0f))

@@ -13,8 +13,9 @@ BEGIN_INANITY_OIL
 
 using namespace Inanity::Graphics;
 
-TextureViewRenderer::TextureViewRenderer(ptr<Engine> engine)
-: engine(engine), offset(0, 0), scale(1), mipMode(0), mipLod(0), mipBias(0)
+TextureViewRenderer::TextureViewRenderer(ptr<Engine> engine) :
+	engine(engine), offset(0, 0), scale(1), mipMode(0), mipLod(0), mipBias(0),
+	colorTransform(Graphics::identity_mat<float, 4>()), colorOffset(0, 0, 0, 0)
 {
 }
 
@@ -45,6 +46,8 @@ void TextureViewRenderer::Render()
 		textureQuad->uOffset.SetValue(vec2(-offset.x * scaleXCoef, -offset.y * scaleYCoef));
 		textureQuad->uLod.SetValue(mipLod);
 		textureQuad->uBias.SetValue(mipBias);
+		textureQuad->uColorTransform.SetValue(colorTransform);
+		textureQuad->uColorOffset.SetValue(colorOffset);
 
 		Painter::TextureQuad::Let tql(context, textureQuad, texture, samplerState, (Painter::TextureQuad::Let::MipMode)mipMode);
 
@@ -105,6 +108,16 @@ void TextureViewRenderer::SetMipLod(float mipLod)
 void TextureViewRenderer::SetMipBias(float mipBias)
 {
 	this->mipBias = mipBias;
+}
+
+void TextureViewRenderer::SetColorTransform(const Graphics::mat4x4& colorTransform)
+{
+	this->colorTransform = colorTransform;
+}
+
+void TextureViewRenderer::SetColorOffset(const Graphics::vec4& colorOffset)
+{
+	this->colorOffset = colorOffset;
 }
 
 END_INANITY_OIL
