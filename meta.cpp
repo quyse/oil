@@ -63,7 +63,6 @@ META_CLASS_END();
 
 #include "Engine.hpp"
 META_CLASS(Inanity::Oil::Engine, Inanity.Oil.Engine);
-	META_METHOD(GetGraphicsDevice);
 	META_METHOD(LoadRawTexture);
 META_CLASS_END();
 

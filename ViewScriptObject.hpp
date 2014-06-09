@@ -33,7 +33,7 @@ public:
 	~ViewScriptObject();
 
 	int GetId() const;
-	static ptr<ViewScriptObject> ViewScriptObject::GetById(int id);
+	static ptr<ViewScriptObject> GetById(int id);
 
 	void Invalidate();
 	void SetViewRenderer(ptr<ViewRenderer> viewRenderer);
