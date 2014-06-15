@@ -71,7 +71,7 @@ var executables = {
 			'../inanity/deps/harfbuzz//libharfbuzz'
 		],
 		'staticLibraries-win32': ['../inanity//libinanity-dx11'],
-		'dynamicLibraries-linux': ['pthread', 'GL', 'dl', 'z', 'SDL2'],
+		'dynamicLibraries-linux': ['pthread', 'GL', 'dl', 'z', 'SDL2', 'X11'],
 		'dynamicLibraries-win32': ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']

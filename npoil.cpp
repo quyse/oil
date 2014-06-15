@@ -6,6 +6,24 @@
 
 BEGIN_INANITY
 
+const Platform::NpapiPlugin::Info& Platform::NpapiPlugin::GetInfo()
+{
+	// information about plugin
+	// should be in sync with Windows resource file
+	static const Platform::NpapiPlugin::Info info =
+	{
+		// version
+		"1.0.0.1",
+		// mime
+		"application/x-inanityoil::Inanity Oil NPAPI Plugin",
+		// "name"
+		"Inanity Oil NPAPI Plugin",
+		 // description
+		"Inanity Oil NPAPI Plugin"
+	};
+	return info;
+}
+
 ptr<Platform::NpapiPluginInstance> Platform::NpapiPlugin::CreateInstance(int argc, char* argn[], char* argv[])
 {
 	BEGIN_TRY();
