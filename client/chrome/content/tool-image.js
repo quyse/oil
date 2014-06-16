@@ -22,6 +22,8 @@ function onImageChange(result) {
 	var mipsCount = result.GetImageMips();
 	document.getElementById("scaleMipLod").max = (mipsCount - 1) * 10;
 	document.getElementById("scaleMipBias").max = (mipsCount - 1) * 10;
+
+	invalidate();
 }
 
 function onMipModeChange(mipMode) {
@@ -30,6 +32,8 @@ function onMipModeChange(mipMode) {
 	document.getElementById("buttonMipBias").checked = mipMode == 2;
 
 	viewRenderer.SetMipMode(mipMode);
+
+	invalidate();
 }
 
 function onMipLodChange() {
@@ -37,6 +41,8 @@ function onMipLodChange() {
 	document.getElementById("textboxMipLod").value = mipLod;
 	onMipModeChange(1);
 	viewRenderer.SetMipLod(mipLod);
+
+	invalidate();
 }
 
 function onMipBiasChange() {
@@ -44,16 +50,22 @@ function onMipBiasChange() {
 	document.getElementById("textboxMipBias").value = mipBias;
 	onMipModeChange(2);
 	viewRenderer.SetMipBias(mipBias);
+
+	invalidate();
 }
 
 function onFilterChange(filterType, filterValue) {
 	viewRenderer.SetFilter(filterType, filterValue);
+
+	invalidate();
 }
 
 function onScaleChange() {
 	var scale = document.getElementById("scaleScale").value;
 	document.getElementById("textboxScale").value = scale + "%";
 	viewRenderer.SetScale(scale * 0.01);
+
+	invalidate();
 }
 
 function onMaskChange() {
@@ -78,10 +90,13 @@ function onMaskChange() {
 
 	viewRenderer.SetColorTransform(transform);
 	viewRenderer.SetColorOffset(offset);
+
+	invalidate();
 }
 
 function onTileChange() {
 	viewRenderer.SetTile(document.getElementById("checkboxTile").checked);
+	invalidate();
 }
 
 var offset = [0, 0];
@@ -116,6 +131,10 @@ function setScaleExp(newScaleExp, centerX, centerY) {
 
 var plugin;
 var viewRenderer;
+
+var invalidate = function() {
+	plugin.Invalidate();
+};
 
 window.addEventListener("load", function() {
 
@@ -170,6 +189,7 @@ window.addEventListener("load", function() {
 			}
 			lastMoveX = event.clientX;
 			lastMoveY = event.clientY;
+			invalidate();
 		} else {
 			lastMoveX = undefined;
 			lastMoveY = undefined;
@@ -179,13 +199,11 @@ window.addEventListener("load", function() {
 	container.addEventListener("wheel", function(event) {
 		setScaleExp(scaleExp - event.deltaY * 0.05, event.clientX, event.clientY);
 
+		invalidate();
+
 		event.preventDefault();
 	}, true);
 
-	// run an update loop
-	var updatePlugin = function() {
-		plugin.Invalidate();
-		setTimeout(updatePlugin, 10);
-	};
-	setTimeout(updatePlugin, 0);
+	// update first time
+	invalidate();
 });
