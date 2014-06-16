@@ -67,7 +67,7 @@ Painter::Quad::Quad(ptr<Device> device, ptr<ShaderCache> shaderCache) :
 	// vertex shader
 	vs = shaderCache->GetVertexShader((
 		setPosition(aPosition),
-		iTexcoord = screenToTexture(aPosition["xy"])
+		iTexcoord = aPosition["xy"] * newvec2(0.5f, -0.5f) + newvec2(0.5f, 0.5f)
 	));
 }
 
@@ -107,7 +107,7 @@ Painter::TextureQuad::TextureQuad(ptr<Device> device, ptr<ShaderCache> shaderCac
 	Expression tail = (
 		sample = mul(uColorTransform, sample) + uColorOffset,
 		backgroundTexcoord = quad->iTexcoord * uBackgroundScale,
-		background = mod(floor(backgroundTexcoord["x"]) + floor(backgroundTexcoord["y"]), 2.0f) * Value<float>(0.5f) + Value<float>(0.5f),
+		background = mod(floor(backgroundTexcoord["x"]) + floor(backgroundTexcoord["y"]), 2.0f) * val(0.5f) + val(0.5f),
 		fragment(0, newvec4(lerp(newvec3(background, background, background), sample["xyz"], sample["w"]), 1.0f))
 	);
 
