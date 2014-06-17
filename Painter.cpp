@@ -18,6 +18,7 @@
 #include "../inanity/graphics/shaders/Uniform.ipp"
 #include "../inanity/graphics/shaders/Sampler.ipp"
 #include "../inanity/graphics/shaders/Temp.ipp"
+#include "../inanity/graphics/shaders/Interpolant.ipp"
 #include "../inanity/graphics/shaders/LValue.ipp"
 #include "../inanity/graphics/shaders/functions.hpp"
 #include "../inanity/MemoryFile.hpp"
