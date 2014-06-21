@@ -61,6 +61,37 @@ META_CLASS(Inanity::Oil::Core, Inanity.Oil.Core);
 	META_METHOD(GetEngine);
 META_CLASS_END();
 
+#include "Mesh.hpp"
+
+META_CLASS(Inanity::Oil::Mesh, Inanity.Oil.Mesh);
+META_CLASS_END();
+
+#include "Material.hpp"
+
+META_CLASS(Inanity::Oil::Material, Inanity.Oil.Material);
+	META_METHOD(GetDiffuseTexture);
+	META_METHOD(GetDiffuseController);
+	META_METHOD(GetNormalTexture);
+META_CLASS_END();
+
+#include "Model.hpp"
+
+META_CLASS(Inanity::Oil::Model, Inanity.Oil.Model);
+META_CLASS_END();
+
+#include "Scene.hpp"
+
+META_CLASS(Inanity::Oil::Scene, Inanity.Oil.Scene);
+META_CLASS_END();
+
+#include "ImportedScene.hpp"
+
+META_CLASS(Inanity::Oil::ImportedScene, Inanity.Oil.ImportedScene);
+	META_CLASS_PARENT(Inanity::Oil::Scene);
+	META_METHOD(TryGetModel);
+	META_METHOD(TryGetMaterial);
+META_CLASS_END();
+
 #include "Engine.hpp"
 META_CLASS(Inanity::Oil::Engine, Inanity.Oil.Engine);
 	META_METHOD(LoadRawTexture);
@@ -171,6 +202,22 @@ META_CLASS(Inanity::Oil::EntityFieldId, Inanity.Oil.EntityFieldId);
 	META_STATIC_METHOD(FromStringData);
 	META_STATIC_METHOD(FromFile);
 META_CLASS_END();
+
+//******* controllers
+
+#include "Controller.hpp"
+#include "ConstantController.hpp"
+
+#define META_OF_CONTROLLER(name) \
+	META_CLASS(Inanity::Oil::name##Controller, Inanity.Oil.name##Controller); \
+		META_STATIC_METHOD(CreateConstant); \
+	META_CLASS_END()
+
+META_OF_CONTROLLER(Vec3);
+META_OF_CONTROLLER(Vec4);
+META_OF_CONTROLLER(Mat4x4);
+
+#undef META_OF_CONTROLLER
 
 //*******
 
