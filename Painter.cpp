@@ -157,4 +157,125 @@ ptr<PixelShader> Painter::TextureQuad::Let::GetPixelShader(const TextureQuad* te
 	}
 }
 
+//*** class Painter::ModelRender::VertexVariantKey
+
+Painter::ModelRender::VertexVariantKey::VertexVariantKey(bool bump, bool skinned, int texcoordsCount)
+: bump(bump), skinned(skinned), texcoordsCount(texcoordsCount) {}
+
+size_t Painter::ModelRender::VertexVariantKey::GetHash() const
+{
+	return (bump ? 1 : 0) | (skinned ? 2 : 0) | (texcoordsCount << 2);
+}
+
+//*** class Painter::ModelRender::VertexVariant
+
+Painter::ModelRender::VertexVariant::VertexVariant(Painter* painter, const VertexVariantKey& key)
+: key(key)
+{
+	BEGIN_TRY();
+
+	END_TRY("Can't create vertex variant");
+}
+
+//*** class Painter::ModelRender
+
+Painter::ModelRender::ModelRender(ptr<Device> device, ptr<ShaderCache> shaderCache) :
+	device(device),
+	shaderCache(shaderCache),
+	vlPNT(NEW(VertexLayout(sizeof(VertexPNT)))),
+	alPNT(NEW(AttributeLayout())),
+	alsPNT(alPNT->AddSlot()),
+	aPNTPosition(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::position))),
+	aPNTNormal(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::normal))),
+	aPNTTexcoord(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::texcoord))),
+
+	vlPBT(NEW(VertexLayout(sizeof(VertexPBT)))),
+	alPBT(NEW(AttributeLayout())),
+	alsPBT(alPBT->AddSlot()),
+	aPBTPosition(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::position))),
+	aPBTTexcoord(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::texcoord))),
+	aPBTBumpTransform1(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform1))),
+	aPBTBumpTransform2(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform2))),
+	aPBTBumpTransform3(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform3))),
+
+	iNormal(0),
+	iTexcoord(1),
+	iBumpTransform1(2),
+	iBumpTransform2(3),
+	iBumpTransform3(4),
+
+	ug(NEW(UniformGroup(0))),
+	uDiffuseColor(ug->AddUniform<vec4>()),
+	uDiffuseSampler(0),
+	uNormalSampler(1)
+{
+	ug->Finalize(device);
+}
+
+Painter::ModelRender::VertexShaderKey::VertexShaderKey()
+: bump(false), skinned(false) {}
+
+bool operator==(const Painter::ModelRender::VertexShaderKey& a, const Painter::ModelRender::VertexShaderKey& b)
+{
+	return a.bump == b.bump && a.skinned == b.skinned;
+}
+
+Painter::ModelRender::PixelShaderKey::PixelShaderKey()
+: diffuseTexture(false), normalTexture(false) {}
+
+bool operator==(const Painter::ModelRender::PixelShaderKey& a, const Painter::ModelRender::PixelShaderKey& b)
+{
+	return a.diffuseTexture == b.diffuseTexture && a.normalTexture == b.normalTexture;
+}
+
+size_t Painter::ModelRender::Hasher::operator()(const VertexShaderKey& key) const
+{
+	return (key.bump ? 1 : 0) | (key.skinned ? 2 : 0);
+}
+
+size_t Painter::ModelRender::Hasher::operator()(const PixelShaderKey& key) const
+{
+	return (key.diffuseTexture ? 1 : 0) | (key.normalTexture ? 1 : 0);
+}
+
+ptr<VertexShader> Painter::ModelRender::GetVertexShader(const VertexShaderKey& key)
+{
+	{
+		VertexShaders::const_iterator i = vertexShaders.find(key);
+		if(i != vertexShaders.end())
+			return i->second;
+	}
+
+	Temp<vec4> position;
+
+	Expression e = (
+		setPosition(newvec4(aPNTPosition, 1))
+	);
+
+	ptr<VertexShader> vertexShader = shaderCache->GetVertexShader(e);
+	vertexShaders[key] = vertexShader;
+	return vertexShader;
+}
+
+ptr<PixelShader> Painter::ModelRender::GetPixelShader(const PixelShaderKey& key)
+{
+	{
+		PixelShaders::const_iterator i = pixelShaders.find(key);
+		if(i != pixelShaders.end())
+			return i->second;
+	}
+
+	Expression e = (
+		fragment(0, newvec4(1, 1, 1, 1))
+	);
+
+	ptr<PixelShader> pixelShader = shaderCache->GetPixelShader(e);
+	pixelShaders[key] = pixelShader;
+	return pixelShader;
+}
+
+Painter::ModelRender::Let::Let(Context* context, const ModelRender* model)
+{
+}
+
 END_INANITY_OIL

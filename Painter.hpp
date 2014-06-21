@@ -6,7 +6,9 @@
 #include "../inanity/graphics/shaders/Value.hpp"
 #include "../inanity/graphics/shaders/Interpolant.hpp"
 #include "../inanity/graphics/shaders/Uniform.hpp"
+#include "../inanity/graphics/shaders/Temp.hpp"
 #include "../inanity/graphics/shaders/Sampler.hpp"
+#include <unordered_map>
 
 #define G Inanity::Graphics
 #define GS Inanity::Graphics::Shaders
@@ -29,6 +31,7 @@ END_INANITY_GRAPHICS
 BEGIN_INANITY_SHADERS
 
 class UniformGroup;
+class AttributeNode;
 
 END_INANITY_SHADERS
 
@@ -42,6 +45,7 @@ private:
 	ptr<G::ShaderCache> shaderCache;
 
 public:
+
 	class Quad : public Object
 	{
 	private:
@@ -129,14 +133,99 @@ public:
 			static ptr<G::PixelShader> GetPixelShader(const TextureQuad* textureQuad, MipMode mipMode);
 
 		public:
-			Let(G::Context* context, const TextureQuad* textureQuad, ptr<G::Texture> t, ptr<G::SamplerState> ss, MipMode mipMode);
+			Let(
+				G::Context* context,
+				const TextureQuad* textureQuad,
+				ptr<G::Texture> t,
+				ptr<G::SamplerState> ss, MipMode mipMode
+			);
 			~Let();
+		};
+	};
+
+	class ModelRender : public Object
+	{
+	private:
+		ptr<G::Device> device;
+		ptr<G::ShaderCache> shaderCache;
+
+		static const int maxTexcoordsCount = 4;
+
+		/// Key for variant of key.
+		struct VertexVariantKey
+		{
+			// do mesh have tangent and binormal
+			bool bump;
+			// do mesh use skinning
+			bool skinned;
+			// number of texcoords in mesh
+			int texcoordsCount;
+
+			VertexVariantKey(bool bump, bool skinned, int texcoordsCount);
+
+			size_t GetHash() const;
+		};
+
+		/// Struct containing everything needed for vertex shader.
+		struct VertexVariant
+		{
+			VertexVariantKey key;
+
+			ptr<G::VertexLayout> vl;
+			ptr<G::AttributeLayout> al;
+			ptr<G::AttributeLayoutSlot> als;
+			GS::Value<G::vec3> aPosition;
+			GS::Value<G::vec3> aTangent;
+			GS::Value<G::vec3> aBinormal;
+			GS::Value<G::vec3> aNormal;
+			GS::Value<G::vec2> aTexcoords[maxTexcoordsCount];
+			GS::Value<G::vec4> aBoneWeights;
+			GS::Value<G::uvec4> aBoneIndices;
+
+			ptr<Instancer> instancer;
+
+			ptr<G::VertexShader> vs;
+
+			VertexVariant(Painter* painter, const VertexVariantKey& key);
+			~VertexVariant();
+		};
+
+		typedef std::unordered_map<size_t, VertexVariant> VertexVariants;
+		VertexVariants vertexVariants;
+
+		GS::Interpolant<G::vec3> iPosition; // in world-space
+		GS::Interpolant<G::vec3> iTangent; // in tangent-space
+		GS::Interpolant<G::vec3> iBinormal; // in tangent-space
+		GS::Interpolant<G::vec3> iNormal; // in tangent-space
+		GS::Interpolant<G::vec2> iTexcoords[maxTexcoordsCount];
+
+		ptr<GS::UniformGroup> ug;
+		GS::Uniform<G::vec4> uDiffuseColor;
+		GS::Sampler<G::vec4, 2> uDiffuseSampler;
+		GS::Sampler<G::vec4, 2> uNormalSampler;
+
+		ptr<GS::UniformGroup> ugSkinned;
+
+		/// Temporary variables.
+		GS::Temp<G::vec3> tmpWorldPosition;
+		GS::Temp<G::vec3> tmpWorldNormal;
+		GS::Temp<G::vec2> tmpTexcoord;
+
+	public:
+		ModelRender(ptr<G::Device> device, ptr<G::ShaderCache> shaderCache);
+		~ModelRender();
+
+		class Let
+		{
+		public:
+			Let(G::Context* context, const ModelRender* model);
 		};
 	};
 
 public: // for convenience
 	ptr<Quad> quad;
 	ptr<TextureQuad> textureQuad;
+	ptr<ModelRender> modelRender;
 
 public:
 	Painter(ptr<G::Device> device, ptr<G::Context> context, ptr<G::ShaderCache> shaderCache);
