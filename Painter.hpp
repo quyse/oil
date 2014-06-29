@@ -6,7 +6,7 @@
 #include "../inanity/graphics/shaders/Value.hpp"
 #include "../inanity/graphics/shaders/Interpolant.hpp"
 #include "../inanity/graphics/shaders/Uniform.hpp"
-#include "../inanity/graphics/shaders/Temp.hpp"
+#include "../inanity/graphics/shaders/UniformArray.hpp"
 #include "../inanity/graphics/shaders/Sampler.hpp"
 #include <unordered_map>
 
@@ -32,6 +32,7 @@ BEGIN_INANITY_SHADERS
 
 class UniformGroup;
 class AttributeNode;
+class Instancer;
 
 END_INANITY_SHADERS
 
@@ -149,19 +150,32 @@ public:
 		ptr<G::Device> device;
 		ptr<G::ShaderCache> shaderCache;
 
-		static const int maxTexcoordsCount = 4;
+		static const int maxInstancesCount = 64;
 
-		/// Key for variant of key.
+		/// Key for variant of vertex shader.
 		struct VertexVariantKey
 		{
-			// do mesh have tangent and binormal
+			/// Does mesh have tangent and binormal?
 			bool bump;
-			// do mesh use skinning
+			/// Does mesh use skinning?
 			bool skinned;
-			// number of texcoords in mesh
-			int texcoordsCount;
 
-			VertexVariantKey(bool bump, bool skinned, int texcoordsCount);
+			VertexVariantKey(bool bump, bool skinned);
+
+			size_t GetHash() const;
+		};
+
+		/// Key for variant of pixel shader.
+		struct PixelVariantKey
+		{
+			/// Does material have a diffuse texture?
+			bool hasDiffuseTexture;
+			/// Does material have a specular texture?
+			bool hasSpecularTexture;
+			/// Does material have a normal texture?
+			bool hasNormalTexture;
+
+			PixelVariantKey(bool hasDiffuseTexture, bool hasSpecularTexture, bool hasNormalTexture);
 
 			size_t GetHash() const;
 		};
@@ -174,52 +188,65 @@ public:
 			ptr<G::VertexLayout> vl;
 			ptr<G::AttributeLayout> al;
 			ptr<G::AttributeLayoutSlot> als;
+			//*** Attributes.
 			GS::Value<G::vec3> aPosition;
-			GS::Value<G::vec3> aTangent;
-			GS::Value<G::vec3> aBinormal;
+			GS::Value<G::vec3> aTangent; // if key.bump
+			GS::Value<G::vec3> aBinormal; // if key.bump
 			GS::Value<G::vec3> aNormal;
-			GS::Value<G::vec2> aTexcoords[maxTexcoordsCount];
-			GS::Value<G::vec4> aBoneWeights;
-			GS::Value<G::uvec4> aBoneIndices;
+			GS::Value<G::vec2> aTexcoord;
+			GS::Value<G::vec4> aBoneWeights; // if key.skinned
+			GS::Value<G::uvec4> aBoneNumbers; // if key.skinned
 
-			ptr<Instancer> instancer;
+			ptr<G::AttributeBinding> ab;
+
+			ptr<GS::Instancer> instancer; // if !key.skinned
+
+			ptr<GS::UniformGroup> ug;
+			GS::UniformArray<G::mat4x4> uWorlds; // if !key.skinned
+			GS::UniformArray<G::vec4> uBoneOrientations; // if key.skinned
+			GS::UniformArray<G::vec4> uBoneOffsets; // if key.skinned
 
 			ptr<G::VertexShader> vs;
 
-			VertexVariant(Painter* painter, const VertexVariantKey& key);
+			VertexVariant(ModelRender* modelRender, const VertexVariantKey& key);
 			~VertexVariant();
 		};
 
+		/// Struct containing everything needed for pixel shader.
+		struct PixelVariant
+		{
+			PixelVariantKey key;
+
+			//ptr<GS::UniformGroup> ug;
+			GS::Sampler<G::vec4, 2> sDiffuse;
+			GS::Sampler<G::vec4, 2> sSpecular;
+
+			PixelVariant(ModelRender* modelRender, const PixelVariantKey& key);
+			~PixelVariant();
+		};
+
+		/// Vertex variants.
 		typedef std::unordered_map<size_t, VertexVariant> VertexVariants;
 		VertexVariants vertexVariants;
 
+		/// Pixel variants.
+		typedef std::unordered_map<size_t, PixelVariant> PixelVariants;
+		PixelVariants pixelVariants;
+
+		//*** Interpolants.
 		GS::Interpolant<G::vec3> iPosition; // in world-space
 		GS::Interpolant<G::vec3> iTangent; // in tangent-space
 		GS::Interpolant<G::vec3> iBinormal; // in tangent-space
 		GS::Interpolant<G::vec3> iNormal; // in tangent-space
-		GS::Interpolant<G::vec2> iTexcoords[maxTexcoordsCount];
+		GS::Interpolant<G::vec2> iTexcoord;
 
 		ptr<GS::UniformGroup> ug;
-		GS::Uniform<G::vec4> uDiffuseColor;
-		GS::Sampler<G::vec4, 2> uDiffuseSampler;
-		GS::Sampler<G::vec4, 2> uNormalSampler;
-
-		ptr<GS::UniformGroup> ugSkinned;
-
-		/// Temporary variables.
-		GS::Temp<G::vec3> tmpWorldPosition;
-		GS::Temp<G::vec3> tmpWorldNormal;
-		GS::Temp<G::vec2> tmpTexcoord;
+		GS::Uniform<G::mat4x4> uViewProj;
+		GS::Uniform<G::vec3> uEye;
 
 	public:
-		ModelRender(ptr<G::Device> device, ptr<G::ShaderCache> shaderCache);
+		ModelRender(Painter* painter);
 		~ModelRender();
-
-		class Let
-		{
-		public:
-			Let(G::Context* context, const ModelRender* model);
-		};
 	};
 
 public: // for convenience

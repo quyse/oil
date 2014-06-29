@@ -17,9 +17,8 @@
 #include "../inanity/graphics/shaders/UniformGroup.hpp"
 #include "../inanity/graphics/shaders/Uniform.ipp"
 #include "../inanity/graphics/shaders/Sampler.ipp"
-#include "../inanity/graphics/shaders/Temp.ipp"
 #include "../inanity/graphics/shaders/Interpolant.ipp"
-#include "../inanity/graphics/shaders/LValue.ipp"
+#include "../inanity/graphics/shaders/Instancer.hpp"
 #include "../inanity/graphics/shaders/functions.hpp"
 #include "../inanity/MemoryFile.hpp"
 
@@ -35,6 +34,7 @@ Painter::Painter(ptr<Device> device, ptr<Context> context, ptr<ShaderCache> shad
 {
 	quad = NEW(Quad(device, shaderCache));
 	textureQuad = NEW(TextureQuad(device, shaderCache, quad));
+	modelRender = NEW(ModelRender(this));
 }
 
 Painter::~Painter() {}
@@ -68,7 +68,7 @@ Painter::Quad::Quad(ptr<Device> device, ptr<ShaderCache> shaderCache) :
 	// vertex shader
 	vs = shaderCache->GetVertexShader((
 		setPosition(aPosition),
-		iTexcoord = aPosition["xy"] * newvec2(0.5f, -0.5f) + newvec2(0.5f, 0.5f)
+		iTexcoord.Set(aPosition["xy"] * newvec2(0.5f, -0.5f) + newvec2(0.5f, 0.5f))
 	));
 }
 
@@ -96,37 +96,19 @@ Painter::TextureQuad::TextureQuad(ptr<Device> device, ptr<ShaderCache> shaderCac
 	ug->Finalize(device);
 
 	// pixel shader
-	Temp<vec2> texcoord;
-	Temp<vec4> sample;
-	Temp<vec2> backgroundTexcoord;
-	Temp<float> background;
+	Value<vec2> texcoord = quad->iTexcoord * uTextureScale + uOffset;
+	Value<vec2> backgroundTexcoord = quad->iTexcoord * uBackgroundScale;
+	Value<float> background = mod(floor(backgroundTexcoord["x"]) + floor(backgroundTexcoord["y"]), 2.0f) * val(0.5f) + val(0.5f);
 
-	Expression head = (
-		texcoord = quad->iTexcoord * uTextureScale + uOffset
-	);
+	auto tail = [this, &background] (Value<vec4> sample) -> Expression
+	{
+		sample = mul(uColorTransform, sample) + uColorOffset;
+		return fragment(0, newvec4(lerp(newvec3(background, background, background), sample["xyz"], sample["w"]), 1.0f));
+	};
 
-	Expression tail = (
-		sample = mul(uColorTransform, sample) + uColorOffset,
-		backgroundTexcoord = quad->iTexcoord * uBackgroundScale,
-		background = mod(floor(backgroundTexcoord["x"]) + floor(backgroundTexcoord["y"]), 2.0f) * val(0.5f) + val(0.5f),
-		fragment(0, newvec4(lerp(newvec3(background, background, background), sample["xyz"], sample["w"]), 1.0f))
-	);
-
-	psMipAuto = shaderCache->GetPixelShader((
-		head,
-		sample = s.Sample(texcoord),
-		tail
-	));
-	psMipLod = shaderCache->GetPixelShader((
-		head,
-		sample = s.SampleLod(texcoord, uLod),
-		tail
-	));
-	psMipBias = shaderCache->GetPixelShader((
-		head,
-		sample = s.SampleBias(texcoord, uBias),
-		tail
-	));
+	psMipAuto = shaderCache->GetPixelShader(tail(s.Sample(texcoord)));
+	psMipLod = shaderCache->GetPixelShader(tail(s.SampleLod(texcoord, uLod)));
+	psMipBias = shaderCache->GetPixelShader(tail(s.SampleBias(texcoord, uBias)));
 }
 
 Painter::TextureQuad::~TextureQuad() {}
@@ -157,125 +139,194 @@ ptr<PixelShader> Painter::TextureQuad::Let::GetPixelShader(const TextureQuad* te
 	}
 }
 
+//*** class Painter::ModelRender
+
+Painter::ModelRender::ModelRender(Painter* painter) :
+	device(painter->device),
+	shaderCache(painter->shaderCache),
+
+	iPosition(0),
+	iTangent(1),
+	iBinormal(2),
+	iNormal(3),
+	iTexcoord(4),
+
+	ug(NEW(UniformGroup(0))),
+	uViewProj(ug->AddUniform<mat4x4>()),
+	uEye(ug->AddUniform<vec3>())
+{}
+
+Painter::ModelRender::~ModelRender() {}
+
 //*** class Painter::ModelRender::VertexVariantKey
 
-Painter::ModelRender::VertexVariantKey::VertexVariantKey(bool bump, bool skinned, int texcoordsCount)
-: bump(bump), skinned(skinned), texcoordsCount(texcoordsCount) {}
+Painter::ModelRender::VertexVariantKey::VertexVariantKey(
+	bool bump,
+	bool skinned
+) :
+	bump(bump),
+	skinned(skinned)
+{}
 
 size_t Painter::ModelRender::VertexVariantKey::GetHash() const
 {
-	return (bump ? 1 : 0) | (skinned ? 2 : 0) | (texcoordsCount << 2);
+	return (bump ? 1 : 0) | (skinned ? 2 : 0);
+}
+
+//*** class Painter::ModelRender::PixelVariantKey
+
+Painter::ModelRender::PixelVariantKey::PixelVariantKey(
+	bool hasDiffuseTexture,
+	bool hasSpecularTexture,
+	bool hasNormalTexture
+) :
+	hasDiffuseTexture(hasDiffuseTexture),
+	hasSpecularTexture(hasSpecularTexture),
+	hasNormalTexture(hasNormalTexture)
+{}
+
+size_t Painter::ModelRender::PixelVariantKey::GetHash() const
+{
+	return (hasDiffuseTexture ? 1 : 0) | (hasSpecularTexture ? 2 : 0) | (hasNormalTexture ? 4 : 0);
 }
 
 //*** class Painter::ModelRender::VertexVariant
 
-Painter::ModelRender::VertexVariant::VertexVariant(Painter* painter, const VertexVariantKey& key)
-: key(key)
+Painter::ModelRender::VertexVariant::VertexVariant(ModelRender* modelRender, const VertexVariantKey& key) : key(key)
 {
 	BEGIN_TRY();
 
+	// calculate size of vertex
+	size_t vertexSize =
+		sizeof(vec3) // position
+		+ (key.bump ? sizeof(vec3) * 2 : 0) // tangent + binormal
+		+ sizeof(vec3) // normal
+		+ sizeof(vec2) // texcoords
+		+ (key.skinned ? sizeof(vec4) + sizeof(uvec4) : 0); // bone weights + bone numbers
+
+	// create vertex & attribute layout
+	vl = NEW(VertexLayout(vertexSize));
+	al = NEW(AttributeLayout());
+	als = al->AddSlot();
+
+	int offset = 0;
+	aPosition = al->AddElement(als, vl->AddElement(DataTypes::_vec3, offset));
+	offset += sizeof(vec3);
+	if(key.bump)
+	{
+		aTangent = al->AddElement(als, vl->AddElement(DataTypes::_vec3, offset));
+		offset += sizeof(vec3);
+		aBinormal = al->AddElement(als, vl->AddElement(DataTypes::_vec3, offset));
+		offset += sizeof(vec3);
+	}
+	aNormal = al->AddElement(als, vl->AddElement(DataTypes::_vec3, offset));
+	offset += sizeof(vec3);
+	aTexcoord = al->AddElement(als, vl->AddElement(DataTypes::_vec2, offset));
+	offset += sizeof(vec2);
+	if(key.skinned)
+	{
+		aBoneWeights = al->AddElement(als, vl->AddElement(DataTypes::_vec4, offset));
+		offset += sizeof(vec4);
+		aBoneNumbers = al->AddElement(als, vl->AddElement(DataTypes::_uvec4, offset));
+		offset += sizeof(uvec4);
+	}
+
+	ab = modelRender->device->CreateAttributeBinding(al);
+
+	if(!key.skinned)
+		instancer = NEW(Instancer(modelRender->device, maxInstancesCount, al));
+
+	// uniforms
+	ug = NEW(UniformGroup(1));
+	if(key.skinned)
+	{
+		uBoneOrientations = ug->AddUniformArray<vec4>(maxInstancesCount);
+		uBoneOffsets = ug->AddUniformArray<vec4>(maxInstancesCount);
+	}
+	else
+	{
+		uWorlds = ug->AddUniformArray<mat4x4>(maxInstancesCount);
+	}
+
+	// vertex shader
+	{
+		BEGIN_TRY();
+
+		// calculate world-space position, tangent/binormal, normal
+		Value<vec4> tmpPosition;
+		Value<vec3> tmpTangent, tmpBinormal, tmpNormal;
+		if(key.skinned)
+		{
+			static auto applyQuaternion = [](const Value<vec4>& q, const Value<vec3>& v)
+			{
+				return v + cross(q["xyz"], cross(q["xyz"], v) + v * q["w"]) * val(2.0f);
+			};
+
+			static const char xyzw[4][2] = { "x", "y", "z", "w" };
+
+			auto applyBoneOrientation = [this](const Value<vec3>& p) -> Value<vec3>
+			{
+				Value<vec3> r = newvec3(0.0f, 0.0f, 0.0f);
+				for(int i = 0; i < 4; ++i)
+				{
+					Value<uint> boneNumber = aBoneNumbers[xyzw[i]];
+					r += applyQuaternion(uBoneOrientations[boneNumber], p) * aBoneWeights[xyzw[i]];
+				}
+				return r;
+			};
+			auto applyBoneTransform = [this](const Value<vec3>& p) -> Value<vec3>
+			{
+				Value<vec3> r = newvec3(0.0f, 0.0f, 0.0f);
+				for(int i = 0; i < 4; ++i)
+				{
+					Value<uint> boneNumber = aBoneNumbers[xyzw[i]];
+					r += (applyQuaternion(uBoneOrientations[boneNumber], p) + uBoneOffsets[boneNumber]["xyz"]) * aBoneWeights[xyzw[i]];
+				}
+				return r;
+			};
+
+			tmpPosition = newvec4(applyBoneTransform(aPosition), 1.0f);
+			if(key.bump)
+			{
+				tmpTangent = applyBoneOrientation(aTangent);
+				tmpBinormal = applyBoneOrientation(aBinormal);
+			}
+			tmpNormal = applyBoneOrientation(aNormal);
+		}
+		else
+		{
+			Value<mat4x4> tmpWorld = uWorlds[instancer->GetInstanceID()];
+
+			tmpPosition = mul(tmpWorld, newvec4(aPosition, 1.0f));
+			Value<mat3x3> tmpWorldOrientation = tmpWorld.Cast<mat3x3>();
+			if(key.bump)
+			{
+				tmpTangent = mul(tmpWorldOrientation, aTangent);
+				tmpBinormal = mul(tmpWorldOrientation, aBinormal);
+			}
+			tmpNormal = mul(tmpWorldOrientation, aNormal);
+		}
+
+		Expression e = (
+			setPosition(mul(modelRender->uViewProj, tmpPosition)),
+			modelRender->iPosition.Set(tmpPosition["xyz"]),
+			modelRender->iNormal.Set(tmpNormal),
+			modelRender->iTexcoord.Set(aTexcoord)
+		);
+		if(key.bump)
+		{
+			e = (
+				e,
+				modelRender->iTangent.Set(tmpTangent),
+				modelRender->iBinormal.Set(tmpBinormal)
+			);
+		}
+		vs = modelRender->shaderCache->GetVertexShader(e);
+
+		END_TRY("Can't create vertex shader");
+	}
+
 	END_TRY("Can't create vertex variant");
-}
-
-//*** class Painter::ModelRender
-
-Painter::ModelRender::ModelRender(ptr<Device> device, ptr<ShaderCache> shaderCache) :
-	device(device),
-	shaderCache(shaderCache),
-	vlPNT(NEW(VertexLayout(sizeof(VertexPNT)))),
-	alPNT(NEW(AttributeLayout())),
-	alsPNT(alPNT->AddSlot()),
-	aPNTPosition(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::position))),
-	aPNTNormal(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::normal))),
-	aPNTTexcoord(alPNT->AddElement(alsPNT, vlPNT->AddElement(&VertexPNT::texcoord))),
-
-	vlPBT(NEW(VertexLayout(sizeof(VertexPBT)))),
-	alPBT(NEW(AttributeLayout())),
-	alsPBT(alPBT->AddSlot()),
-	aPBTPosition(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::position))),
-	aPBTTexcoord(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::texcoord))),
-	aPBTBumpTransform1(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform1))),
-	aPBTBumpTransform2(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform2))),
-	aPBTBumpTransform3(alPBT->AddElement(alsPBT, vlPBT->AddElement(&VertexPBT::bumpTransform3))),
-
-	iNormal(0),
-	iTexcoord(1),
-	iBumpTransform1(2),
-	iBumpTransform2(3),
-	iBumpTransform3(4),
-
-	ug(NEW(UniformGroup(0))),
-	uDiffuseColor(ug->AddUniform<vec4>()),
-	uDiffuseSampler(0),
-	uNormalSampler(1)
-{
-	ug->Finalize(device);
-}
-
-Painter::ModelRender::VertexShaderKey::VertexShaderKey()
-: bump(false), skinned(false) {}
-
-bool operator==(const Painter::ModelRender::VertexShaderKey& a, const Painter::ModelRender::VertexShaderKey& b)
-{
-	return a.bump == b.bump && a.skinned == b.skinned;
-}
-
-Painter::ModelRender::PixelShaderKey::PixelShaderKey()
-: diffuseTexture(false), normalTexture(false) {}
-
-bool operator==(const Painter::ModelRender::PixelShaderKey& a, const Painter::ModelRender::PixelShaderKey& b)
-{
-	return a.diffuseTexture == b.diffuseTexture && a.normalTexture == b.normalTexture;
-}
-
-size_t Painter::ModelRender::Hasher::operator()(const VertexShaderKey& key) const
-{
-	return (key.bump ? 1 : 0) | (key.skinned ? 2 : 0);
-}
-
-size_t Painter::ModelRender::Hasher::operator()(const PixelShaderKey& key) const
-{
-	return (key.diffuseTexture ? 1 : 0) | (key.normalTexture ? 1 : 0);
-}
-
-ptr<VertexShader> Painter::ModelRender::GetVertexShader(const VertexShaderKey& key)
-{
-	{
-		VertexShaders::const_iterator i = vertexShaders.find(key);
-		if(i != vertexShaders.end())
-			return i->second;
-	}
-
-	Temp<vec4> position;
-
-	Expression e = (
-		setPosition(newvec4(aPNTPosition, 1))
-	);
-
-	ptr<VertexShader> vertexShader = shaderCache->GetVertexShader(e);
-	vertexShaders[key] = vertexShader;
-	return vertexShader;
-}
-
-ptr<PixelShader> Painter::ModelRender::GetPixelShader(const PixelShaderKey& key)
-{
-	{
-		PixelShaders::const_iterator i = pixelShaders.find(key);
-		if(i != pixelShaders.end())
-			return i->second;
-	}
-
-	Expression e = (
-		fragment(0, newvec4(1, 1, 1, 1))
-	);
-
-	ptr<PixelShader> pixelShader = shaderCache->GetPixelShader(e);
-	pixelShaders[key] = pixelShader;
-	return pixelShader;
-}
-
-Painter::ModelRender::Let::Let(Context* context, const ModelRender* model)
-{
 }
 
 END_INANITY_OIL
