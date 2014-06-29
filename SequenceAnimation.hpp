@@ -94,7 +94,9 @@ template <typename _Value>
 class LinearInterpolator : public StepInterpolator<_Value>
 {
 public:
-	Value Interpolate(float key1, Data data1, float key2, Data data2, float key) const
+	using typename StepInterpolator<_Value>::Data;
+
+	_Value Interpolate(float key1, Data data1, float key2, Data data2, float key) const
 	{
 		return Math::lerp(data1, data2, (key - key1) / (key2 - key1));
 	}
@@ -105,7 +107,9 @@ template <typename _Value>
 class LinearEigenInterpolator : public StepInterpolator<_Value>
 {
 public:
-	Value Interpolate(float key1, Data data1, float key2, Data data2, float key) const
+	using typename StepInterpolator<_Value>::Data;
+
+	_Value Interpolate(float key1, Data data1, float key2, Data data2, float key) const
 	{
 		float t = (key - key1) / (key2 - key1);
 		return Math::fromEigen((Math::toEigen(data1) * (1 - t) + Math::toEigen(data2) * t).eval());
@@ -173,7 +177,9 @@ template <typename _Value>
 class CubicBezierEigenInterpolator : public CubicBezierInterpolator<_Value>
 {
 public:
-	Value Interpolate(float key1, const Data& data1, float key2, const Data& data2, float key) const
+	using typename CubicBezierInterpolator<_Value>::Data;
+
+	_Value Interpolate(float key1, const Data& data1, float key2, const Data& data2, float key) const
 	{
 		float t = (key - key1) / (key2 - key1);
 		float t1 = 1 - t;
@@ -227,7 +233,7 @@ N(StepFloatAnimation, StepInterpolator<float>);
 N(StepVec2Animation, StepInterpolator<Math::vec2>);
 N(StepVec3Animation, StepInterpolator<Math::vec3>);
 N(StepVec4Animation, StepInterpolator<Math::vec4>);
-N(StepQuatAnimation, StepInterpolator<Math::quat>);
+typedef StepVec4Animation StepQuatAnimation;
 N(StepMat4x4Animation, StepInterpolator<Math::mat4x4>);
 
 N(LinearFloatAnimation, LinearInterpolator<float>);

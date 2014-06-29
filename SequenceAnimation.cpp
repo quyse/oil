@@ -9,7 +9,6 @@ N(StepInterpolator<float>);
 N(StepInterpolator<Math::vec2>);
 N(StepInterpolator<Math::vec3>);
 N(StepInterpolator<Math::vec4>);
-N(StepInterpolator<Math::quat>);
 N(StepInterpolator<Math::mat4x4>);
 
 N(LinearInterpolator<float>);
