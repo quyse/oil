@@ -74,7 +74,7 @@
 		</button>
 		<checkbox id="checkboxTile" label="tile" oncommand="onTileChange()" />
 		<textbox id="textboxScale" value="100%" readonly="true" width="40" />
-		<button label="100%" oncommand="setScaleExp(0)" />
+		<button label="100%" oncommand="setScaleExp(0);invalidate();" />
 	</hbox>
 
 	<stack id="container" flex="1">
