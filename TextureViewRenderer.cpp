@@ -41,13 +41,13 @@ void TextureViewRenderer::Render()
 		float scaleXCoef = 1.0f / (imageWidth * scale);
 		float scaleYCoef = 1.0f / (imageHeight * scale);
 
-		textureQuad->uTextureScale.SetValue(vec2(viewportWidth * scaleXCoef, viewportHeight * scaleYCoef));
-		textureQuad->uBackgroundScale.SetValue(vec2(viewportWidth * 0.1f, viewportHeight * 0.1f));
-		textureQuad->uOffset.SetValue(vec2(-offset.x * scaleXCoef, -offset.y * scaleYCoef));
-		textureQuad->uLod.SetValue(mipLod);
-		textureQuad->uBias.SetValue(mipBias);
-		textureQuad->uColorTransform.SetValue(colorTransform);
-		textureQuad->uColorOffset.SetValue(colorOffset);
+		textureQuad->uTextureScale.Set(vec2(viewportWidth * scaleXCoef, viewportHeight * scaleYCoef));
+		textureQuad->uBackgroundScale.Set(vec2(viewportWidth * 0.1f, viewportHeight * 0.1f));
+		textureQuad->uOffset.Set(vec2(-offset.x * scaleXCoef, -offset.y * scaleYCoef));
+		textureQuad->uLod.Set(mipLod);
+		textureQuad->uBias.Set(mipBias);
+		textureQuad->uColorTransform.Set(colorTransform);
+		textureQuad->uColorOffset.Set(colorOffset);
 
 		Painter::TextureQuad::Let tql(context, textureQuad, texture, samplerState, (Painter::TextureQuad::Let::MipMode)mipMode);
 
