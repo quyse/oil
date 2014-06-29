@@ -16,6 +16,7 @@
 #include "../inanity/graphics/PixelShader.hpp"
 #include "../inanity/graphics/shaders/UniformGroup.hpp"
 #include "../inanity/graphics/shaders/Uniform.ipp"
+#include "../inanity/graphics/shaders/UniformArray.ipp"
 #include "../inanity/graphics/shaders/Sampler.ipp"
 #include "../inanity/graphics/shaders/Interpolant.ipp"
 #include "../inanity/graphics/shaders/Instancer.hpp"

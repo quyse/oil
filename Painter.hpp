@@ -209,7 +209,6 @@ public:
 			ptr<G::VertexShader> vs;
 
 			VertexVariant(ModelRender* modelRender, const VertexVariantKey& key);
-			~VertexVariant();
 		};
 
 		/// Struct containing everything needed for pixel shader.
@@ -222,7 +221,6 @@ public:
 			GS::Sampler<G::vec4, 2> sSpecular;
 
 			PixelVariant(ModelRender* modelRender, const PixelVariantKey& key);
-			~PixelVariant();
 		};
 
 		/// Vertex variants.
