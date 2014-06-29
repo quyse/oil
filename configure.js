@@ -31,7 +31,6 @@ var executables = {
 			'ViewPluginInstance',
 			'Engine',
 			'Painter',
-			'Mesh',
 			'MeshInstance',
 			'BasicMeshInstance',
 			'Material',

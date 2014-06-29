@@ -14,7 +14,7 @@ private:
 	ptr<TransformController> transformController;
 
 public:
-	BasicMeshInstance(ptr<Mesh> mesh, ptr<TransformController> transformController);
+	BasicMeshInstance(ptr<Graphics::RawMesh> mesh, ptr<TransformController> transformController);
 	~BasicMeshInstance();
 
 	ptr<TransformController> GetTransformController() const;

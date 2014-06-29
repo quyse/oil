@@ -61,11 +61,6 @@ META_CLASS(Inanity::Oil::Core, Inanity.Oil.Core);
 	META_METHOD(GetEngine);
 META_CLASS_END();
 
-#include "Mesh.hpp"
-
-META_CLASS(Inanity::Oil::Mesh, Inanity.Oil.Mesh);
-META_CLASS_END();
-
 #include "Material.hpp"
 
 META_CLASS(Inanity::Oil::Material, Inanity.Oil.Material);

@@ -1,10 +1,10 @@
 #include "BasicMeshInstance.hpp"
-#include "Mesh.hpp"
 #include "Painter.hpp"
+#include "../inanity/graphics/RawMesh.hpp"
 
 BEGIN_INANITY_OIL
 
-BasicMeshInstance::BasicMeshInstance(ptr<Mesh> mesh, ptr<TransformController> transformController)
+BasicMeshInstance::BasicMeshInstance(ptr<Graphics::RawMesh> mesh, ptr<TransformController> transformController)
 : MeshInstance(mesh), transformController(transformController) {}
 
 BasicMeshInstance::~BasicMeshInstance() {}
