@@ -12,10 +12,10 @@
 
 BEGIN_INANITY_SCRIPT
 
-extern template Math::vec3 ConvertFromScript<Math::vec3>(ptr<Any> value);
-extern template Math::vec4 ConvertFromScript<Math::vec4>(ptr<Any> value);
-extern template ptr<Any> ConvertToScript<Math::vec3>(ptr<State> state, const Math::vec3& value);
-extern template ptr<Any> ConvertToScript<Math::vec4>(ptr<State> state, const Math::vec4& value);
+extern template Math::vec3 ConvertFromScript<Np::MetaProvider, Math::vec3>(ptr<Any> value);
+extern template Math::vec4 ConvertFromScript<Np::MetaProvider, Math::vec4>(ptr<Any> value);
+extern template ptr<Any> ConvertToScript<Np::MetaProvider, Math::vec3>(ptr<State> state, const Math::vec3& value);
+extern template ptr<Any> ConvertToScript<Np::MetaProvider, Math::vec4>(ptr<State> state, const Math::vec4& value);
 
 END_INANITY_SCRIPT
 
@@ -133,7 +133,7 @@ String Vec3EntityFieldType::GetName() const
 
 ptr<Script::Any> Vec3EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	return Script::ConvertToScript(scriptState, value && value->GetSize() == sizeof(Math::vec3) ? *(const Math::vec3*)value->GetData() : Math::vec3(0, 0, 0));
+	return Script::ConvertToScript<Script::Np::MetaProvider, Math::vec3>(scriptState, value && value->GetSize() == sizeof(Math::vec3) ? *(const Math::vec3*)value->GetData() : Math::vec3(0, 0, 0));
 }
 
 ptr<File> Vec3EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -141,7 +141,7 @@ ptr<File> Vec3EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 	Math::vec3 v;
 	try
 	{
-		v = Script::ConvertFromScript<Math::vec3>(value);
+		v = Script::ConvertFromScript<Script::Np::MetaProvider, Math::vec3>(value);
 	}
 	catch(Exception* exception)
 	{
@@ -160,7 +160,7 @@ String Vec4EntityFieldType::GetName() const
 
 ptr<Script::Any> Vec4EntityFieldType::TryConvertToScript(EntityManager* entityManager, ptr<Script::Np::State> scriptState, ptr<File> value)
 {
-	return Script::ConvertToScript(scriptState, value && value->GetSize() == sizeof(Math::vec4) ? *(const Math::vec4*)value->GetData() : Math::vec4(0, 0, 0, 0));
+	return Script::ConvertToScript<Script::Np::MetaProvider, Math::vec4>(scriptState, value && value->GetSize() == sizeof(Math::vec4) ? *(const Math::vec4*)value->GetData() : Math::vec4(0, 0, 0, 0));
 }
 
 ptr<File> Vec4EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
@@ -168,7 +168,7 @@ ptr<File> Vec4EntityFieldType::TryConvertFromScript(ptr<Script::Np::Any> value)
 	Math::vec4 v;
 	try
 	{
-		v = Script::ConvertFromScript<Math::vec4>(value);
+		v = Script::ConvertFromScript<Script::Np::MetaProvider, Math::vec4>(value);
 	}
 	catch(Exception* exception)
 	{

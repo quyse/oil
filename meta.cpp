@@ -14,7 +14,7 @@ BEGIN_INANITY_SCRIPT
 
 #define ID_CONVERTER(T) \
 	template <> \
-	struct ConverterFromScript<T> \
+	struct ConverterFromScript<META_PROVIDER, T> \
 	{ \
 		static T Convert(ptr<Any> value) \
 		{ \
@@ -22,7 +22,7 @@ BEGIN_INANITY_SCRIPT
 		} \
 	}; \
 	template <> \
-	struct ConverterToScript<T> \
+	struct ConverterToScript<META_PROVIDER, T> \
 	{ \
 		static ptr<Any> Convert(ptr<State> state, const T& value) \
 		{ \
