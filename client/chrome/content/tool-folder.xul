@@ -8,7 +8,7 @@
 	<script src="tool-folder.js" />
 
 	<commandset>
-		<command id="commandOpen" oncommand="onCommandOpen()" />
+		<command id="commandOpen" oncommand="onCommandOpen(false)" />
 		<command id="commandRename" oncommand="onCommandRename()" />
 		<command id="commandDelete" oncommand="onCommandDelete()" />
 		<command id="commandProperties" oncommand="onCommandProperties()" />
@@ -30,9 +30,8 @@
 	</keyset>
 
 	<popupset>
-		<menupopup id="contextMenu"
-			onpopupshowing="onContextMenuShowing()">
-			<menuitem id="contextMenuOpen" label="open" command="commandOpen" key="keyOpen" />
+		<menupopup id="contextMenu" onpopupshowing="onContextMenuShowing()">
+			<menuitem id="contextMenuOpen" label="open" command="commandOpen" key="keyOpen" default="true" />
 			<menuitem id="contextMenuRename" label="rename" command="commandRename" key="keyRename" />
 			<menuitem id="contextMenuDelete" label="delete" command="commandDelete" key="keyDelete" />
 			<menu id="contextMenuCreate" label="create">
@@ -50,7 +49,7 @@
 		</menupopup>
 	</popupset>
 
-	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="true" onselect="onTreeSelect(event)">
+	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="false" onselect="onTreeSelect(event)" ondblclick="onTreeDblClick(event)">
 		<treecols>
 			<treecol id="treecolName" primary="true" label="name" flex="1" />
 			<splitter class="tree-splitter" />

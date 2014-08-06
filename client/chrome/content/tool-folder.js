@@ -358,19 +358,6 @@ View.prototype.toggleOpenState = function(row) {
 	item.open(!item.opened);
 	this.treebox.invalidateRow(row);
 };
-View.prototype.isEditable = function(row, col) {
-	return col.id == "treecolName";
-};
-View.prototype.setCellText = function(row, col, value) {
-	if(col.id != "treecolName")
-		return;
-
-	var item = this.getItem(row);
-
-	var action = OIL.createAction("rename " + item.getStringifiedName() + " to " + JSON.stringify(value));
-	item.entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(value));
-	OIL.finishAction(action);
-};
 View.prototype.canDrop = function(row, orientation, dataTransfer) {
 	return checkDrop(row, orientation, dataTransfer);
 };
@@ -378,7 +365,7 @@ View.prototype.drop = function(row, orientation, dataTransfer) {
 	var checkOutput = {};
 	if(!checkDrop(row, orientation, dataTransfer, checkOutput)) {
 		if(checkOutput.message)
-			OIL.getPromptService().prompt(window, "drop error", checkOutput.message);
+			OIL.getPromptService().alert(window, "drop error", checkOutput.message);
 		return;
 	}
 
@@ -580,15 +567,20 @@ function isItemInto(targetId, containerId) {
 	}
 }
 
-function onCommandOpen() {
+function onCommandOpen(fromDblClick) {
 	if(toolMode != "normal")
 		return;
 
 	var selectedItems = getSelectedItems();
-	for(var i = 0; i < selectedItems.length; ++i)
-		window.toolTab.addDependentToolTab(OIL.createTool("default", {
-			entity: selectedItems[i].entityId
-		}));
+	for(var i = 0; i < selectedItems.length; ++i) {
+		var item = selectedItems[i];
+		// don't open folders by double click
+		if(fromDblClick && item.scheme.GetId() == OIL.ids.schemes.folder)
+			continue;
+		OIL.createTool("default", {
+			entity: item.entityId
+		});
+	}
 }
 
 function onCommandRename() {
@@ -598,11 +590,21 @@ function onCommandRename() {
 	var selectedItems = getSelectedItems();
 	if(selectedItems.length != 1)
 		return;
-	var tree = getTree();
-	tree.startEditing(selectedItems[0].getRow(), tree.columns.getNamedColumn("treecolName"));
+
+	var item = selectedItems[0];
+
+	var nameWrap = {
+		value: item.name
+	};
+	if(!OIL.getPromptService().prompt(window, "rename", "enter a new name", nameWrap, null, { value: false }))
+		return;
+
+	var action = OIL.createAction("rename " + item.getStringifiedName() + " to " + JSON.stringify(nameWrap.value));
+	item.entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(nameWrap.value));
+	OIL.finishAction(action);
 }
 
-function startRenameNewItem(parentItem, newEntityId) {
+function selectNewItem(parentItem, newEntityId) {
 	parentItem.open(true);
 	for(var i = 0; i < parentItem.children.length; ++i) {
 		var item = parentItem.children[i];
@@ -610,14 +612,26 @@ function startRenameNewItem(parentItem, newEntityId) {
 			var row = item.getRow();
 			view.selection.select(row);
 			view.treebox.ensureRowIsVisible(row);
-			onCommandRename();
 			break;
 		}
 	}
 }
 
+function getNewObjectName(schemeName) {
+	var nameWrap = {
+		value: "new " + schemeName
+	};
+	if(!OIL.getPromptService().prompt(window, "create new " + schemeName, "enter a name", nameWrap, null, { value: false }))
+		return null;
+	return nameWrap.value;
+}
+
 function onCommandCreateFolder() {
 	if(toolReadOnly)
+		return;
+
+	var name = getNewObjectName("folder");
+	if(name == null)
 		return;
 
 	var selectedItems = getSelectedItems();
@@ -625,16 +639,20 @@ function onCommandCreateFolder() {
 
 	var action = OIL.createAction("create folder");
 	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new folder"));
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
 	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
-	startRenameNewItem(selectedItem, entity.GetId());
+	selectNewItem(selectedItem, entity.GetId());
 }
 
 function onCommandCreateImage() {
 	if(toolReadOnly)
+		return;
+
+	var name = getNewObjectName("image");
+	if(name == null)
 		return;
 
 	var selectedItems = getSelectedItems();
@@ -642,16 +660,20 @@ function onCommandCreateImage() {
 
 	var action = OIL.createAction("create image");
 	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.image);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new image"));
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
 	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
-	startRenameNewItem(selectedItem, entity.GetId());
+	selectNewItem(selectedItem, entity.GetId());
 }
 
 function onCommandCreateImageTransform() {
 	if(toolReadOnly)
+		return;
+
+	var name = getNewObjectName("image transform");
+	if(name == null)
 		return;
 
 	var selectedItems = getSelectedItems();
@@ -659,12 +681,12 @@ function onCommandCreateImageTransform() {
 
 	var action = OIL.createAction("create image transform");
 	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.imageTransform);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f("new image transform"));
+	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
 	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
-	startRenameNewItem(selectedItem, entity.GetId());
+	selectNewItem(selectedItem, entity.GetId());
 }
 
 function onCommandUploadFile() {
@@ -910,9 +932,9 @@ function onCommandProperties() {
 	var selectedItems = getSelectedItems();
 
 	for(var i = 0; i < selectedItems.length; ++i)
-		window.toolTab.addDependentToolTab(OIL.createTool("entity", {
+		OIL.createTool("entity", {
 			entity: selectedItems[i].entityId
-		}));
+		});
 }
 
 function onCommandPlace() {
@@ -1097,6 +1119,10 @@ function onTreeSelect(event) {
 		if(window.toolDialog)
 			window.toolDialog.setAcceptOk(ok);
 	}
+}
+
+function onTreeDblClick(event) {
+	onCommandOpen(true);
 }
 
 var rootItem;
