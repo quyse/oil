@@ -567,7 +567,7 @@ function isItemInto(targetId, containerId) {
 	}
 }
 
-function onCommandOpen(fromDblClick) {
+function onCommandOpen(fromDblClick, dependent) {
 	if(toolMode != "normal")
 		return;
 
@@ -577,9 +577,11 @@ function onCommandOpen(fromDblClick) {
 		// don't open folders by double click
 		if(fromDblClick && item.scheme.GetId() == OIL.ids.schemes.folder)
 			continue;
-		OIL.createTool("default", {
+		var toolTab = OIL.createTool("default", {
 			entity: item.entityId
 		});
+		if(dependent)
+			window.toolTab.addDependentToolTab(toolTab);
 	}
 }
 
@@ -925,16 +927,19 @@ function onCommandDelete() {
 	OIL.finishAction(action);
 }
 
-function onCommandProperties() {
+function onCommandProperties(dependent) {
 	if(toolMode != "normal")
 		return;
 
 	var selectedItems = getSelectedItems();
 
-	for(var i = 0; i < selectedItems.length; ++i)
-		OIL.createTool("entity", {
+	for(var i = 0; i < selectedItems.length; ++i) {
+		var toolTab = OIL.createTool("entity", {
 			entity: selectedItems[i].entityId
 		});
+		if(dependent)
+			window.toolTab.addDependentToolTab(toolTab);
+	}
 }
 
 function onCommandPlace() {
@@ -1122,7 +1127,7 @@ function onTreeSelect(event) {
 }
 
 function onTreeDblClick(event) {
-	onCommandOpen(true);
+	onCommandOpen(true, false);
 }
 
 var rootItem;

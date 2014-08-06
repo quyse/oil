@@ -8,10 +8,10 @@
 	<script src="tool-folder.js" />
 
 	<commandset>
-		<command id="commandOpen" oncommand="onCommandOpen(false)" />
+		<command id="commandOpen" oncommand="onCommandOpen(false, false)" />
 		<command id="commandRename" oncommand="onCommandRename()" />
 		<command id="commandDelete" oncommand="onCommandDelete()" />
-		<command id="commandProperties" oncommand="onCommandProperties()" />
+		<command id="commandProperties" oncommand="onCommandProperties(false)" />
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
 		<command id="commandCreateImage" oncommand="onCommandCreateImage()" />
 		<command id="commandCreateImageTransform" oncommand="onCommandCreateImageTransform()" />
@@ -48,6 +48,15 @@
 			<menuitem id="contextMenuProperties" label="properties" command="commandProperties" key="keyProperties" />
 		</menupopup>
 	</popupset>
+
+	<hbox align="baseline">
+		<button type="menu" label="tools">
+			<menupopup>
+				<menuitem label="default viewer" oncommand="onCommandOpen(false, true)" />
+				<menuitem label="properties" oncommand="onCommandProperties(true)" />
+			</menupopup>
+		</button>
+	</hbox>
 
 	<tree id="tree" flex="1" seltype="multiple" treelines="true" editable="false" onselect="onTreeSelect(event)" ondblclick="onTreeDblClick(event)">
 		<treecols>
