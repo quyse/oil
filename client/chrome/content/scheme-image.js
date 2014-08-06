@@ -56,6 +56,7 @@ OIL.ids.schemesInit.push({
 						}
 						else {
 							dataInterfaceCallback = null;
+							dataResult = null;
 							recalculate();
 						}
 						break;
@@ -71,6 +72,7 @@ OIL.ids.schemesInit.push({
 						}
 						else {
 							transformInterfaceCallback = null;
+							transformResult = null;
 							recalculate();
 						}
 						break;
