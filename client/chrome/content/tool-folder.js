@@ -619,76 +619,55 @@ function selectNewItem(parentItem, newEntityId) {
 	}
 }
 
-function getNewObjectName(schemeName) {
+function getNewObjectName(schemeDisplayName) {
 	var nameWrap = {
-		value: "new " + schemeName
+		value: "new " + schemeDisplayName
 	};
-	if(!OIL.getPromptService().prompt(window, "create new " + schemeName, "enter a name", nameWrap, null, { value: false }))
+	if(!OIL.getPromptService().prompt(window, "create new " + schemeDisplayName, "enter a name", nameWrap, null, { value: false }))
 		return null;
 	return nameWrap.value;
 }
 
-function onCommandCreateFolder() {
+function commandCreate(schemeName) {
 	if(toolReadOnly)
 		return;
 
-	var name = getNewObjectName("folder");
+	var schemeId = OIL.ids.schemes[schemeName];
+	if(!schemeId)
+		throw "wrong scheme name: " + schemeName;
+	var schemeDisplayName = OIL.ids.schemeDescs[schemeId].displayName;
+
+	var name = getNewObjectName(schemeDisplayName);
 	if(name == null)
 		return;
 
 	var selectedItems = getSelectedItems();
 	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
 
-	var action = OIL.createAction("create folder");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.folder);
+	var action = OIL.createAction("create " + schemeDisplayName);
+	var entity = OIL.entityManager.CreateEntity(action, schemeId);
 	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
 	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
 	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
 	OIL.finishAction(action);
 
 	selectNewItem(selectedItem, entity.GetId());
+}
+
+function onCommandCreateFolder() {
+	commandCreate("folder");
 }
 
 function onCommandCreateImage() {
-	if(toolReadOnly)
-		return;
-
-	var name = getNewObjectName("image");
-	if(name == null)
-		return;
-
-	var selectedItems = getSelectedItems();
-	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
-
-	var action = OIL.createAction("create image");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.image);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
-	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
-	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-	OIL.finishAction(action);
-
-	selectNewItem(selectedItem, entity.GetId());
+	commandCreate("image");
 }
 
 function onCommandCreateImageTransform() {
-	if(toolReadOnly)
-		return;
+	commandCreate("imageTransform");
+}
 
-	var name = getNewObjectName("image transform");
-	if(name == null)
-		return;
-
-	var selectedItems = getSelectedItems();
-	var selectedItem = selectedItems.length == 1 ? selectedItems[0] : view.rootItem;
-
-	var action = OIL.createAction("create image transform");
-	var entity = OIL.entityManager.CreateEntity(action, OIL.ids.schemes.imageTransform);
-	entity.WriteTag(action, OIL.ids.tags.name, OIL.s2f(name));
-	entity.WriteTag(action, OIL.ids.tags.parent, OIL.eid2f(selectedItem.entityId));
-	selectedItem.entity.WriteData(action, OIL.eid2f(entity.GetId()), OIL.fileTrue());
-	OIL.finishAction(action);
-
-	selectNewItem(selectedItem, entity.GetId());
+function onCommandCreateImportedScene() {
+	commandCreate("importedScene");
 }
 
 function onCommandUploadFile() {

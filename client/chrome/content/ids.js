@@ -50,6 +50,21 @@ OIL.ids = {
 		name: "imageTransform",
 		id: "imgt",
 		displayName: "image transform"
+	},
+	{
+		name: "importedScene",
+		id: "iscn",
+		displayName: "imported scene"
+	},
+	{
+		name: "mesh",
+		id: "mesh",
+		displayName: "mesh"
+	},
+	{
+		name: "model",
+		id: "modl",
+		displayName: "model"
 	}],
 
 	/* Scheme is characterized by:

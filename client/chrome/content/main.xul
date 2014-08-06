@@ -15,6 +15,9 @@
 	<script src="scheme-file.js" />
 	<script src="scheme-image.js" />
 	<script src="scheme-imageTransform.js" />
+	<script src="scheme-importedScene.js" />
+	<script src="scheme-meshFromScene.js" />
+	<script src="scheme-modelFromScene.js" />
 
 	<commandset>
 		<command id="commandRepoConnect" oncommand="onRepoConnect()" />

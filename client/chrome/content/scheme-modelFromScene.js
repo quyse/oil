@@ -4,7 +4,7 @@ OIL.ids.schemesInit.push({
 	displayName: "model from scene",
 	fieldsInit: [{
 		name: "scene",
-		id: "scene",
+		id: "scen",
 		displayName: "scene",
 		type: {
 			type: "reference",

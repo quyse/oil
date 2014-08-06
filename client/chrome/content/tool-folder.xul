@@ -15,6 +15,7 @@
 		<command id="commandCreateFolder" oncommand="onCommandCreateFolder()" />
 		<command id="commandCreateImage" oncommand="onCommandCreateImage()" />
 		<command id="commandCreateImageTransform" oncommand="onCommandCreateImageTransform()" />
+		<command id="commandCreateImportedScene" oncommand="onCommandCreateImportedScene()" />
 		<command id="commandUploadFile" oncommand="onCommandUploadFile()" />
 		<command id="commandPlace" oncommand="onCommandPlace()" />
 		<command id="commandShowRealPlace" oncommand="onCommandShowRealPlace()" />
@@ -39,6 +40,7 @@
 					<menuitem label="folder" command="commandCreateFolder" />
 					<menuitem label="image" command="commandCreateImage" />
 					<menuitem label="image transform" command="commandCreateImageTransform" />
+					<menuitem label="imported scene" command="commandCreateImportedScene" />
 				</menupopup>
 			</menu>
 			<menuitem id="contextMenuUploadFile" label="upload file(s)..." command="commandUploadFile" />
