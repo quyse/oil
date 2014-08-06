@@ -51,9 +51,9 @@ function onRepoConnect() {
 			entity: OIL.ids.entities.root
 		});
 		// TEST
-		// show file viewer
-		var fileToolTab = createTool("file", {});
-		rootFolderToolTab.addDependentToolTab(fileToolTab);
+		// show default viewer
+		var defaultToolTab = createTool("default", {});
+		rootFolderToolTab.addDependentToolTab(defaultToolTab);
 		// show properties
 		var entityToolTab = createTool("entity", {});
 		rootFolderToolTab.addDependentToolTab(entityToolTab);

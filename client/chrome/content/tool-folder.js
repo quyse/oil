@@ -585,18 +585,10 @@ function onCommandOpen() {
 		return;
 
 	var selectedItems = getSelectedItems();
-	for(var i = 0; i < selectedItems.length; ++i) {
-		var item = selectedItems[i];
-		var scheme = item.entity.GetScheme();
-		if(!scheme)
-			continue;
-		var tool = OIL.ids.schemeDescs[scheme.GetId()].tool;
-		if(!tool)
-			continue;
-		window.toolTab.addDependentToolTab(OIL.createTool(tool, {
-			entity: item.entityId
+	for(var i = 0; i < selectedItems.length; ++i)
+		window.toolTab.addDependentToolTab(OIL.createTool("default", {
+			entity: selectedItems[i].entityId
 		}));
-	}
 }
 
 function onCommandRename() {

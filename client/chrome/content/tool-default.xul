@@ -5,6 +5,10 @@
 <page id="tool"
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-	<description>Nothing to show.</description>
+	<script src="tool-default.js" />
+
+	<iframe id="iframe" flex="1" />
+
+	<label id="labelNote" value="no such entity" />
 
 </page>

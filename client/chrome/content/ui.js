@@ -67,9 +67,12 @@ ToolTab.prototype.setTitle = function(title) {
 	this.tab.setAttribute("label", title);
 	this.tab.setAttribute("tooltiptext", tooltip);
 };
+ToolTab.prototype.composeUrlForPage = function(page) {
+	return "chrome://oil/content/tool-" + page + ".xul#tab=" + this.id;
+};
 ToolTab.prototype.navigate = function() {
 	// compose url
-	var url = "chrome://oil/content/tool-" + this.page + ".xul#tab=" + this.id;
+	var url = this.composeUrlForPage(this.page);
 
 	// navigate iframe
 	if(this.iframe)
