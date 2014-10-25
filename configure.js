@@ -68,6 +68,8 @@ var executables = {
 			'../inanity//libinanity-platform-filesystem',
 			'../inanity//libinanity-graphics-shaders',
 			'../inanity//libinanity-input',
+			'../inanity//libinanity-al',
+			'../inanity//libinanity-audio',
 			'../inanity//libinanity-crypto',
 			'../inanity//libinanity-data',
 			'../inanity//libinanity-npapi',
@@ -85,7 +87,7 @@ var executables = {
 		],
 		'staticLibraries-win32': ['../inanity//libinanity-graphics-dx11'],
 		'dynamicLibraries-linux': ['pthread', 'GL', 'dl', 'z', 'SDL2', 'X11'],
-		'dynamicLibraries-win32': ['user32.lib', 'gdi32.lib', 'opengl32.lib'],
+		'dynamicLibraries-win32': ['user32.lib', 'gdi32.lib', 'opengl32.lib', 'openal32.lib'],
 		defFile: 'windows/npoil.def',
 		resFiles: ['windows/npoil.res']
 	},
